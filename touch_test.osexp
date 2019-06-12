@@ -71,6 +71,17 @@ define inline_script committed
 	set _run "committed = True"
 	set _prepare ""
 
+define inline_script emergency_exit
+	set description "Executes Python code"
+	___run__
+	# adding an 'exit' key for the experiment
+	
+	response_end_experiment = myKeys.get_mods()
+	if response_end_experiment == 'esc':
+		breaking_variable = False
+	__end__
+	set _prepare ""
+
 define sketchpad end
 	set duration mouseclick
 	set description "Displays stimuli"
@@ -135,10 +146,7 @@ define inline_script global_prep
 	m = Mouse()
 	myKeys = Keyboard()
 	
-	# adding an 'exit' key for the experiment
-	response_end_experiment = myKeys.get_mods()
-	if response_end_experiment == 'esc':
-		breaking_variable = True
+	var.breaking_variable = True #for emergency exit
 	
 	stim, response = items['circle_stimulus'], items['circle_mouse_response']
 	beep = items['beep']
@@ -214,7 +222,7 @@ define loop trial_loop
 	set cycles 4
 	set continuous no
 	set break_if_on_first yes
-	set break_if never
+	set break_if "[breaking_variable] = False"
 	setcycle 0 x 50
 	setcycle 0 y 50
 	setcycle 1 x -50
@@ -228,14 +236,15 @@ define loop trial_loop
 define sequence trial_sequence
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
-	run blank always
-	run target always
-	run experiment_script always
+	run blank "[breaking_variable] = True"
+	run target "[breaking_variable] = True"
+	run experiment_script "[breaking_variable] = True"
 	run circle_stimulus "=elapsed >= 500 and m.get_pressed()[0]"
 	run beep "=elapsed >= 500 and m.get_pressed()[0]"
 	run committed "=elapsed >= 500 and m.get_pressed()[0]"
 	run circle_mouse_response "=committed"
 	run pause2 "=committed"
+	run emergency_exit "[breaking_variable] = True"
 	run logger "=committed"
 	run repeat "=not committed"
 
