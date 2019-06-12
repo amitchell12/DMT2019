@@ -76,6 +76,14 @@ define sketchpad end
 	set description "Displays stimuli"
 	draw textline center=1 color=white font_bold=no font_family=sans font_italic=no font_size=40 html=yes show_if=always text="Thank you for taking part<br /><br />Touch the screen to end the experiment" x=0 y=0 z_index=0
 
+define keyboard_response end_experiment_key
+	set timeout infinite
+	set flush yes
+	set event_type keypress
+	set duration keypress
+	set description "Collects keyboard responses"
+	set allowed_responses "+"
+
 define sequence experiment
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
@@ -127,6 +135,11 @@ define inline_script global_prep
 	m = Mouse()
 	myKeys = Keyboard()
 	
+	# adding an 'exit' key for the experiment
+	response_end_experiment = myKeys.get_mods()
+	if response_end_experiment == 'esc':
+		breaking_variable = True
+	
 	stim, response = items['circle_stimulus'], items['circle_mouse_response']
 	beep = items['beep']
 	blank = items['blank']
@@ -163,6 +176,11 @@ define logger logger
 	set description "Logs experimental data"
 	set auto_log yes
 
+define sketchpad loop_end
+	set duration mouseclick
+	set description "Displays stimuli"
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=24 html=yes show_if=response text="You have quit this experiment - click the mouse to quit" x=0 y=0 z_index=0
+
 define sketchpad pause1
 	set duration 500
 	set description "Displays stimuli"
@@ -189,7 +207,6 @@ define sketchpad target
 	draw rect color=white fill=0 h=64 penwidth=5 show_if=always w=64 x=-928 y=-32 z_index=0
 
 define loop trial_loop
-	set source_file ""
 	set source table
 	set repeat 1
 	set order sequential
