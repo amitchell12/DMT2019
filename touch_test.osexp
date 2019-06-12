@@ -75,10 +75,9 @@ define inline_script emergency_exit
 	set description "Executes Python code"
 	___run__
 	# adding an 'exit' key for the experiment
-	
-	response_end_experiment = myKeys.get_mods()
-	if response_end_experiment == 'esc':
-		breaking_variable = False
+	# think script is the best way to go for this - need to find a way of getting key information
+	# extract key press here and determine whether there is a way I can use a key to exit
+	breaking_variable = False
 	__end__
 	set _prepare ""
 
@@ -88,11 +87,12 @@ define sketchpad end
 	draw textline center=1 color=white font_bold=no font_family=sans font_italic=no font_size=40 html=yes show_if=always text="Thank you for taking part<br /><br />Touch the screen to end the experiment" x=0 y=0 z_index=0
 
 define keyboard_response end_experiment_key
-	set timeout infinite
+	set timeout 0
 	set flush yes
 	set event_type keypress
 	set duration keypress
 	set description "Collects keyboard responses"
+	set correct_response end_experiment
 	set allowed_responses "+"
 
 define sequence experiment
@@ -215,6 +215,7 @@ define sketchpad target
 	draw rect color=white fill=0 h=64 penwidth=5 show_if=always w=64 x=-928 y=-32 z_index=0
 
 define loop trial_loop
+	set source_file ""
 	set source table
 	set repeat 1
 	set order sequential
@@ -236,15 +237,15 @@ define loop trial_loop
 define sequence trial_sequence
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
-	run blank "[breaking_variable] = True"
-	run target "[breaking_variable] = True"
-	run experiment_script "[breaking_variable] = True"
+	run blank always
+	run target always
+	run experiment_script always
 	run circle_stimulus "=elapsed >= 500 and m.get_pressed()[0]"
 	run beep "=elapsed >= 500 and m.get_pressed()[0]"
 	run committed "=elapsed >= 500 and m.get_pressed()[0]"
 	run circle_mouse_response "=committed"
 	run pause2 "=committed"
-	run emergency_exit "[breaking_variable] = True"
+	run emergency_exit "[correct_end_experiment_key] = 1"
 	run logger "=committed"
 	run repeat "=not committed"
 
