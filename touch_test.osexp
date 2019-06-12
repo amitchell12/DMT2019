@@ -26,7 +26,7 @@ set font_size 18
 set font_italic no
 set font_family mono
 set font_bold no
-set experiment_path "/home/experimenter/StudentHelp/staff/mcintosh"
+set experiment_path "/home/experimenter/git/DMT_pointing"
 set disable_garbage_collection yes
 set description "The main experiment item"
 set coordinates uniform
@@ -122,8 +122,10 @@ define inline_script global_prep
 	import csv
 	
 	from libopensesame import sketchpad_elements
+	from openexp.keyboard import keyboard
 	
 	m = Mouse()
+	myKeys = Keyboard()
 	
 	stim, response = items['circle_stimulus'], items['circle_mouse_response']
 	beep = items['beep']
