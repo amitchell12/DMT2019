@@ -48,6 +48,7 @@ define synth beep
 	set attack 0
 
 define sketchpad blank
+	# code that means space can be used as esc key
 	set duration 0
 	set description "Displays stimuli"
 
@@ -77,7 +78,8 @@ define inline_script emergency_exit
 	# adding an 'exit' key for the experiment
 	# think script is the best way to go for this - need to find a way of getting key information
 	# extract key press here and determine whether there is a way I can use a key to exit
-	breaking_variable = False
+	if exp.response == 'space':
+		var.breaking_variable = False
 	__end__
 	set _prepare ""
 
@@ -144,9 +146,9 @@ define inline_script global_prep
 	from openexp.keyboard import keyboard
 	
 	m = Mouse()
-	myKeys = Keyboard()
-	
+	myKeys = Keyboard(exp, keylist=['space'])
 	var.breaking_variable = True #for emergency exit
+	#setting up exit experiment back-stop
 	
 	stim, response = items['circle_stimulus'], items['circle_mouse_response']
 	beep = items['beep']
