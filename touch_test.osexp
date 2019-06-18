@@ -139,6 +139,7 @@ define inline_script global_prep
 	___run__
 				
 	# getting information about degrees visual angle
+	import math
 	from math import atan2, degrees
 	h = 18 #monitor height in cm
 	d = 40 #distance between pp and monitor
