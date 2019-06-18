@@ -136,7 +136,29 @@ define inline_script experiment_script
 
 define inline_script global_prep
 	set description "Executes Python code"
-	set _run ""
+	___run__
+				
+	# getting information about degrees visual angle
+	from math import atan2, degrees
+	h = 18 #monitor height in cm
+	d = 40 #distance between pp and monitor
+	r = 1080 #vertical resolution of monitor
+	deg_perPix = degrees(atan2(.5*h, d))/(.5*r)
+	
+	fixDist_pix = -900 #maximum distance of fixation target
+	targetSize_pix = 64 #size of target in pixels
+	fixDist = fixDist_pix*deg_perPix
+	targetSize = targetSize_pix*deg_perPix #converting both fix target distance and size into deg
+	centreFix = fixDist+(targetSize/2)
+	
+	target1deg = centreFix + 24
+	target2deg = centreFix + 31
+	target3deg = centreFix + 38 #defining target eccentricies from centre
+	# converting to pixels for analysis
+	target1Dist_pix = target1deg/deg_perPix
+	target2Dist_pix = target2deg/deg_perPix
+	target3Dist_pix = target3deg/deg_perPix
+	__end__
 	___prepare__
 	# prepare steps that only need to happen once
 	
@@ -176,27 +198,6 @@ define inline_script global_prep
 			clock.sleep(1)
 			if timeout and clock.time() - t0 >= timeout:
 				break
-				
-	# getting information about degrees visual angle
-	from math import atan2, degrees
-	h = 18 #monitor height in cm
-	d = 40 #distance between pp and monitor
-	r = 1080 #vertical resolution of monitor
-	deg_perPix = degrees(atan2(.5*h, d))/(.5*r)
-	
-	fixDist_pix = -900 #maximum distance of fixation target
-	targetSize_pix = 64 #size of target in pixels
-	fixDist = fixDist_pix*deg_perPix
-	targetSize = targetSize_pix*deg_perPix #converting both fix target distance and size into deg
-	centreFix = fixDist+(targetSize/2)
-	
-	target1deg = centreFix + 24
-	target2deg = centreFix + 31
-	target3deg = centreFix + 38 #defining target eccentricies from centre
-	# converting to pixels for analysis
-	target1Dist_pix = target1deg/deg_perPix
-	target2Dist_pix = target2deg/deg_perPix
-	target3Dist_pix = target3deg/deg_perPix
 	__end__
 
 define sketchpad intro
@@ -239,6 +240,7 @@ define sketchpad target
 	draw rect color=white fill=0 h=64 penwidth=5 show_if=always w=64 x=-900 y=-32 z_index=0
 
 define loop trial_loop
+	set source_file ""
 	set source table
 	set repeat 1
 	set order random
@@ -250,21 +252,21 @@ define loop trial_loop
 	setcycle 0 x 154.05
 	setcycle 0 y 0
 	setcycle 1 x 154.05
-	setcycle 1 y 100
+	setcycle 1 y 128
 	setcycle 2 x 154.05
-	setcycle 2 y -100
+	setcycle 2 y -128
 	setcycle 3 x 452.15
 	setcycle 3 y 0
 	setcycle 4 x 452.15
-	setcycle 4 y 100
+	setcycle 4 y 128
 	setcycle 5 x 452.15
-	setcycle 5 y -100
+	setcycle 5 y -128
 	setcycle 6 x 750.25
 	setcycle 6 y 0
 	setcycle 7 x 750.25
-	setcycle 7 y 100
+	setcycle 7 y 128
 	setcycle 8 x 750.25
-	setcycle 8 y -100
+	setcycle 8 y -128
 	run trial_sequence
 
 define sequence trial_sequence
