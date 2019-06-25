@@ -1,4 +1,0 @@
-"avg_rt","count_committed","count_experimentL_script","count_experimentR_script","cursor_x","cursor_y","datetime","experiment_file","eye_move","log_file","response_time","response_time_target_mouse_release_l","response_time_target_mouse_release_r","response_time_target_mouse_response_l","response_time_target_mouse_response_r","subject_nr","time_committed","time_trial_sequence_l","time_trial_sequence_r","x","y"
-"883","0","0","NA","-366","-82","Tue 25 Jun 2019 10:46:09 BST","pointingTask_openLoop_v1.osexp","NA","NA","1114","153","NA","1382","NA","1","3664","1849","NA","-438","0"
-"781.666666667","1","1","NA","894","46","Tue 25 Jun 2019 10:46:09 BST","pointingTask_openLoop_v1.osexp","NA","NA","178","147","NA","1716","NA","1","9166","7454","NA","-728","-200"
-"636.555555556","2","2","NA","-708","155","Tue 25 Jun 2019 10:46:09 BST","pointingTask_openLoop_v1.osexp","NA","NA","680","246","NA","113","NA","1","13946","12367","NA","-728","200"
