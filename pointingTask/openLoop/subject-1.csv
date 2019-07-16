@@ -1,6 +1,0 @@
-"avg_rt","beep_touchOffset","count_committed","count_valid_trial","cursor_x","cursor_y","datetime","eye_move","fix_x","reach_duration","response_time_target_mouse_response","subject_nr","subject_parity","targets_file","time_touch_offset","touch_x","x","y"
-"1018.58556271","383.77904892","0","0","-110","-99","Thu 27 Jun 2019 16:04:08 BST","NA","900","360.65196991","125.923156738","1","odd","pointingTask_targets_radial7_left.csv","1000.78415871","868","-128","-126"
-"668.92850399","184.614181519","1","1","-566","-96","Thu 27 Jun 2019 16:04:08 BST","NA","900","499.233961105","295.402050018","1","odd","pointingTask_targets_radial7_left.csv","1000.10991096","868","-728","-200"
-"568.873325984","182.439088821","2","2","-657","-21","Thu 27 Jun 2019 16:04:08 BST","NA","900","357.918024063","154.061079025","1","odd","pointingTask_targets_radial7_left.csv","1000.05292892","868","-740","0"
-"485.008090734","505.412101746","3","3","-376","-162","Thu 27 Jun 2019 16:04:08 BST","NA","900","405.282974243","201.529979706","1","odd","pointingTask_targets_radial7_left.csv","1000.61798096","868","-428","-163"
-"424.602365494","472.446918488","4","4","-602","195","Thu 27 Jun 2019 16:04:08 BST","NA","900","348.787069321","145.016908646","1","odd","pointingTask_targets_radial7_left.csv","1000.45990944","868","-728","200"
