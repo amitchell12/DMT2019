@@ -1,4 +1,0 @@
-"avg_rt","beep_touchOffset","count_committed","count_valid_trial","cursor_x","cursor_y","datetime","eye_move","fix_x","reach_duration","response_time_target_mouse_response","subject_nr","subject_parity","targets_file","time_touch_offset","touch_x","x","y"
-"895.128011703","229.898929596","0","0","672","-123","Tue 16 Jul 2019 13:59:31 BST","NA","-900","692.620038986","456.825017929","2","even","pointingTask_targets_radial7_right.csv","1015.56611061","-932","728","-200"
-"587.400555611","270.98608017","2","2","-158","-62","Tue 16 Jul 2019 13:59:31 BST","NA","-900","208.17899704","5.05614280701","2","even","pointingTask_targets_radial7_right.csv","1015.47598839","-932","428","-163"
-"428.11870575","229.535102844","3","3","133","-156","Tue 16 Jul 2019 13:59:31 BST","NA","-900","340.322971344","137.29095459","2","even","pointingTask_targets_radial7_right.csv","1015.94495773","-932","128","-126"
