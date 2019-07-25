@@ -1,0 +1,7 @@
+%% AG. Mitchell - 25.07.19
+%% DMT2019 Pointing task analysis script
+% Takes pointing data from .csv files extracted from opensesame experiment
+% Experiment: peripheral pointing task, touch targets presented at
+% 24,31,37deg eccentricity
+% Subtracts touch response to target from actual target location
+% Does this for e
