@@ -4,4 +4,39 @@
 % Experiment: peripheral pointing task, touch targets presented at
 % 24,31,37deg eccentricity
 % Subtracts touch response to target from actual target location
-% Does this for e
+% Does this for each target location (3 trials per target loc), for each
+% eccentricity (9 trials per) and for each side (L/R - 27 trials per)
+
+% Task will be used to compare pointing in AD patients with control
+% patients
+% For now- use for healthy pilot data
+
+%% Data files and variables
+dataPath = 'M:\Alex_Files\Experiments\DMT2019\DMT2019_rawData';
+anaPath = 'M:\Alex_Files\Experiments\DMT2019\dataAnalysis';
+nParticipants = 1:4; %number of participants
+% task 1 = closed loop norm, task 2 = closed loop fix, task 3 = closed loop
+% beep, task 4 = open loop
+nTasks = 1:4; %number of tasks used during testing
+
+allData = struct; %data structure
+
+%% Extracting data
+cd(dataPath) %to where the data is
+for p = 1:length(nParticipants)
+    ppID = sprintf('hp%0*d',2,nParticipants(p)); %for use when navigating files
+    anaFileName = ('%s_pointingAnalysis.mat'); %name of final analysis file
+    
+    dirData = [dataPath filesep ppID]; %where to extract data
+    % Data file names for each task
+    switch nTasks
+        case 1
+            dataFileName_left = sprintf('subject90%d_pointingTask_CLnorm_left*.csv', nTasks(i));
+        case 2
+        case 3
+        case 4
+    end
+    % making analysis folder for data extraction
+    dirAna = mkdir([anaPath filesep ppID]); 
+   
+end
