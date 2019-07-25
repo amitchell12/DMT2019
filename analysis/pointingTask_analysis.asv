@@ -66,12 +66,15 @@ for p = 1:length(nParticipants)
         allData.(sprintf('%s', ppID)).(sprintf('%s', taskName)).right = right_data;
         
         % Extracting important variables from the data
-        left_
-        
+        %for the LHS
+        eyeMove = cell2mat(left_data(2:end,8)); %eye movement data - for filtering 
+        target_location = cell2mat([left_data(2:end,14), left_data(2:end,15)]; %actual target location        
         if t == 2
-            %land_x = 
+            touch_response = cell2mat([left_data(2:end,7), left_data(2:end,8)]);
         else
+            touch_response = [left_data(2:end,5), left_data(2:end,6)]; %landing position of the point to target, x and y
         end
-       
+        trial = [1:length(eyeMove)]';
+        leftMat = [trial, eyeMove, target_location, touch_response];
     end
 end

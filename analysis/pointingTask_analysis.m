@@ -41,6 +41,16 @@ for p = 1:length(nParticipants)
     % Loop through each task importing and analysing critical data
     for t = 1:length(nTasks)
         %task name - generally done alphabetically
+                
+        %importing data
+        [~,~,left_data] = xlsread(names{t*2-1});
+        [~,~,right_data] = xlsread(names{t*2});  
+        % sorting so everything is in the right order
+        [temp, order] = sort(left_data(1,:)); %left data
+        left_data = left_data(:,order);
+        [temp, order] = sort(right_data(1,:)); %right data
+        right_data = right_data(:,order);
+        
         switch t
             case 1
                 taskName = 'CLbeep'; %take name
@@ -51,30 +61,82 @@ for p = 1:length(nParticipants)
             case 4
                 taskName = 'OL';
         end
-        
-        %importing data
-        [~,~,left_data] = xlsread(names{t*2-1});
-        [~,~,right_data] = xlsread(names{t*2});  
-        % sorting so everything is in the right order
-        [temp, order] = sort(left_data(1,:)); %left data
-        left_data = left_data(:,order);
-        [temp, order] = sort(right_data(1,:)); %right data
-        right_data = right_data(:,order);
 
         % adding to structure
         allData.(sprintf('%s', ppID)).(sprintf('%s', taskName)).left = left_data;
         allData.(sprintf('%s', ppID)).(sprintf('%s', taskName)).right = right_data;
         
-        % Extracting important variables from the data
-        %for the LHS
-        eyeMove = left_data(2:end,8); %eye movement data - for filtering 
-        touch_response = [left_data(2:end,5), left_data(2:end,6)]; %landing position of the point to target, x and y
-        target_location = [left_data(2:end,14), left_data(2:end,15)]; %actual target location
+        switch t 
+            case 1
+                % Extracting important variables from the data
+                %for the LHS
+                %eyeMove = cell2mat(left_data(2:end,8)); %eye movement data - for filtering 
+                target_location = cell2mat([left_data(2:end,14), left_data(2:end,15)]); %actual target location        
+                touch_response = cell2mat([left_data(2:end,5), left_data(2:end,6)]); %landing position of the point to target, x and y
+                trial = [1:length(target_location)]';
+                leftMat = [trial, target_location, touch_response];
+                allData.(sprintf('%s', ppID)).(sprintf('%s', taskName)).leftMat = leftMat;
+                
+                %for the RHS
+                %eyeMove = cell2mat(right_data(2:end,8)); %eye movement data - for filtering 
+                target_location = cell2mat([right_data(2:end,14), right_data(2:end,15)]); %actual target location        
+                touch_response = cell2mat([right_data(2:end,5), right_data(2:end,6)]); %landing position of the point to target, x and y
+                trial = [1:length(target_location)]';
+                rightMat = [trial, target_location, touch_response];
+                allData.(sprintf('%s', ppID)).(sprintf('%s', taskName)).rightMat = rightMat;
         
-        if t == 2
-            %land_x = 
-        else
+            case 2
+                %for the LHS
+                %eyeMove = cell2mat(left_data(2:end,5)); %eye movement data - for filtering 
+                target_location = cell2mat([left_data(2:end,14), left_data(2:end,15)]); %actual target location        
+                touch_response = cell2mat([left_data(2:end,7), left_data(2:end,8)]); %landing position of the point to target, x and y
+                trial = [1:length(target_location)]';
+                leftMat = [trial, target_location, touch_response];
+                allData.(sprintf('%s', ppID)).(sprintf('%s', taskName)).leftMat = leftMat;
+                
+                %for the RHS
+                %eyeMove = cell2mat(right_data(2:end,5)); %eye movement data - for filtering 
+                target_location = cell2mat([right_data(2:end,14), right_data(2:end,15)]); %actual target location        
+                touch_response = cell2mat([right_data(2:end,7), right_data(2:end,8)]); %landing position of the point to target, x and y
+                trial = [1:length(target_location)]';
+                rightMat = [trial, target_location, touch_response];
+                allData.(sprintf('%s', ppID)).(sprintf('%s', taskName)).rightMat = rightMat;
+                
+            case 3
+                %for the LHS
+                %eyeMove = cell2mat(left_data(2:end,5)); %eye movement data - for filtering 
+                target_location = cell2mat([left_data(2:end,13), left_data(2:end,14)]); %actual target location        
+                touch_response = cell2mat([left_data(2:end,4), left_data(2:end,5)]); %landing position of the point to target, x and y
+                trial = [1:length(target_location)]';
+                leftMat = [trial, target_location, touch_response];
+                allData.(sprintf('%s', ppID)).(sprintf('%s', taskName)).leftMat = leftMat;
+                
+                %for the RHS
+                %eyeMove = cell2mat(right_data(2:end,5)); %eye movement data - for filtering 
+                target_location = cell2mat([right_data(2:end,13), right_data(2:end,14)]); %actual target location        
+                touch_response = cell2mat([right_data(2:end,4), right_data(2:end,5)]); %landing position of the point to target, x and y
+                trial = [1:length(target_location)]';
+                rightMat = [trial, target_location, touch_response];
+                allData.(sprintf('%s', ppID)).(sprintf('%s', taskName)).rightMat = rightMat;
+                
+            case 4
+                %for the LHS
+                %eyeMove = cell2mat(left_data(2:end,5)); %eye movement data - for filtering 
+                target_location = cell2mat([left_data(2:end,14), left_data(2:end,15)]); %actual target location        
+                touch_response = cell2mat([left_data(2:end,5), left_data(2:end,6)]); %landing position of the point to target, x and y
+                trial = [1:length(target_location)]';
+                leftMat = [trial, target_location, touch_response];
+                allData.(sprintf('%s', ppID)).(sprintf('%s', taskName)).leftMat = leftMat;
+                
+                %for the RHS
+                %eyeMove = cell2mat(right_data(2:end,5)); %eye movement data - for filtering 
+                target_location = cell2mat([right_data(2:end,14), right_data(2:end,15)]); %actual target location        
+                touch_response = cell2mat([right_data(2:end,5), right_data(2:end,6)]); %landing position of the point to target, x and y
+                trial = [1:length(target_location)]';
+                rightMat = [trial, target_location, touch_response];
+                allData.(sprintf('%s', ppID)).(sprintf('%s', taskName)).rightMat = rightMat;
         end
-       
+        
+        
     end
 end
