@@ -51,6 +51,7 @@ for p = 1:length(nParticipants)
             case 4
                 taskName = 'OL';
         end
+        
         %importing data
         [~,~,left_data] = xlsread(names{t*2-1});
         [~,~,right_data] = xlsread(names{t*2});  
@@ -65,8 +66,11 @@ for p = 1:length(nParticipants)
         allData.(sprintf('%s', ppID)).(sprintf('%s', taskName)).right = right_data;
         
         % Extracting important variables from the data
-        %eyeMove = 
-
+        %for the LHS
+        eyeMove = left_data(2:end,8); %eye movement data - for filtering 
+        touch_response = [left_data(2:end,5), left_data(2:end,6)]; %landing position of the point to target, x and y
+        target_location = [left_data(2:end,14), left_data(2:end,15)]; %actual target location
+        
         if t == 2
             %land_x = 
         else
