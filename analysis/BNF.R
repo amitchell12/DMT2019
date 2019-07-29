@@ -99,8 +99,8 @@ BNF$targ <- factor(BNF$tX)
 
 ggplot(BNF)+ geom_point(aes(x=rX, y=rY, colour=targ), size=3) +
               geom_point(aes(x=tX, y = tY, colour=targ), shape=4, size=3, alpha=1) +
-              lims(x=c(0, 800)) + 
-              facet_grid(COND~PAT) +
+              lims(x=c(-50, 900)) + lims(y=c(-300,300)) +
+               facet_grid(COND~PAT) +
               theme_bw() -> BNFplot
 
 png("BNF-patient.png", res=300, units="in", width = 30, height =20)
