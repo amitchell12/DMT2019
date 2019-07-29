@@ -1,15 +1,12 @@
 library(ggplot2)
 library(Rmisc)
 
-dataPath = "\\\\chss.datastore.ed.ac.uk/chss/ppls/users/amitch17/Alex_Files/Experiments/DMT2019/DMT2019_rawData/patients"
-setwd(dataPath)
+dataPath = "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/DMT2019_rawdata/patients/"
+setwd(dataPath) #setting the path
 
-subject801_pointingTask_CLbeep_right_2019.07.26T14_26_13$SUB <- 801-1
-subject801_pointingTask_CLnorm_right_2019.07.26T14_32_14$SUB <- 801-2
-subject801_pointingTask_CLfix_right_2019.07.26T14_37_16$SUB <- 801-3
-subject802_pointingTask_CLbeep_right_2019.07.26T14_49_43$SUB <- 802-1
-subject802_pointingTask_CLnorm_right_2019.07.26T14_57_37$SUB <- 802-2
-subject802_pointingTask_CLfix_right_2019.07.26T15_01_30$SUB <- 802-3
+library(readr)
+subject801_pointingTask_CLbeep_right <- 
+  read_csv("subject801_pointingTask_CLbeep_right_2019-07-26T14_26_13.csv")
 
 CLB <- rbind(subject801_pointingTask_CLbeep_right_2019.07.26T14_26_13,
       subject802_pointingTask_CLbeep_right_2019.07.26T14_49_43)
