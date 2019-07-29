@@ -1,21 +1,24 @@
 library(ggplot2)
 library(Rmisc)
 
-subject801_pointingTask_CLbeep_right_2019.07.26T14_26_13$SUB <- 801
-subject802_pointingTask_CLnorm_right_2019.07.26T14_32_14$SUB <- 802
-subject803_pointingTask_CLfix_right_2019.07.26T14_37_16$SUB <- 803
-subject804_pointingTask_CLbeep_right_2019.07.26T14_49_43$SUB <- 804
-subject805_pointingTask_CLnorm_right_2019.07.26T14_57_37$SUB <- 805
-subject806_pointingTask_CLfix_right_2019.07.26T15_01_30$SUB <- 806
+dataPath = "\\\\chss.datastore.ed.ac.uk/chss/ppls/users/amitch17/Alex_Files/Experiments/DMT2019/DMT2019_rawData/patients"
+setwd(dataPath)
+
+subject801_pointingTask_CLbeep_right_2019.07.26T14_26_13$SUB <- 801-1
+subject801_pointingTask_CLnorm_right_2019.07.26T14_32_14$SUB <- 801-2
+subject801_pointingTask_CLfix_right_2019.07.26T14_37_16$SUB <- 801-3
+subject802_pointingTask_CLbeep_right_2019.07.26T14_49_43$SUB <- 802-1
+subject802_pointingTask_CLnorm_right_2019.07.26T14_57_37$SUB <- 802-2
+subject802_pointingTask_CLfix_right_2019.07.26T15_01_30$SUB <- 802-3
 
 CLB <- rbind(subject801_pointingTask_CLbeep_right_2019.07.26T14_26_13,
-      subject804_pointingTask_CLbeep_right_2019.07.26T14_49_43)
+      subject802_pointingTask_CLbeep_right_2019.07.26T14_49_43)
 
-CLN <- rbind(subject802_pointingTask_CLnorm_right_2019.07.26T14_32_14,
-             subject805_pointingTask_CLnorm_right_2019.07.26T14_57_37)
+CLN <- rbind(subject801_pointingTask_CLnorm_right_2019.07.26T14_32_14,
+             subject802_pointingTask_CLnorm_right_2019.07.26T14_57_37)
 
-CLF <- rbind(subject803_pointingTask_CLfix_right_2019.07.26T14_37_16,
-             subject806_pointingTask_CLfix_right_2019.07.26T15_01_30)
+CLF <- rbind(subject801_pointingTask_CLfix_right_2019.07.26T14_37_16,
+             subject802_pointingTask_CLfix_right_2019.07.26T15_01_30)
 
 B <- CLB[c(5,6,14,15,19)]
 N <- CLN[c(4,5,13,14,19)]
@@ -30,11 +33,11 @@ BNF <- rbind(B, N, F)
 
 
 BNF$PAT <- "MCI"
-BNF[BNF$SUB > 803, "PAT"] <- "AD"
+BNF[BNF$SUB > 801-3, "PAT"] <- "AD"
 
 BNF$COND <- "CLB"
-BNF[BNF$SUB %in% c(802,805), "COND"] <- "CLN"
-BNF[BNF$SUB %in% c(803,806), "COND"] <- "CLF"
+BNF[BNF$SUB %in% c(801-2,803-2), "COND"] <- "CLN"
+BNF[BNF$SUB %in% c(801-3,802-3), "COND"] <- "CLF"
 
 BNF$targ <- factor(BNF$tX)
 
