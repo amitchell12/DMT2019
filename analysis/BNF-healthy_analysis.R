@@ -91,9 +91,9 @@ names(OL_r)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
 rData <- rbind(CLB_r,CLN_r,CLF_r,OL_r)
 
 rData$COND <- "CLB"
-rData[rData$TASK == 2, "COND"] <- "CLN"
-rData[rData$TASK == 3, "COND"] <- "CLF"
-rData[rData$TASK == 4, "COND"] <- "OL"
+rData[rData$TASK == "cln", "COND"] <- "CLN"
+rData[rData$TASK == "clf", "COND"] <- "CLF"
+rData[rData$TASK == "ol", "COND"] <- "OL"
 
 rData$targ <- factor(rData$tX)
 
@@ -206,9 +206,9 @@ names(OL_l)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
 lData <- rbind(CLB_l, CLN_l, CLF_l, OL_l)
 
 lData$COND <- "CLB"
-lData[lData$TASK == 2, "COND"] <- "CLN"
-lData[lData$TASK == 3, "COND"] <- "CLF"
-lData[lData$TASK == 4, "COND"] <- "OL"
+lData[lData$TASK == "cln", "COND"] <- "CLN"
+lData[lData$TASK == "clf", "COND"] <- "CLF"
+lData[lData$TASK == "ol", "COND"] <- "OL"
 
 lData$targ <- factor(lData$tX)
 
@@ -242,13 +242,57 @@ lData$SUB <- factor(lData$SUB)
 rData$TASK <- factor(rData$TASK)
 lData$TASK <- factor(lData$TASK)
 
+data <- rbind(rData,lData)
+data$side <- "right"
+data[data$tX <0, "side"] <- "left"
+
 #plotting
 ggplot(rData, aes(x=SUB, y=abs_err, colour = TASK)) +
   geom_boxplot(outlier.alpha=0) +
   geom_jitter(position=position_dodge(width=.8), size=4, alpha=.5) +
   ylim(0,300) + geom_hline(yintercept=55, linetype="dotted") +
-  theme_bw() -> rDataplot 
+  theme_bw() + theme(legend.position = "bottom") -> rDataplot 
 rDataplot
+#same for left
+ggplot(lData, aes(x=SUB, y=abs_err, colour = TASK)) +
+  geom_boxplot(outlier.alpha=0) +
+  geom_jitter(position=position_dodge(width=.8), size=4, alpha=.5) +
+  ylim(0,300) + geom_hline(yintercept=55, linetype="dotted") +
+  theme_bw() + theme(legend.position = "bottom") -> lDataplot 
+lDataplot
+  
+library(ggpubr)
+taskFig <- ggarrange(lDataplot, rDataplot,
+                 labels = c("L", "R"), nCol = 2, common.legend = TRUE,
+                 legend = "top")
+taskFig
+
+
+# summary stats for each task
+library(Rmisc)
+meanR_AE <- summarySE(data=rData, measurevar = "abs_err", groupvars = c("SUB", "TYPE"))
 
 # just CL norm and CL fix
+lData_NF <- lData[lData$TASK %in% c("cln","clf"), ]
+rData_NF <- rData[rData$TASK %in% c("cln","clf"), ]
 
+#plotting
+ggplot(rData_NF, aes(x=SUB, y=abs_err, colour = TASK)) +
+  geom_boxplot(outlier.alpha=0) +
+  geom_jitter(position=position_dodge(width=.8), size=4, alpha=.5) +
+  ylim(0,300) + geom_hline(yintercept=55, linetype="dotted") +
+  theme_bw() + theme(legend.position = "bottom") -> rDataplot 
+rDataplot
+#same for left
+ggplot(lData_NF, aes(x=SUB, y=abs_err, colour = TASK)) +
+  geom_boxplot(outlier.alpha=0) +
+  geom_jitter(position=position_dodge(width=.8), size=4, alpha=.5) +
+  ylim(0,300) + geom_hline(yintercept=55, linetype="dotted") +
+  theme_bw() + theme(legend.position = "bottom") -> lDataplot 
+lDataplot
+
+library(ggpubr)
+taskFig_NF <- ggarrange(lDataplot, rDataplot,
+                     labels = c("L", "R"), nCol = 2, common.legend = TRUE,
+                     legend = "top")
+taskFig_NF
