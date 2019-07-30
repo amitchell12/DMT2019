@@ -56,21 +56,21 @@ h04_ol_right$SUB <- 904
 
 #adding type of task
 #cl beep
-h02_clb_right$TASK <- 1
-h03_clb_right$TASK <- 1
-h04_clb_right$TASK <- 1
+h02_clb_right$TASK <- "clb"
+h03_clb_right$TASK <- "clb"
+h04_clb_right$TASK <- "clb"
 #cl norm
-h02_cln_right$TASK <- 2
-h03_cln_right$TASK <- 2
-h04_cln_right$TASK <- 2
+h02_cln_right$TASK <- "cln"
+h03_cln_right$TASK <- "cln"
+h04_cln_right$TASK <- "cln"
 #cl fix
-h02_clf_right$TASK <- 3
-h03_clf_right$TASK <- 3
-h04_clf_right$TASK <- 3
+h02_clf_right$TASK <- "clf"
+h03_clf_right$TASK <- "clf"
+h04_clf_right$TASK <- "clf"
 #ol
-h02_ol_right$TASK <- 4
-h03_ol_right$TASK <- 4
-h04_ol_right$TASK <- 4
+h02_ol_right$TASK <- "ol"
+h03_ol_right$TASK <- "ol"
+h04_ol_right$TASK <- "ol"
 
 CLB <- rbind(h02_clb_right, h03_clb_right, h04_clb_right)
 CLN <- rbind(h02_cln_right, h03_cln_right, h04_cln_right)
@@ -171,21 +171,21 @@ h04_ol_left$SUB <- 904
 
 #adding type of task
 #cl beep
-h02_clb_left$TASK <- 1
-h03_clb_left$TASK <- 1
-h04_clb_left$TASK <- 1
+h02_clb_left$TASK <- "clb"
+h03_clb_left$TASK <- "clb"
+h04_clb_left$TASK <- "clb"
 #cl norm
-h02_cln_left$TASK <- 2
-h03_cln_left$TASK <- 2
-h04_cln_left$TASK <- 2
+h02_cln_left$TASK <- "cln"
+h03_cln_left$TASK <- "cln"
+h04_cln_left$TASK <- "cln"
 #cl fix
-h02_clf_left$TASK <- 3
-h03_clf_left$TASK <- 3
-h04_clf_left$TASK <- 3
+h02_clf_left$TASK <- "clf"
+h03_clf_left$TASK <- "clf"
+h04_clf_left$TASK <- "clf"
 #ol
-h02_ol_left$TASK <- 4
-h03_ol_left$TASK <- 4
-h04_ol_left$TASK <- 4
+h02_ol_left$TASK <- "ol"
+h03_ol_left$TASK <- "ol"
+h04_ol_left$TASK <- "ol"
 
 CLB <- rbind(h02_clb_left, h03_clb_left, h04_clb_left)
 CLN <- rbind(h02_cln_left, h03_cln_left, h04_cln_left)
@@ -221,3 +221,34 @@ ggplot(lData)+ geom_point(aes(x=rX, y=rY, colour=targ), size=3) +
   theme_bw() -> LDplot
 LDplot
 dev.off()
+
+## EXTRACT SUMMARY DATA ##
+#directional error
+rData$x_err = rData$rX - rData$tX
+lData$x_err = lData$rX - lData$tX
+rData$y_err = rData$rY - rData$tY
+lData$y_err = lData$rY - lData$tY
+
+# absolute error
+rData$abs_err = sqrt(rData$x_err^2 + rData$y_err^2)
+lData$abs_err = sqrt(lData$x_err^2 + lData$y_err^2)
+
+#ecccentricity coding
+rData$ECC <- factor(cut(rData$tX, 3, label=c("N", "M", "F")))
+lData$ECC <- factor(cut(lData$tX, 3, label=c("F", "M", "N"))) #has to be opposite, sign reversed
+#making factors
+rData$SUB <- factor(rData$SUB)
+lData$SUB <- factor(lData$SUB)
+rData$TASK <- factor(rData$TASK)
+lData$TASK <- factor(lData$TASK)
+
+#plotting
+ggplot(rData, aes(x=SUB, y=abs_err, colour = TASK)) +
+  geom_boxplot(outlier.alpha=0) +
+  geom_jitter(position=position_dodge(width=.8), size=4, alpha=.5) +
+  ylim(0,300) + geom_hline(yintercept=55, linetype="dotted") +
+  theme_bw() -> rDataplot 
+rDataplot
+
+# just CL norm and CL fix
+

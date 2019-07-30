@@ -41,7 +41,7 @@ ggplot(CLF, aes(x=SUB, y=ABS_ERR, colour=ECC)) +
   geom_boxplot(outlier.alpha=0) +
   geom_jitter(position=position_dodge(width=.8), size=4, alpha=.5) +
   ylim(0,300) + geom_hline(yintercept=55, linetype="dotted")+
-  theme_bw()
+  theme_bw() + 
 
 
 mean_AE <- summarySE(data=CLF, measurevar = "ABS_ERR", groupvars = c("SUB", "GRP"))
