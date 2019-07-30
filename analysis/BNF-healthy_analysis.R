@@ -126,7 +126,7 @@ h02_clb_left <-
 h03_clb_left <-
   read_csv("subject903_pointingTask_CLbeep_left_2019-07-30T10_21_41.csv")
 h04_clb_left <-
-  read_csv("subject903_pointingTask_CLfix_left_2019-07-23T16_50_16.csv")
+  read_csv("subject904_pointingTask_CLbeep_left_2019-07-24T12_10_50.csv")
 #closed loop norm
 #continue from here
 h02_cln_left <- 
@@ -150,6 +150,7 @@ h03_ol_left <-
 h04_ol_left <-
   read_csv("subject904_pointingTask_OLnorm_left_2019-07-24T12_12_30.csv")
 
+#dropping sanity check 
 #adding subject number column
 h02_clb_left$SUB <- 902
 h03_clb_left$SUB <- 903
@@ -202,21 +203,21 @@ names(CLF_l)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
 names(OL_l)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
 
 
-rData <- rbind(CLB_l, CLN_l, CLF_l, OL_l)
+lData <- rbind(CLB_l, CLN_l, CLF_l, OL_l)
 
-rData$COND <- "CLB"
-rData[rData$TASK == 2, "COND"] <- "CLN"
-rData[rData$TASK == 3, "COND"] <- "CLF"
-rData[rData$TASK == 4, "COND"] <- "OL"
+lData$COND <- "CLB"
+lData[lData$TASK == 2, "COND"] <- "CLN"
+lData[lData$TASK == 3, "COND"] <- "CLF"
+lData[lData$TASK == 4, "COND"] <- "OL"
 
-rData$targ <- factor(rData$tX)
+lData$targ <- factor(lData$tX)
 
-ggplot(rData)+ geom_point(aes(x=rX, y=rY, colour=targ), size=3) +
+ggplot(lData)+ geom_point(aes(x=rX, y=rY, colour=targ), size=3) +
   geom_point(aes(x=tX, y = tY, colour=targ), shape=4, size=3, alpha=1) +
-  lims(x=c(-50, 950)) + lims(y=c(-350,350)) +
+  lims(x=c(-950, 50)) + lims(y=c(-350,350)) +
   facet_grid(COND~SUB) +
   theme(axis.text=element_text(size=12),
         axis.title=element_text(size=12)) +
-  theme_bw() -> RDplot
-RDplot
+  theme_bw() -> LDplot
+LDplot
 dev.off()
