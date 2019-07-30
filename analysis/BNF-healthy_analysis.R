@@ -268,9 +268,7 @@ taskFig <- ggarrange(lDataplot, rDataplot,
 taskFig
 
 
-# summary stats for each task
-library(Rmisc)
-meanR_AE <- summarySE(data=rData, measurevar = "abs_err", groupvars = c("SUB", "TYPE"))
+
 
 # just CL norm and CL fix
 lData_NF <- lData[lData$TASK %in% c("cln","clf"), ]
@@ -296,3 +294,7 @@ taskFig_NF <- ggarrange(lDataplot, rDataplot,
                      labels = c("L", "R"), nCol = 2, common.legend = TRUE,
                      legend = "top")
 taskFig_NF
+
+# summary stats for each task
+# median across target locations
+med = lData[lData$abs_err, median, by = TASK]
