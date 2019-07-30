@@ -77,38 +77,38 @@ CLN <- rbind(h02_cln_right, h03_cln_right, h04_cln_right)
 CLF <- rbind(h02_clf_right, h03_clf_right, h04_clf_right)
 OL <- rbind(h02_ol_right, h03_ol_right, h04_ol_right)
 
-B <- CLB[c(5,6,17,18,19,20)]
-N <- CLN[c(4,5,17,18,19,20)]
-F <- CLF[c(7,8,14,15,20,21)]
-O <- OL[c(5,6,17,18,19,20)]
+CLB_r <- CLB[c(5,6,17,18,19,20)]
+CLN_r<- CLN[c(4,5,17,18,19,20)]
+CLF_r <- CLF[c(7,8,14,15,20,21)]
+OL_r <- OL[c(5,6,17,18,19,20)]
 
-names(B)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
-names(N)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
-names(F)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
-names(O)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
-
-
-BNF <- rbind(B, N, F, O)
+names(CLB_r)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
+names(CLN_r)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
+names(CLF_r)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
+names(OL_r)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
 
 
-BNF$COND <- "CLB"
-BNF[BNF$TASK == 2, "COND"] <- "CLN"
-BNF[BNF$TASK == 3, "COND"] <- "CLF"
-BNF[BNF$TASK == 4, "COND"] <- "OL"
+rData <- rbind(CLB_r,CLN_r,CLF_r,OL_r)
 
-BNF$targ <- factor(BNF$tX)
+rData$COND <- "CLB"
+rData[rData$TASK == 2, "COND"] <- "CLN"
+rData[rData$TASK == 3, "COND"] <- "CLF"
+rData[rData$TASK == 4, "COND"] <- "OL"
 
-ggplot(BNF)+ geom_point(aes(x=rX, y=rY, colour=targ), size=3) +
-              geom_point(aes(x=tX, y = tY, colour=targ), shape=4, size=3, alpha=1) +
-              lims(x=c(-50, 900)) + lims(y=c(-300,300)) +
-               facet_grid(COND~SUB) +
-              theme(axis.text=element_text(size=12),
-                       axis.title=element_text(size=12)) +
-              theme_bw() -> BNFplot
-BNFplot
+rData$targ <- factor(rData$tX)
+
+ggplot(rData)+ geom_point(aes(x=rX, y=rY, colour=targ), size=3) +
+  geom_point(aes(x=tX, y = tY, colour=targ), shape=4, size=3, alpha=1) +
+  lims(x=c(-50, 950)) + lims(y=c(-350,350)) +
+  facet_grid(COND~SUB) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12)) +
+  theme_bw() -> RDplot
+RDplot
 dev.off()
 
 #mean error
+#change this for later 
 library(matrixStats)
 clb_mean = colMeans(B)
 clb_error = clb_mean[1]-clb_mean[3]
@@ -127,97 +127,96 @@ h03_clb_left <-
   read_csv("subject903_pointingTask_CLbeep_left_2019-07-30T10_21_41.csv")
 h04_clb_left <-
   read_csv("subject903_pointingTask_CLfix_left_2019-07-23T16_50_16.csv")
-##continue changing here
 #closed loop norm
-h02_cln_right <- 
-  read_csv("subject902_pointingTask_CLnorm_right_2019-07-23T16_09_28.csv")
-h03_cln_right <-
-  read_csv("subject903_pointingTask_CLnorm_right_2019-07-23T16_43_20.csv")
-h04_cln_right <-
-  read_csv("subject904_pointingTask_CLnorm_right_2019-07-24T11_54_15.csv")
+#continue from here
+h02_cln_left <- 
+  read_csv("subject902_pointingTask_CLnorm_left_2019-07-23T16_21_49.csv")
+h03_cln_left <-
+  read_csv("subject903_pointingTask_CLnorm_left_2019-07-23T16_51_52.csv")
+h04_cln_left <-
+  read_csv("subject904_pointingTask_CLnorm_left_2019-07-24T12_07_22.csv")
 #closed loop dynamic fix
-h02_clf_right <- 
-  read_csv("subject902_pointingTask_CLfix_right_2019-07-23T16_13_12.csv")
-h03_clf_right <-
-  read_csv("subject903_pointingTask_CLfix_right_2019-07-23T16_41_44.csv")
-h04_clf_right <-
-  read_csv("subject904_pointingTask_CLfix_right_2019-07-24T11_58_31.csv")
+h02_clf_left <- 
+  read_csv("subject902_pointingTask_CLfix_left_2019-07-23T16_24_06.csv")
+h03_clf_left <-
+  read_csv("subject903_pointingTask_CLfix_left_2019-07-23T16_50_16.csv")
+h04_clf_left <-
+  read_csv("subject904_pointingTask_CLfix_left_2019-07-24T12_09_04.csv")
 #open loop beep
-h02_ol_right <- 
-  read_csv("subject902_pointingTask_OLnorm_right_2019-07-23T16_19_36.csv")
-h03_ol_right <-
-  read_csv("subject903_pointingTask_OLnorm_right_2019-07-23T16_46_40.csv")
-h04_ol_right <-
-  read_csv("subject904_pointingTask_OLnorm_right_2019-07-24T12_04_48.csv")
+h02_ol_left <- 
+  read_csv("subject902_pointingTask_OLnorm_left_2019-07-23T16_28_17.csv")
+h03_ol_left <-
+  read_csv("subject903_pointingTask_OLnorm_left_2019-07-23T16_54_59.csv")
+h04_ol_left <-
+  read_csv("subject904_pointingTask_OLnorm_left_2019-07-24T12_12_30.csv")
 
 #adding subject number column
-h02_clb_right$SUB <- 902
-h03_clb_right$SUB <- 903
-h04_clb_right$SUB <- 904
+h02_clb_left$SUB <- 902
+h03_clb_left$SUB <- 903
+h04_clb_left$SUB <- 904
 
-h02_cln_right$SUB <- 902
-h03_cln_right$SUB <- 903
-h04_cln_right$SUB <- 904
+h02_cln_left$SUB <- 902
+h03_cln_left$SUB <- 903
+h04_cln_left$SUB <- 904
 
-h02_clf_right$SUB <- 902
-h03_clf_right$SUB <- 903
-h04_clf_right$SUB <- 904
+h02_clf_left$SUB <- 902
+h03_clf_left$SUB <- 903
+h04_clf_left$SUB <- 904
 
-h02_ol_right$SUB <- 902
-h03_ol_right$SUB <- 903
-h04_ol_right$SUB <- 904
+h02_ol_left$SUB <- 902
+h03_ol_left$SUB <- 903
+h04_ol_left$SUB <- 904
 
 
 #adding type of task
 #cl beep
-h02_clb_right$TASK <- 1
-h03_clb_right$TASK <- 1
-h04_clb_right$TASK <- 1
+h02_clb_left$TASK <- 1
+h03_clb_left$TASK <- 1
+h04_clb_left$TASK <- 1
 #cl norm
-h02_cln_right$TASK <- 2
-h03_cln_right$TASK <- 2
-h04_cln_right$TASK <- 2
+h02_cln_left$TASK <- 2
+h03_cln_left$TASK <- 2
+h04_cln_left$TASK <- 2
 #cl fix
-h02_clf_right$TASK <- 3
-h03_clf_right$TASK <- 3
-h04_clf_right$TASK <- 3
+h02_clf_left$TASK <- 3
+h03_clf_left$TASK <- 3
+h04_clf_left$TASK <- 3
 #ol
-h02_ol_right$TASK <- 4
-h03_ol_right$TASK <- 4
-h04_ol_right$TASK <- 4
+h02_ol_left$TASK <- 4
+h03_ol_left$TASK <- 4
+h04_ol_left$TASK <- 4
 
-CLB <- rbind(h02_clb_right, h03_clb_right, h04_clb_right)
-CLN <- rbind(h02_cln_right, h03_cln_right, h04_cln_right)
-CLF <- rbind(h02_clf_right, h03_clf_right, h04_clf_right)
-OL <- rbind(h02_ol_right, h03_ol_right, h04_ol_right)
+CLB <- rbind(h02_clb_left, h03_clb_left, h04_clb_left)
+CLN <- rbind(h02_cln_left, h03_cln_left, h04_cln_left)
+CLF <- rbind(h02_clf_left, h03_clf_left, h04_clf_left)
+OL <- rbind(h02_ol_left, h03_ol_left, h04_ol_left)
 
-B <- CLB[c(5,6,17,18,19,20)]
-N <- CLN[c(4,5,17,18,19,20)]
-F <- CLF[c(7,8,14,15,20,21)]
-O <- OL[c(5,6,17,18,19,20)]
+CLB_l <- CLB[c(5,6,17,18,19,20)]
+CLN_l<- CLN[c(4,5,17,18,19,20)]
+CLF_l <- CLF[c(7,8,14,15,20,21)]
+OL_l <- OL[c(5,6,17,18,19,20)]
 
-names(B)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
-names(N)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
-names(F)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
-names(O)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
-
-
-BNF <- rbind(B, N, F, O)
+names(CLB_l)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
+names(CLN_l)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
+names(CLF_l)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
+names(OL_l)[1:6] <- c("rX", "rY","tX", "tY", "SUB", "TASK")
 
 
-BNF$COND <- "CLB"
-BNF[BNF$TASK == 2, "COND"] <- "CLN"
-BNF[BNF$TASK == 3, "COND"] <- "CLF"
-BNF[BNF$TASK == 4, "COND"] <- "OL"
+rData <- rbind(CLB_l, CLN_l, CLF_l, OL_l)
 
-BNF$targ <- factor(BNF$tX)
+rData$COND <- "CLB"
+rData[rData$TASK == 2, "COND"] <- "CLN"
+rData[rData$TASK == 3, "COND"] <- "CLF"
+rData[rData$TASK == 4, "COND"] <- "OL"
 
-ggplot(BNF)+ geom_point(aes(x=rX, y=rY, colour=targ), size=3) +
+rData$targ <- factor(rData$tX)
+
+ggplot(rData)+ geom_point(aes(x=rX, y=rY, colour=targ), size=3) +
   geom_point(aes(x=tX, y = tY, colour=targ), shape=4, size=3, alpha=1) +
   lims(x=c(-50, 950)) + lims(y=c(-350,350)) +
   facet_grid(COND~SUB) +
   theme(axis.text=element_text(size=12),
         axis.title=element_text(size=12)) +
-  theme_bw() -> BNFplot
-BNFplot
+  theme_bw() -> RDplot
+RDplot
 dev.off()
