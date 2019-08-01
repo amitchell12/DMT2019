@@ -1,0 +1,8 @@
+"Block","Condition","L1","L2","L3","L4","L5","L6","Letter_duration","accumulated_accuracy","correct_responses","count_correct","count_responses","exp_minutes","exp_seconds","number_responses","posLet1","posLet2","posLet3","posLet4","posLet5","posLet6","response","subject_nr","time_progress"
+"0","1","P","A","X","V","F","Z","10","None","0","0","0","0","12","0","right","top right","bot right","top left","bot left","left","-","111","0 minutes, 12 seconds"
+"0","3","O","B","P","M","N","J","80","0","0","0","1","0","15","1","bot left","right","bot right","top right","top left","left","N","111","0 minutes, 15 seconds"
+"0","1","V","T","R","H","K","F","80","0.666666666667","2","2","3","0","18","2","bot left","left","top left","bot right","top right","right","KR","111","0 minutes, 18 seconds"
+"0","3","B","F","Z","M","D","P","80","0.8","2","4","5","0","22","2","top right","right","top left","left","bot right","bot left","BF","111","0 minutes, 22 seconds"
+"0","1","X","O","L","A","P","S","140","0.888888888889","4","8","9","0","27","4","left","top left","right","top right","bot left","bot right","ALOS","111","0 minutes, 27 seconds"
+"0","1","F","E","P","N","V","R","200","0.916666666667","3","11","12","0","30","3","bot left","bot right","top left","top right","left","right","RVN","111","0 minutes, 30 seconds"
+"0","3","S","O","J","Z","X","R","80","0.928571428571","2","13","14","0","33","2","top left","top right","bot left","bot right","right","left","SO","111","0 minutes, 33 seconds"
