@@ -1,9 +1,9 @@
 ---
 API: 2.1
-OpenSesame: 3.2.7
-Platform: nt
+OpenSesame: 3.2.7b1
+Platform: posix
 ---
-set width 1024
+set width 1920
 set uniform_coordinates no
 set transparent_variables no
 set title Insert_Resolution_here
@@ -17,9 +17,9 @@ set sound_channels 2
 set sound_buf_size 1024
 set sampler_backend legacy
 set round_decimals 2
-set mouse_backend xpyriment
-set keyboard_backend legacy
-set height 768
+set mouse_backend psycho
+set keyboard_backend psycho
+set height 1080
 set fullscreen no
 set form_clicks no
 set foreground white
@@ -28,12 +28,14 @@ set font_size 18
 set font_italic no
 set font_family mono
 set font_bold no
-set experiment_path "\\\\chss.datastore.ed.ac.uk\\chss\\ppls\\users\\amitch17\\git\\DMT2019\\visualAttentionTask\\CombiTVA_PapenbergAust\\combitva-master\\calibration"
+set experiment_path "/home/experimenter/git/DMT2019/visualAttentionTask"
 set disable_garbage_collection yes
 set description "Default description"
 set coordinates relative
 set compensation 0
-set canvas_backend xpyriment
+set color_backend psycho
+set clock_backend psycho
+set canvas_backend psycho
 set bidi no
 set background black
 
@@ -53,7 +55,7 @@ define inline_script Adjust_monitor
 	resolution_width = 1920 ## pixel width of your screen
 	screen_distance = 40 ## how far from the screen will participants be seated
 	
-	letter_size = 100 ## must correspond to a visual angle of 2.7; 
+	letter_size = 127 ## must correspond to a visual angle of 2.7; 
 	# calibrate letter size in this sample experiment by inserting the three values above and running the experiment; 
 	# adjust letter_size till its actual size corresponds to the centimeter value that is shown when you run the experiment
 	
