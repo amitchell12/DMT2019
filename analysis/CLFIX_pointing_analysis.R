@@ -1,8 +1,7 @@
 library(readr)
 library(ggplot2)
 library(Rmisc)
-
-#THE RAW DATA FILES SHOULD BE IN SUBDIRECTORY PA_XPT1_data/
+mypath
 #MANUALLY SET WORKING DIRECTORY TO DATA DIRECTORY AND LIST *.DAT CONTENTS
 mypath <- getwd()
 
@@ -68,4 +67,19 @@ for(SUB in levels(CLF$SUB)){
   lm_fits[row, 2] <- summary(model)$r.squared
   row=row+1
 }
+
+
+#summary statistics
+#all eccentricities
+med <- aggregate(ABS_ERR~SUB*ECC, median, data=CLF) #median of eccentricity
+mean_med <- aggregate(ABS_ERR~SUB, mean, data=med) #mean of all
+
+ggplot(mean_med, aes(x=SUB, y=ABS_ERR))+ geom_point(size=5)
+
+#far targets only
+med_far <- aggregate(ABS_ERR~SUB*ECC, median, data=CLF[CLF$targ_x > 300, ]) #median of eccentricity
+mean_med_far <- aggregate(ABS_ERR~SUB, mean, data=med) #mean of all
+
+ggplot(mean_med_far, aes(x=SUB, y=ABS_ERR))+ geom_point(size=5)
+
 
