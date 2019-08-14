@@ -1,1 +1,0 @@
-DMT_pointing
