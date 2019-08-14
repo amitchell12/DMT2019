@@ -54,19 +54,19 @@ CLF$CODE = factor(CLF$CODE, levels = (c("AD-1", "AD-2", "MCI-1", "MCI-2",
 #plotting individual participant data
 ggplot(CLF, aes(x=CODE, y=ABS_ERR, colour = ECC)) +
   geom_boxplot(outlier.alpha=0) +
-  geom_jitter(position=position_dodge(width=.8), size=4, alpha=.5) +
-  ylim(0,50) + geom_hline(yintercept=10, linetype="dotted") +
-  labs(y = 'Absolute error (mm)') + 
-  theme(axis.text.y = element_text(size=12, vjust = 0.5, color="black"),
+  geom_jitter(position=position_dodge(width=.8), size=5, alpha=.5) +
+  ylim(0,50) + geom_hline(yintercept=9, linetype="dotted") +
+  labs(color = "Eccentricity", x = " ", y = 'Absolute error (mm)') + 
+  theme_bw() +
+  theme(panel.grid.major.x = element_line( size=.3, color="grey80"),
+        panel.grid.major.y = element_line( size=.3, color="grey80"),
+        axis.text.y = element_text(size=12, vjust = 0.5, color="black"),
+        axis.title.y = element_text(size=14, color="black"),
         axis.text.x = element_text(size=12, vjust = 0.5, color="black"), 
-        legend.position = "bottom") -> ppPlot
+        axis.ticks = element_blank(),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size=12), legend.position = "bottom") -> ppPlot
 ppPlot
-
-ggplot(CLF, aes(x=SUB, y=ABS_ERR, colour=ECC)) +
-  geom_boxplot(outlier.alpha=0) +
-  geom_jitter(position=position_dodge(width=.8), size=4, alpha=.5) +
-  ylim(0,50) + geom_hline(yintercept=10, linetype="dotted")+
-  theme_bw() + 
 
 
 mean_AE <- summarySE(data=CLF, measurevar = "ABS_ERR", groupvars = c("SUB", "GRP"))
@@ -97,15 +97,62 @@ for(SUB in levels(CLF$SUB)){
 
 #summary statistics
 #all eccentricities
-med <- aggregate(ABS_ERR~SUB*ECC, median, data=CLF) #median of eccentricity
-mean_med <- aggregate(ABS_ERR~SUB, mean, data=med) #mean of all
+med <- aggregate(ABS_ERR~CODE*ECC, median, data=CLF) #median of eccentricity
+mean_med <- aggregate(ABS_ERR~CODE, mean, data=med) #mean of all
 
-ggplot(mean_med, aes(x=SUB, y=ABS_ERR))+ geom_point(size=5)
+#plotting medians for each PP
+ggplot(med, aes(x=CODE, y=ABS_ERR, color=ECC)) +
+  geom_point(size=6) + 
+  geom_hline(yintercept=9, linetype="dotted", size=.5) +
+  labs(color = "Eccentricity", x = " ", y = 'Median absolute error (mm)') + 
+  scale_y_continuous(limits=c(0,30), breaks = seq(0,30,5)) +
+  theme_bw() +
+  theme(panel.grid.major.x = element_line(size=.3, color="grey80"),
+        panel.grid.major.y = element_line(size=.3, color="grey80"),
+        axis.text.y = element_text(size=12, vjust = 0.5, color="black"),
+        axis.title.y = element_text(size=14, color="black"),
+        axis.text.x = element_text(size=12, vjust = 0.5, color="black"), 
+        axis.ticks = element_blank(),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size=12))-> med_PP
+med_PP
+
+#plotting means for each PP
+ggplot(mean_med, aes(x=CODE, y=ABS_ERR)) +
+  geom_point(size=6) + 
+  geom_hline(yintercept=9, linetype="dotted", size=.5) +
+  labs(color = "Eccentricity", x = " ", y = 'Mean absolute error (mm)') + 
+  scale_y_continuous(limits=c(0,25), breaks = seq(0,30,5)) +
+  theme_bw() +
+  theme(panel.grid.major.x = element_line(size=.3, color="grey80"),
+        panel.grid.major.y = element_line(size=.3, color="grey80"),
+        axis.text.y = element_text(size=12, vjust = 0.5, color="black"),
+        axis.title.y = element_text(size=14, color="black"),
+        axis.text.x = element_text(size=12, vjust = 0.5, color="black"), 
+        axis.ticks = element_blank(),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size=12))-> mean_PP
+mean_PP
 
 #far targets only
-med_far <- aggregate(ABS_ERR~SUB*ECC, median, data=CLF[CLF$targ_x > 300, ]) #median of eccentricity
-mean_med_far <- aggregate(ABS_ERR~SUB, mean, data=med) #mean of all
+med_far <- aggregate(ABS_ERR~CODE*ECC, median, data=CLF[CLF$targ_x > 300, ]) #median of eccentricity
+mean_med_far <- aggregate(ABS_ERR~CODE, mean, data=med_far) #mean of all
 
-ggplot(mean_med_far, aes(x=SUB, y=ABS_ERR))+ geom_point(size=5)
+#plotting means for each PP
+ggplot(mean_med_far, aes(x=CODE, y=ABS_ERR)) +
+  geom_point(size=6) + 
+  geom_hline(yintercept=9, linetype="dotted", size=.5) +
+  labs(color = "Eccentricity", x = " ", y = 'Mean absolute error (mm)') + 
+  scale_y_continuous(limits=c(0,25), breaks = seq(0,30,5)) +
+  theme_bw() +
+  theme(panel.grid.major.x = element_line(size=.3, color="grey80"),
+        panel.grid.major.y = element_line(size=.3, color="grey80"),
+        axis.text.y = element_text(size=12, vjust = 0.5, color="black"),
+        axis.title.y = element_text(size=14, color="black"),
+        axis.text.x = element_text(size=12, vjust = 0.5, color="black"), 
+        axis.ticks = element_blank(),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size=12))-> mean_PP_far
+mean_PP_far
 
 
