@@ -54,18 +54,18 @@ CLF$CODE = factor(CLF$CODE, levels = (c("AD-1", "AD-2", "MCI-1", "MCI-2",
 #plotting individual participant data
 ggplot(CLF, aes(x=CODE, y=ABS_ERR, colour = ECC)) +
   geom_boxplot(outlier.alpha=0) +
-  geom_jitter(position=position_dodge(width=.8), size=5, alpha=.5) +
-  ylim(0,50) + geom_hline(yintercept=9, linetype="dotted") +
+  geom_jitter(position=position_dodge(width=.8), size=6, alpha=.5) +
+  ylim(0,50) + geom_hline(yintercept=9, size = 1, linetype="dotted") +
   labs(color = "Eccentricity", x = " ", y = 'Absolute error (mm)') + 
   theme_bw() +
-  theme(panel.grid.major.x = element_line( size=.3, color="grey80"),
-        panel.grid.major.y = element_line( size=.3, color="grey80"),
-        axis.text.y = element_text(size=12, vjust = 0.5, color="black"),
-        axis.title.y = element_text(size=14, color="black"),
-        axis.text.x = element_text(size=12, vjust = 0.5, color="black"), 
+  theme(panel.grid.major.x = element_line( size=.5, color="grey80"),
+        panel.grid.major.y = element_line( size=.5, color="grey80"),
+        axis.text.y = element_text(size=14, vjust = 0.5, color="black"),
+        axis.title.y = element_text(size=16, color="black"),
+        axis.text.x = element_text(size=14, vjust = 0.5, color="black"), 
         axis.ticks = element_blank(),
-        legend.title = element_text(size = 12),
-        legend.text = element_text(size=12), legend.position = "bottom") -> ppPlot
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size=14), legend.position = "bottom") -> ppPlot
 ppPlot
 
 
@@ -102,19 +102,19 @@ mean_med <- aggregate(ABS_ERR~CODE, mean, data=med) #mean of all
 
 #plotting medians for each PP
 ggplot(med, aes(x=CODE, y=ABS_ERR, color=ECC)) +
-  geom_point(size=6) + 
-  geom_hline(yintercept=9, linetype="dotted", size=.5) +
+  geom_point(size=7) + 
+  geom_hline(yintercept=9, linetype="dotted", size=1) +
   labs(color = "Eccentricity", x = " ", y = 'Median absolute error (mm)') + 
   scale_y_continuous(limits=c(0,30), breaks = seq(0,30,5)) +
   theme_bw() +
-  theme(panel.grid.major.x = element_line(size=.3, color="grey80"),
-        panel.grid.major.y = element_line(size=.3, color="grey80"),
-        axis.text.y = element_text(size=12, vjust = 0.5, color="black"),
-        axis.title.y = element_text(size=14, color="black"),
-        axis.text.x = element_text(size=12, vjust = 0.5, color="black"), 
+  theme(panel.grid.major.x = element_line(size=.5, color="grey80"),
+        panel.grid.major.y = element_line(size=.5, color="grey80"),
+        axis.text.y = element_text(size=14, vjust = 0.5, color="black"),
+        axis.title.y = element_text(size=16, color="black"),
+        axis.text.x = element_text(size=14, vjust = 0.5, color="black"), 
         axis.ticks = element_blank(),
-        legend.title = element_text(size = 12),
-        legend.text = element_text(size=12))-> med_PP
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size=14))-> med_PP
 med_PP
 
 #plotting means for each PP
