@@ -24,6 +24,13 @@ CLF <- CLF[CLF$targ_x > 0, c(5,7,8,12,14,15)]
 CLF$GRP <- "HC"
 CLF[CLF$subject_nr %in% c(801,804), "GRP"] <- "MCI"
 CLF[CLF$subject_nr %in% c(802,803), "GRP"] <- "AD"
+CLF$CODE <- "HC-1"
+CLF[CLF$subject_nr %in% c(801), "CODE"] <- "MCI-1"
+CLF[CLF$subject_nr %in% c(802), "CODE"] <- "AD-1"
+CLF[CLF$subject_nr %in% c(803), "CODE"] <- "AD-2"
+CLF[CLF$subject_nr %in% c(804), "CODE"] <- "MCI-2"
+CLF[CLF$subject_nr %in% c(903), "CODE"] <- "HC-2"
+CLF[CLF$subject_nr %in% c(904), "CODE"] <- "HC-3"
 CLF$SUB <- factor(CLF$subject_nr)
 
 CLF$x_Err <- CLF$land_x-CLF$targ_x #x and y error
@@ -40,13 +47,19 @@ CLF <- CLF[CLF$eye_move == 0, ]
 
 CLF$ABS_ERR <- sqrt(CLF$x_Err^2 + CLF$y_Err^2) #absolute error calc
 
+# Reorganise levels for plot naming
+CLF$CODE = factor(CLF$CODE, levels = (c("AD-1", "AD-2", "MCI-1", "MCI-2", 
+                                   "HC-1", "HC-2", "HC-3")))
+
 #plotting individual participant data
-ggplot(CLF, aes(x=SUB, y=ABS_ERR, colour = ECC)) +
+ggplot(CLF, aes(x=CODE, y=ABS_ERR, colour = ECC)) +
   geom_boxplot(outlier.alpha=0) +
   geom_jitter(position=position_dodge(width=.8), size=4, alpha=.5) +
   ylim(0,50) + geom_hline(yintercept=10, linetype="dotted") +
-  labs(x = 'Group', y = 'Absolute error (mm)') + 
-  theme_bw() + theme(legend.position = "bottom") -> ppPlot
+  labs(y = 'Absolute error (mm)') + 
+  theme(axis.text.y = element_text(size=12, vjust = 0.5, color="black"),
+        axis.text.x = element_text(size=12, vjust = 0.5, color="black"), 
+        legend.position = "bottom") -> ppPlot
 ppPlot
 
 ggplot(CLF, aes(x=SUB, y=ABS_ERR, colour=ECC)) +
