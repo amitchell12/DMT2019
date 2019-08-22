@@ -1,6 +1,6 @@
 ---
 API: 2.1
-OpenSesame: 3.2.7b1
+OpenSesame: 3.2.8b1
 Platform: posix
 ---
 set width 1024
@@ -26,7 +26,7 @@ set font_size 18
 set font_italic no
 set font_family mono
 set font_bold no
-set experiment_path "/home/experimenter/git/DMT2019"
+set experiment_path "/home/atullo2/code/StudentHelp/staff/mcintosh"
 set disable_garbage_collection yes
 set description "The main experiment item"
 set coordinates uniform
@@ -53,9 +53,8 @@ define inline_script apply_settings
 	set _prepare "import subprocess"
 
 define loop do_experiment
-	set source_file ""
 	set source table
-	set repeat 2
+	set repeat 10
 	set order random
 	set description "Repeatedly runs another item"
 	set cycles 1
@@ -207,14 +206,20 @@ define inline_script webcam_select
 	for cam_idx in range(n_cams):
 		capture = VCNoBuffer(cam_idx)
 		#capture = cv2.VideoCapture(cam_idx)
+		got_image = True
 		if capture and capture.isOpened():
 			ok, im = capture.read()
 			if ok:
 				filename = temp_image.format(cam_idx)
 				cv2.imwrite(filename,im)
 				size = im.shape
+			else:
+				got_image = False
 		else:
+			got_image = False
+		if not got_image:
 			filename, size = None, None
+	
 		grabs.append(filename)
 		caps.append(capture)
 		sizes.append(size)
@@ -277,43 +282,60 @@ define inline_script webcam_select
 	from queue import Queue, Empty
 	import sys
 	import threading
+	import traceback
 	
 	import cv2
 	
 	images_to_save = {}
 	
 	class VCNoBuffer:
-	  def __init__(self, cam_id):
-		self.cap = cv2.VideoCapture(cam_id)
-		self.q = Queue()
-		t = threading.Thread(target=self.read_images)
-		t.daemon = True
-		t.start()
+		def __init__(self, cam_id):
+			self.cap = cv2.VideoCapture(cam_id)
+			self.q = Queue()
+			self.t = threading.Thread(target=self.read_images)
+			self.t.daemon = True
+			self.t.start()
 	
-	  def set(self, *args, **kwargs):
-		  return self.cap.set(*args, **kwargs)
+		def set(self, *args, **kwargs):
+			return self.cap.set(*args, **kwargs)
 	
-	  def isOpened(self):
-		  return self.cap.isOpened()
+		def isOpened(self):
+			return self.cap.isOpened()
 	
-	  def read_images(self):
-		while True:
-		  ok, im = self.cap.read()
-		  if not ok:
-			continue
-		  if not self.q.empty():
+		def read_images(self):
 			try:
-			  self.q.get_nowait()   # discard previous (unprocessed) frame
-			except Empty:
-			  pass
-		  self.q.put(im)
-	
-	  def read(self):
-		  x = self._read()
-		  return True, x
-	
-	  def _read(self):
-		return self.q.get()
+				while True:
+					#sys.stderr.write("start read\n")
+					try:
+						ok, im = self.cap.read()
+					except:
+						# OpenCV is sometimes unhappy, wait a bit and try again
+						clock.sleep(1)
+						sys.stderr.write("X")
+						continue
+					#sys.stderr.write("end read\n")
+					if not ok:
+						continue
+					if not self.q.empty():
+						try:
+							self.q.get_nowait()	 # discard previous (unprocessed) frame
+						except Empty:
+							pass
+					#sys.stderr.write("adding to queue\n")
+					self.q.put(im)
+			except:
+				sys.stderr.write("Thread troubles!")
+				traceback.print_exc(file=sys.stderr)
+				
+		def read(self):
+			if self.cap.isOpened():
+				sys.stderr.write("start queue get\n")
+				sys.stderr.write("thread is alive: {}\n".format(self.t.is_alive()))
+				im = self.q.get()
+				sys.stderr.write("end queue get\n")
+				return True, im
+			else:
+				return False, None
 	__end__
 
 define inline_script webcam_settings
