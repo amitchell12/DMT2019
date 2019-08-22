@@ -1,0 +1,333 @@
+---
+API: 2.1
+OpenSesame: 3.2.7b1
+Platform: posix
+---
+set width 1024
+set uniform_coordinates yes
+set title "New experiment"
+set subject_parity even
+set subject_nr 0
+set start outer
+set sound_sample_size -16
+set sound_freq 48000
+set sound_channels 2
+set sound_buf_size 1024
+set sampler_backend legacy
+set round_decimals 2
+set mouse_backend psycho
+set keyboard_backend psycho
+set height 768
+set fullscreen no
+set form_clicks no
+set foreground white
+set font_underline no
+set font_size 18
+set font_italic no
+set font_family mono
+set font_bold no
+set experiment_path "/home/experimenter/git/DMT2019"
+set disable_garbage_collection yes
+set description "The main experiment item"
+set coordinates uniform
+set compensation 0
+set color_backend psycho
+set clock_backend psycho
+set canvas_backend psycho
+set background black
+
+define inline_script apply_settings
+	set description "Executes Python code"
+	___run__
+	webcam_path = "/dev/video{}".format(camera_number)
+	set_string = ",".join(
+		param_name+"="+param_value
+		for param_name, param_value in cam_settings.items()
+	)
+	cmd_fmt = "v4l2-ctl -d {device} --set {params}".format(
+		device=webcam_path,
+		params=set_string
+	)
+	subprocess.call(cmd_fmt, shell=True)
+	__end__
+	set _prepare "import subprocess"
+
+define loop do_experiment
+	set source_file ""
+	set source table
+	set repeat 2
+	set order random
+	set description "Repeatedly runs another item"
+	set cycles 1
+	set continuous no
+	set break_if_on_first yes
+	set break_if never
+	setcycle 0 empty_column ""
+	run experiment
+
+define sequence experiment
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run wait always
+	run take_a_picture always
+	run iti always
+
+define notepad eye_detection_license
+	__note__
+	This is the license for the file "haarcascade_eye.xml"
+	
+	IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
+	
+	By downloading, copying, installing or using the software you agree to this license.
+	If you do not agree to this license, do not download, install, copy or use the software.
+	
+	
+	                        Intel License Agreement
+	                For Open Source Computer Vision Library
+	
+	Copyright (C) 2000, Intel Corporation, all rights reserved.
+	Third party copyrights are property of their respective owners.
+	
+	Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+	
+	   * Redistribution's of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+	
+	   * Redistribution's in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+	
+	   * The name of Intel Corporation may not be used to endorse or promote products derived from this software without specific prior written permission.
+	
+	This software is provided by the copyright holders and contributors "as is" and any express or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed.
+	
+	In no event shall the Intel Corporation or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services;
+	 loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this software, even if advised of the possibility of such damage.
+	__end__
+	set description "A simple notepad to document your experiment. This plug-in does nothing."
+
+define notepad in_case_experiment_hangs
+	__note__
+	If the experiment appears to start but won't go past the first instruction
+	screen, this is possibly due to an old zombie OpenSesame run holding on
+	to the webcam.
+	
+	Close OpenSesame, go to the terminal, and type
+	
+	killall opensesame
+	
+	If this doesn't work, you can try
+	
+	killall -9 opensesame
+	__end__
+	set description "A simple notepad to document your experiment. This plug-in does nothing."
+
+define sketchpad instructions
+	set duration keypress
+	set description "Displays stimuli"
+	draw textline center=0 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="You will see images from the available cameras.<br /><br />To select a camera, press the number corresponding<br />to that camera.<br /><br />Press any key." x=-224 y=-64 z_index=0
+
+define sketchpad iti
+	set duration 500
+	set description "Displays stimuli"
+
+define sequence outer
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run in_case_experiment_hangs always
+	run eye_detection_license always
+	run webcam_settings always
+	run instructions always
+	run webcam_select always
+	run apply_settings always
+	run do_experiment always
+	run save_images always
+
+define inline_script save_images
+	set description "Executes Python code"
+	___run__
+	
+	for filename, im in images_to_save.items():
+		grey = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+		eyepos, _, weights = eye_cascade.detectMultiScale3(
+			grey,
+			outputRejectLevels=True
+		)
+		weights = list(weights)
+		eyes_with_weights = zip(eyepos, weights)
+		sorted_eyes = sorted(
+			eyes_with_weights,
+			key=lambda x: x[1],
+			reverse=True
+		)
+		eyes = sorted_eyes[:2] # take best two
+		for idx, (eyepos, weight) in enumerate(eyes):
+			x, y, w, h = eyepos
+			eye = im[y:y+h,x:x+w]
+			cv2.imwrite("{}_eye{}.jpg".format(filename, idx), eye)
+			cv2.rectangle(im, (x, y), (x+w, y+h), (255, 0, 0), 2)
+		cv2.imwrite("{}.jpg".format(filename), im)
+	__end__
+	___prepare__
+	eye_cascade = cv2.CascadeClassifier(
+		os.path.join(var.experiment_path,'haarcascade_eye.xml')
+	)
+	__end__
+
+define inline_script take_a_picture
+	set description "Executes Python code"
+	___run__
+	filename = "grab_{}".format(var.count_take_a_picture+1)
+	
+	t0 = clock.time()
+	ok, im = capture.read()
+	sys.stderr.write("read took {}\n".format(clock.time()-t0))
+	if ok:
+		images_to_save[os.path.join(var.experiment_path,filename)] = im
+	__end__
+	set _prepare ""
+
+define sketchpad wait
+	set duration keypress
+	set description "Displays stimuli"
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Press a key to take a photo" x=0 y=0 z_index=0
+
+define inline_script webcam_select
+	set description "Executes Python code"
+	___run__
+	n_cams = 4
+	assert n_cams < 10
+	caps = []
+	grabs = []
+	sizes = []
+	temp_image = "tmp{}.jpg"
+	selected = None
+	
+	c = Canvas()
+	w, h = c.size
+	k = Keyboard()
+	
+	for cam_idx in range(n_cams):
+		capture = VCNoBuffer(cam_idx)
+		#capture = cv2.VideoCapture(cam_idx)
+		if capture and capture.isOpened():
+			ok, im = capture.read()
+			if ok:
+				filename = temp_image.format(cam_idx)
+				cv2.imwrite(filename,im)
+				size = im.shape
+		else:
+			filename, size = None, None
+		grabs.append(filename)
+		caps.append(capture)
+		sizes.append(size)
+	
+	def cleanup():
+		# make sure capture objects are deleted
+		for cap in caps:
+			del cap
+	
+	register_cleanup_function(cleanup)
+	
+	# work out grid positions
+	n_rows = int(math.floor(math.sqrt(n_cams)))
+	n_cols, remainder = divmod(n_cams, n_rows)
+	grid_pos = []
+	h_spacing, v_spacing = w/n_cols, h/n_rows
+	for row in range(n_rows):
+		row_y = -h//2+v_spacing//2+v_spacing*row
+		for col in range(n_cols):
+			col_x = -w//2+h_spacing//2+h_spacing*col
+			grid_pos.append((col_x, row_y))
+	
+	# draw images
+	for idx, grab in enumerate(grabs):
+		x, y = grid_pos[idx]
+		if grab is None:
+			error = "Couldn't open camera {}".format(idx)
+			c.text(error, center=True, x=x, y=y)
+		else:
+			scale = 0.6*float(h_spacing)/float(sizes[idx][0])
+			print(scale)
+			c.image(grab, center=True, x=x, y=y, scale=scale)
+			c.text(
+				"Camera {}".format(idx),
+				center=False,
+				x=x-h_spacing//2+10,
+				y=y-v_spacing//2+10
+			)
+	
+	c.show()
+	
+	keys = [str(n) for n in range(n_cams)]
+	key, time = k.get_key(keylist=keys)
+	
+	camera_number = int(key)
+	capture = caps.pop(camera_number)
+	for c in caps:
+		if c is not None:
+			del c # each capture is a thread, remove ones we're not using
+	
+	capture.set(cv2.CAP_PROP_FRAME_WIDTH, cam_resolution[0])
+	capture.set(cv2.CAP_PROP_FRAME_HEIGHT, cam_resolution[1])
+	
+	[os.unlink(g) for g in grabs if g is not None]
+	__end__
+	___prepare__
+	import math
+	import os
+	import os.path
+	from queue import Queue, Empty
+	import sys
+	import threading
+	
+	import cv2
+	
+	images_to_save = {}
+	
+	class VCNoBuffer:
+	  def __init__(self, cam_id):
+		self.cap = cv2.VideoCapture(cam_id)
+		self.q = Queue()
+		t = threading.Thread(target=self.read_images)
+		t.daemon = True
+		t.start()
+	
+	  def set(self, *args, **kwargs):
+		  return self.cap.set(*args, **kwargs)
+	
+	  def isOpened(self):
+		  return self.cap.isOpened()
+	
+	  def read_images(self):
+		while True:
+		  ok, im = self.cap.read()
+		  if not ok:
+			continue
+		  if not self.q.empty():
+			try:
+			  self.q.get_nowait()   # discard previous (unprocessed) frame
+			except Empty:
+			  pass
+		  self.q.put(im)
+	
+	  def read(self):
+		  x = self._read()
+		  return True, x
+	
+	  def _read(self):
+		return self.q.get()
+	__end__
+
+define inline_script webcam_settings
+	set description "Executes Python code"
+	set _run ""
+	___prepare__
+	# these will be applied after the camera is selected
+	cam_settings = {
+		"white_balance_temperature_auto": "0", # off
+	    "power_line_frequency": "2", # 60Hz
+	    "exposure_auto": "0", # off
+		"exposure_absolute": "150",
+		"saturation": "0" # greyscale
+	}
+	cam_resolution = (1280,960)
+	__end__
+
