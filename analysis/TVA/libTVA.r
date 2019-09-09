@@ -39,7 +39,7 @@ libTVA <- function(x, filename, filepath) {
       , targets
       , distractors
       , response = tva_data$response
-      , mask = tva_data$Condition
+      , eccentricity = tva_data$Eccentricity
     )
     
     ## Write whole report data to file
