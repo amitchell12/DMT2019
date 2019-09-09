@@ -3,9 +3,9 @@
 # and set the following paths correctly!                                                                  #
 ###########################################################################################################
 
-setwd("") # Enter path to 
-raw_data_path <- "" # Enter directory to raw data
-output_path <- "" # Enter directory to save converted files to
+setwd("M:/git/DMT2019/analysis/TVA/") # Enter path to 
+raw_data_path <- "M:/Alex_Files/Experiments/DMT2019/DMT2019_rawdata/" # Enter directory to raw data
+output_path <- "M:/Alex_Files/Experiments/DMT2019/dataAnalysis/TVA/" # Enter directory to save converted files to
 
 
 # Prepare files for MatLab fitting
@@ -14,7 +14,7 @@ if(readline("Have you removed all previously converted files? [y/n] ") == "n") {
 }
 
 source("libTVA.r")
-tva_files <- list.files(raw_data_path, ".csv")
+tva.files <- list.files(raw_data_path, ".csv")
 
 for(i in tva.files) {
   i.tva <- read.csv(paste0(raw_data_path, tva.files[which(tva.files == i)]))
