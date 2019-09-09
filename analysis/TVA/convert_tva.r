@@ -28,5 +28,5 @@ for (i in 1:length(tva.files)) {
   tva_accuracies <- rbind(tva_accuracies, c(unique(i_accuracies$subject_nr), mean(as.numeric(as.character(i_accuracies$accumulated_accuracy)))))
 }
 
-boxplot(tva.accuracies$accuracy)
-summary(tva.accuracies$accuracy)
+boxplot(tva_accuracies$accuracy)
+summary(tva_accuracies$accuracy)

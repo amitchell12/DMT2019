@@ -4,7 +4,7 @@ libTVA <- function(x, filename, filepath) {
   # Write trial number into the output file
   output.name <- paste0(filepath, filename, ".dat")
   exp_blocks <- subset(x, Block != 0) # Exclude practice trials
-  write.table(length(exp_blocks$Block), file = output.name, quote = FALSE, col.names = FALSE, row.names = FALSE, sep = "\t", append = TRUE)
+  write.table(length(exp_blocks$Block), file = output.name, quote = FALSE, col.names = FALSE, row.names = FALSE, sep = "\t", append = FALSE)
   
   # Whole report data
   for(cond in c(1:2)) { # 1 = whole report unmasked; 2 = whole report masked
@@ -34,11 +34,12 @@ libTVA <- function(x, filename, filepath) {
     
     ## Combine variables that are needed for the TVA parameter estimate
     whole_data <- cbind(
-      condition = tva_data$Condition
+      condition = tva_data$Timing
       , letter_duration = tva_data$Letter_duration
       , targets
       , distractors
       , response = tva_data$response
+      , mask = tva_data$Condition
     )
     
     ## Write whole report data to file
