@@ -14,7 +14,7 @@ files = dir(fullfile(dataDir, 'subject*.dat'));
 %% TVA file prep
 filecheck = tvacheckdatafile(files.name);
 % load data
-% need to include the 'STD' [5 6] for masked conditions
+% need to include the 'STD' [5 6] for masked consitions
 tvadata = tvaloader(files.name, 'STD', [5 6]);
 % tva report on data
 tvareport(tvadata) %leave open to view
