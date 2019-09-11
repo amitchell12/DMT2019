@@ -7,8 +7,9 @@ libTVA <- function(x, filename, filepath) {
   write.table(length(exp_blocks$Block), file = output.name, quote = FALSE, col.names = FALSE, row.names = FALSE, sep = "\t", append = FALSE)
   
   # Whole report data
-  for(cond in c(1:2)) { # 1 = whole report unmasked; 2 = whole report masked
-    tva_data <- subset(exp_blocks, exp_blocks$Condition == cond)
+  #for(cond in c(5:10)) { # 1 = Eccentricity small, 2 = eccentricity large, 
+  ## loop commented out - unsure how to account for yet
+    tva_data <- subset(exp_blocks)
     tva_data$Letter_duration <- tva_data$Letter_duration # Correct to represent actual presentation times
     tva_data[, paste0("L", 1:4)] <- apply(tva_data[, paste0("L", 1:4)], 2, as.character)
     
@@ -44,6 +45,6 @@ libTVA <- function(x, filename, filepath) {
     
     ## Write whole report data to file
     write.table(whole_data, file=output.name, quote=FALSE, col.names=FALSE, row.names=FALSE, sep="\t", append=TRUE)
-  }
+ #}
 }
  
