@@ -4,12 +4,12 @@
 ###########################################################################################################
 
 #creating folder to sae data in
-setwd("M:/Alex_Files/Experiments/DMT2019/DMT2019_rawdata/") # Enter path to 
+setwd("M:/Alex_Files/Experiments/DMT2019/raw_data/") # Enter path to 
 dir.create("formatted_TVA")
 #back to script WD
-setwd("M:/Alex_Files/Experiments/DMT2019/DMT2019_rawdata/")
+setwd("M:/GitHub/DMT2019/analysis/TVA/")
 
-raw_data_path <- "M:/Alex_Files/Experiments/DMT2019/DMT2019_rawdata/" # Enter directory to raw data
+raw_data_path <- "M:/Alex_Files/Experiments/DMT2019/raw_data/" # Enter directory to raw data
 output_path <- "M:/Alex_Files/Experiments/DMT2019/DMT2019_rawdata/formatted_TVA/" # Enter directory to save converted files to
 
 
