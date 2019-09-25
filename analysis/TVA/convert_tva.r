@@ -3,9 +3,14 @@
 # and set the following paths correctly!                                                                  #
 ###########################################################################################################
 
-setwd("M:/git/DMT2019/analysis/TVA") # Enter path to 
+#creating folder to sae data in
+setwd("M:/Alex_Files/Experiments/DMT2019/DMT2019_rawdata/") # Enter path to 
+dir.create("formatted_TVA")
+#back to script WD
+setwd("M:/Alex_Files/Experiments/DMT2019/DMT2019_rawdata/")
+
 raw_data_path <- "M:/Alex_Files/Experiments/DMT2019/DMT2019_rawdata/" # Enter directory to raw data
-output_path <- "M:/Alex_Files/Experiments/DMT2019/dataAnalysis/TVA/" # Enter directory to save converted files to
+output_path <- "M:/Alex_Files/Experiments/DMT2019/DMT2019_rawdata/formatted_TVA/" # Enter directory to save converted files to
 
 
 # Prepare files for MatLab fitting
