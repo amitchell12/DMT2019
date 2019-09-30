@@ -3,11 +3,23 @@ library(ggplot2)
 library(Rmisc)
 library(gridExtra)
 
-#MANUALLY SET WORKING DIRECTORY TO DATA DIRECTORY
-currentPath <- getwd()
+#set working directory to where data is
+anaPath <- '/Users/alexandramitchell/Documents/git/DMT2019/analysis/tablet_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/git/DMT2019/analysis/tablet_reaching/data'
+setwd(dataPath)
+
+#variable information
+nParticipants = 1 #for testing
+#nParticipants = 1:24 #for analysis
 
 #make complete list of RESULTS files (trial information)
-resfiles=list.files(path=mypath, full.names=TRUE, recursive = FALSE, include.dirs = TRUE, pattern = "*.csv")
+for (x in nParticipants){
+  ppID = sprintf("10%s", x)
+  ppPath = (file.path(dataPath, ppID))
+  resfiles = (path=dataPath, full.names=TRUE, recursive = FALSE, 
+                             include.dirs = FALSE, pattern = "*.csv")
+}
+  
 
 #make empty dataframe to stack up trial information
 CLF <- read.csv(text = "avg_rt,count_committed,count_valid_trial,datetime,eye_move,fix_x,land_x,land_y,reach_duration,response_time_target_mouse_response,sanity_check,subject_nr,subject_parity,targ_x,targ_y,target_onset,targets_file,time_touch_offset,touch_x")
