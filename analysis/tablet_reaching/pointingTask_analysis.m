@@ -12,10 +12,11 @@
 % For now- use for healthy pilot data
 
 %% Data files and variables
-dataPath = 'M:\Alex_Files\Experiments\DMT2019\DMT2019_rawData';
-anaPath = 'M:\Alex_Files\Experiments\DMT2019\dataAnalysis';
+dataPath = '/Users/alexandramitchell/Documents/git/DMT2019/analysis/tablet_reaching/data';
+anaPath = '/Users/alexandramitchell/Documents/git/DMT2019/analysis/tablet_reaching';
+
 %nParticipants = 2:4; %number of participants
-nParticipants = 2; %for testing
+nParticipants = 1; %for testing
 % task 1 = closed loop beep, task 2 = closed loop fix, task 3 = closed loop
 % norm, task 4 = open loop
 nTasks = 1:4; %number of tasks used during testing
