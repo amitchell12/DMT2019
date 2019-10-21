@@ -9,14 +9,14 @@ dataPath <- '/Users/alexandramitchell/Documents/git/DMT2019/analysis/tablet_reac
 setwd(dataPath)
 
 #variable information
-nParticipants = 1 #for testing
+nParticipants = 2 #for testing
 #nParticipants = 1:24 #for analysis
 
 #make complete list of RESULTS files (trial information)
 for (x in nParticipants){
-  ppID = sprintf("10%s", x)
+  ppID = sprintf("10%s", nParticipants[x])
   ppPath = (file.path(dataPath, ppID))
-  resfiles = (path=dataPath, full.names=TRUE, recursive = FALSE, 
+  resfiles = (path=ppPath, full.names=TRUE, recursive = FALSE, 
                              include.dirs = FALSE, pattern = "*.csv")
 }
   
