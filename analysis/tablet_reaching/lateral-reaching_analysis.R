@@ -4,16 +4,22 @@ library(Rmisc)
 library(gridExtra)
 
 #set working directory to where data is
-anaPath <- '/Users/alexandramitchell/Documents/git/DMT2019/analysis/tablet_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/git/DMT2019/analysis/tablet_reaching/data'
+#on mac
+#anaPath <- '/Users/alexandramitchell/Documents/git/DMT2019/analysis/tablet_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/git/DMT2019/analysis/tablet_reaching/data'
+#on pc
+dataPath <- 'S:/groups/DMT/data/control'
+anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 #variable information
-nParticipants = 2 #for testing
+nParticipants = 1 #for testing
 #nParticipants = 1:24 #for analysis
-nTasks = 1:6 #total number of tasks - free + peripheral reaching, visual detection (non-dominant, dominant)
+nTasks = 1:4 #total number of tasks - free + peripheral reaching, visual detection (non-dominant, dominant)
+nSide = 1:2 #total number of sides tested - left, right
 
 #make complete list of RESULTS files (trial information)
+# for reaching only - visual detection analysed seperately
 for (x in nParticipants){
   ppID = sprintf("10%s", x)
   ppPath = (file.path(dataPath, ppID))
@@ -21,12 +27,17 @@ for (x in nParticipants){
                              include.dirs = FALSE, pattern = "*.csv")
   
   for (t in nTasks){
-    task_name = switch(t, "peripheral_l", "peripheral_r","free_l", "free_r",
-                       "detection_l", "detection_r")
-    tmp <- read.csv(resfiles[t])
+    task_name = switch(t, "peripheral_left", "peripheral_right","free_left", "free_right",
+                       "detection_left", "detection_right")
+    res <- read.csv(resfiles[t])
+    # assigning key data points to dataframe for each task
+    res1 = data.frame(res$targ_x, res$targ_y, res$land_x, res$land_y,
+                      res$reach_duration, res$time_touch_offset, res$target_onset,
+                      res$eye_move, res$void_trial)
     file_name = sprintf("%s_%s", ppID, task_name)
-    assign(file_name, tmp) #assigning csv file logical name, yay!
+    assign(file_name, res1) #assigning csv file logical name, yay
   }
+  # now to remove eye-move and void trials from each task
   
 }
   
