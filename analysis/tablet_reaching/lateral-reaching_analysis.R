@@ -18,6 +18,19 @@ nParticipants = 1 #for testing
 #nParticipants = 1:24 #for analysis
 nTasks = 1:4 #total number of tasks - free + peripheral reaching, visual detection (non-dominant, dominant)
 nSide = 1:2 #total number of sides tested - left, right
+# screen information
+x = 310
+y = 175
+pixels_perdeg = 43.76
+deg_perpix = 1/pixels_perdeg
+x_res = 1920
+y_res = 1080
+sd = 40
+
+pixPer_mm_x = x_res/x;
+pixPer_mm_y = y_res/y;
+pixPer_mm = (pixPer_mm_x+pixPer_mm_y)/2;
+mm_perPix = 1/pixPer_mm;
 
 #make complete list of RESULTS files (trial information)
 # for reaching only - visual detection analysed seperately
@@ -45,6 +58,23 @@ for (x in nParticipants){
     res1 <- res1[res1$eye_move == 0, ]
     res1 <- res1[res1$void_trial == 0, ]
     
+    #adding extra info columns
+    
+    
+    # calculating x and y error for each targ location
+    res1$xerr = res1$land_x - res1$targ_x
+    res1$yerr = res1$land_y - res1$targ_y
+    # transforming pixels into mm 
+    res1$xerr_mm = res1$xerr*mm_perPix
+    res1$yerr_mm = res1$yerr*mm_perPix
+    # transforming pixels into degrees
+    res1$xerr_deg = res1$xerr*deg_perpix
+    res1$yerr_deg = res1$yerr*deg_perpix
+    
+    #absolute error in mm
+    
+  
+    
     file_name = sprintf("%s", task_name)
     assign(file_name, res1) #assigning csv file logical name, yay
     
@@ -53,6 +83,8 @@ for (x in nParticipants){
     setwd(pp_anaPath)
     write.csv(res1, sprintf("%s.csv", file_name), row.names = TRUE)
   }
+  
+  #calculating absolute error for each target location
   
   
 }
@@ -67,16 +99,6 @@ for (x in nParticipants){
 #  tmp <- read.csv(x)
 #}
   
-  tmp$subject_nr <- as.numeric(substr(x, 44, 46))
-  CLF <- rbind(CLF, tmp)
-
-
-#organise
-CLF <- CLF[CLF$targ_x > 0, c(5,7,8,12,14,15)]
-CLF$GRP <- "HC"
-CLF[CLF$subject_nr %in% c(801,804), "GRP"] <- "MCI"
-CLF[CLF$subject_nr %in% c(802,803), "GRP"] <- "AD"
-CLF$SUB <- factor(CLF$subject_nr)
 
 CLF$x_Err <- CLF$land_x-CLF$targ_x
 CLF$y_Err <- CLF$land_y-CLF$targ_y
