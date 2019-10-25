@@ -2,14 +2,15 @@ library(readr)
 library(ggplot2)
 library(Rmisc)
 library(gridExtra)
+library(plyr)
 
 #set working directory to where data is
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/git/DMT2019/analysis/tablet_reaching'
-#dataPath <- '/Users/alexandramitchell/Documents/git/DMT2019/analysis/tablet_reaching/data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
 #on pc
-dataPath <- 'S:/groups/DMT/data/control'
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+#dataPath <- 'S:/groups/DMT/data/control'
+#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 #variable information
@@ -21,8 +22,12 @@ nSide = 1:2 #total number of sides tested - left, right
 #make complete list of RESULTS files (trial information)
 # for reaching only - visual detection analysed seperately
 for (x in nParticipants){
+  # creating paths
   ppID = sprintf("10%s", x)
   ppPath = (file.path(dataPath, ppID))
+  setwd(anaPath)
+  dir.create(ppID)
+  
   resfiles = list.files(path=ppPath, full.names=TRUE, recursive = FALSE, 
                              include.dirs = FALSE, pattern = "*.csv")
   
@@ -34,10 +39,21 @@ for (x in nParticipants){
     res1 = data.frame(res$targ_x, res$targ_y, res$land_x, res$land_y,
                       res$reach_duration, res$time_touch_offset, res$target_onset,
                       res$eye_move, res$void_trial)
-    file_name = sprintf("%s_%s", ppID, task_name)
+    names(res1) <- gsub("res.", "", names(res1)) #renaming vectors without 'res.'
+    
+    # now to remove eye-move and void trials from each task
+    res1 <- res1[res1$eye_move == 0, ]
+    res1 <- res1[res1$void_trial == 0, ]
+    
+    file_name = sprintf("%s", task_name)
     assign(file_name, res1) #assigning csv file logical name, yay
+    
+    # saving filtered file as is to analysis folder for PP
+    pp_anaPath = file.path(anaPath, ppID)
+    setwd(pp_anaPath)
+    write.csv(res1, sprintf("%s.csv", file_name), row.names = TRUE)
   }
-  # now to remove eye-move and void trials from each task
+  
   
 }
   
