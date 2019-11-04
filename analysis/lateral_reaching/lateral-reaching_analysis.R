@@ -3,6 +3,7 @@ library(ggplot2)
 library(Rmisc)
 library(gridExtra)
 library(plyr)
+library(tidyverse)
 
 #set working directory to where data is
 #on mac
@@ -18,6 +19,7 @@ nParticipants = 1 #for testing
 #nParticipants = 1:24 #for analysis
 nTasks = 1:4 #total number of tasks - free + peripheral reaching, visual detection (non-dominant, dominant)
 nSide = 1:2 #total number of sides tested - left, right
+nTargets = 1:9
 # screen information
 x = 310
 y = 175
@@ -72,47 +74,41 @@ for (x in nParticipants){
     res1$yerr_deg = res1$yerr*deg_perpix
     
     #absolute error in mm
+    res1$abserr_mm = sqrt(res1$xerr_mm^2 + res1$yerr_mm^2)
+    res1$abserr_deg = sqrt(res1$xerr_deg^2 + res1$yerr_deg^2)
     
-  
+    #group variables
+    res1$ecc <- factor(cut(res1$targ_x, 3, label=c('28','33','38')))
+    res1$height <- factor(cut(res1$targ_y, 3, label=c('top', 'mid', 'bottom')))
+    res1$target <- paste0(res1$ecc, res1$height)
     
-    file_name = sprintf("%s", task_name)
+    file_name = sprintf("%s_allData", task_name)
     assign(file_name, res1) #assigning csv file logical name, yay
     
     # saving filtered file as is to analysis folder for PP
     pp_anaPath = file.path(anaPath, ppID)
     setwd(pp_anaPath)
     write.csv(res1, sprintf("%s.csv", file_name), row.names = TRUE)
+    
+    #median for each target location
+    targ_meds <- res1 %>% #creating another data frame
+      group_by(target) %>% 
+      summarise(av.meds = median(abserr_mm))
+    
+    ## add more information to the meds file - x-axis information etc
+    
+    #adding name of task to data-frame for later compiling
+    targ_meds$task <- file_name
+    #individually naming each data frame to task - to allow for compiling
+    medfile_name = sprintf("%s_meds", task_name)
+    assign(medfile_name, targ_meds) 
   }
-  
-  #calculating absolute error for each target location
+  #append each median task to each other then calculate means for each task
+
   
   
 }
   
-
-#make empty dataframe to stack up trial information
-#CLF <- read.csv(text = "avg_rt,count_committed,count_valid_trial,datetime,eye_move,fix_x,land_x,land_y,reach_duration,response_time_target_mouse_response,sanity_check,subject_nr,subject_parity,targ_x,targ_y,target_onset,targets_file,time_touch_offset,touch_x")
-
-
-#stack them all up
-#for(x in resfiles){
-#  tmp <- read.csv(x)
-#}
-  
-
-CLF$x_Err <- CLF$land_x-CLF$targ_x
-CLF$y_Err <- CLF$land_y-CLF$targ_y
-
-CLF[is.na(CLF$eye_move), "eye_move"] <- 0
-
-CLF$ECC <- factor(cut(CLF$targ_x, 3, label=c("N", "M", "F")))
-CLF <- CLF[CLF$eye_move == 0, ]
-
-CLF$HEIGHT <- factor(cut(CLF$targ_y, 3, label=c("L", "M", "H")))
-
-CLF$TARGET <- paste0(CLF$ECC, CLF$HEIGHT)
-
-CLF$ABS_ERR <- sqrt(CLF$x_Err^2 + CLF$y_Err^2)
 
 
 #boxplots
