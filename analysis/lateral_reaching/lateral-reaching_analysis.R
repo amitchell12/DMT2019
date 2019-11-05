@@ -7,15 +7,15 @@ library(tidyverse)
 
 #set working directory to where data is
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
 #on pc
-#dataPath <- 'S:/groups/DMT/data/control'
-#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+dataPath <- 'S:/groups/DMT/data/control'
+anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 #variable information
-nParticipants = 1 #for testing
+nParticipants = 2 #for testing
 #nParticipants = 1:24 #for analysis
 nTasks = 1:4 #total number of tasks - free + peripheral reaching, visual detection (non-dominant, dominant)
 nSide = 1:2 #total number of sides tested - left, right
@@ -82,29 +82,40 @@ for (x in nParticipants){
     res1$height <- factor(cut(res1$targ_y, 3, label=c('top', 'mid', 'bottom')))
     res1$target <- paste0(res1$ecc, res1$height)
     
-    file_name = sprintf("%s_allData", task_name)
+    file_name = sprintf("%s", task_name)
     assign(file_name, res1) #assigning csv file logical name, yay
     
     # saving filtered file as is to analysis folder for PP
     pp_anaPath = file.path(anaPath, ppID)
     setwd(pp_anaPath)
-    write.csv(res1, sprintf("%s.csv", file_name), row.names = TRUE)
+    write.csv(res1, sprintf("%s_allData.csv", file_name), row.names = TRUE)
     
     #median for each target location
     targ_meds <- res1 %>% #creating another data frame
       group_by(target) %>% 
-      summarise(av.meds = median(abserr_mm))
+      summarise(meds_mm = median(abserr_mm), meds_deg = median(abserr_deg))
     
-    ## add more information to the meds file - x-axis information etc
+    targ_meds$ecc <- substr(targ_meds$target, 1, 2) #adding column for eccentricity info only
+    targ_meds$height <- substr(targ_meds$target, 3, 8) #adding column for height info only
+
     
     #adding name of task to data-frame for later compiling
     targ_meds$task <- file_name
     #individually naming each data frame to task - to allow for compiling
     medfile_name = sprintf("%s_meds", task_name)
     assign(medfile_name, targ_meds) 
+    
+    #plot the medians - then save plot to each PP folder
+    ggplot(targ_meds, aes(x = ecc, y = meds_deg, colour = target)) +
+      geom_point(size = 4) + ylim(0,4) + 
+      geom_hline(yintercept = 1, linetype = 'dotted') +
+      theme_bw()
+    
   }
-  #append each median task to each other then calculate means for each task
 
+  
+  #append each median task to each other then calculate means for each task
+  
   
   
 }
