@@ -15,8 +15,8 @@ anaPath <- 'S:/groups/DMT/analysis/lateral_reaching/control_data'
 setwd(dataPath)
 
 #variable information
-nParticipants = 1:2 #for testing
-#nParticipants = 1:24 #for analysis
+#nParticipants = 1:2 #for testing
+nParticipants = 1:24 #for analysis
 nTasks = 1:4 #total number of tasks - free + peripheral reaching, visual detection (non-dominant, dominant)
 nSide = 1:2 #total number of sides tested - left, right
 nTargets = 1:9
@@ -37,9 +37,14 @@ mm_perPix = 1/pixPer_mm;
 #make complete list of RESULTS files (trial information)
 # for reaching only - visual detection analysed seperately
 for (x in nParticipants){
+  if (x < 10){ #getting around issue of added '0' on PP 1-9
+    xx = sprintf('0%d', x)
+  } else {
+    xx = x
+  }
   # creating paths
   setwd(dataPath)
-  controlID = sprintf("10%s", x)
+  controlID = sprintf("1%s", xx)
   ppPath = (file.path(dataPath, controlID))
   setwd(anaPath)
   dir.create(controlID)
@@ -119,7 +124,7 @@ for (x in nParticipants){
   ggplot(left_data, aes(x = ecc, y = AEdeg, colour = task)) +
     geom_point(size = 4) + ylim(0,5) + 
     geom_hline(yintercept = 1, linetype = 'dotted') + 
-    labs(x = 'Target eccentricity (deg)', y = 'Absolute error (deg)') +
+    labs(x = 'Target eccentricity (deg)', y = 'Median absolute error (deg)', title = 'Left side') +
     theme_bw()
   ggsave(plot_name, plot = last_plot(), device = NULL,
          path = pp_anaPath)
@@ -129,7 +134,7 @@ for (x in nParticipants){
   ggplot(right_data, aes(x = ecc, y = AEdeg, colour = task)) +
     geom_point(size = 4) + ylim(0,5) + 
     geom_hline(yintercept = 1, linetype = 'dotted') + 
-    labs(x = 'Target eccentricity (deg)', y = 'Absolute error (deg)') +
+    labs(x = 'Target eccentricity (deg)', y = 'Median absolute error (deg)', title = 'Right side') + 
     theme_bw()
   ggsave(plot_name, plot = last_plot(), device = NULL,
          path = pp_anaPath)
@@ -142,6 +147,8 @@ for (x in nParticipants){
   left_meanAE = left_meanAE_deg
   # pp information to left mean data
   left_meanAE$sub <- controlID
+  left_meanAE$side <- 'left'
+  left_meanAE$condition <- substr(left_meanAE$task, 1, 4)
   
   right_meanAE_mm = summarySE(data=right_data, measurevar = "AEmm", 
                              groupvars = c("task", "ecc"))
@@ -150,46 +157,38 @@ for (x in nParticipants){
   right_meanAE = right_meanAE_deg
   # pp information to left mean data
   right_meanAE$sub <- controlID
+  right_meanAE$side <- 'right'
+  right_meanAE$condition <- substr(right_meanAE$task, 1, 4)
   
   # put right and left together
   meanAE <- rbind(left_meanAE, right_meanAE)
+  
   # caluclating overall means for each task + side
   tot_meanAE <- summarySE(meanAE, measurevar = 'AEdeg', groupvars = 'task')
   tot_meanAE$sub <- controlID
+  # saving
+  write.csv(meanAE, sprintf("%s_meanAE_targ.csv", controlID), row.names = TRUE) 
+  write.csv(tot_meanAE, sprintf("%s_meanAE_tot.csv", controlID), row.names = TRUE) 
+  
+  # plotting! (each participant)
+  # mean for each eccentricity
+  plot_name = sprintf('%s_meanAE_targs.png', controlID)
+  means <- ggplot(meanAE, aes(x = ecc, y = AEdeg, colour = condition)) +
+    geom_point(size = 3, position = position_dodge(.5)) + ylim(0,5) + 
+    geom_errorbar(aes(ymin = AEdeg-sd, ymax = AEdeg+sd), width = .2, 
+                  size = 0.7, position = position_dodge(.5)) +
+    geom_hline(yintercept = 1, linetype = 'dotted') + 
+    scale_colour_manual(values = c('free'='grey60', 'peri'='black'), labels = c('free', 'peripheral')) +
+    labs(x = 'Target eccentricity (deg)', y = 'Absolute error (deg)') + 
+    theme_bw() + theme(legend.position = 'right', legend.title = element_blank(),
+                       legend.box = 'vertical')
+  
+  means + facet_grid(cols = vars(side)) + theme(strip.text.x = element_text(size = 11))
+  ggsave(plot_name, plot = last_plot(), device = NULL,
+         path = pp_anaPath)
+  
+  # calculating PMI score - then plotting :)
+  
   
 }
-  
 
-#mean of medians
-mean_AE <- summarySE(data=CLF, measurevar = "ABS_ERR", groupvars = c("SUB", "GRP"))
-
-ggplot(mean_AE, aes(x = SUB, y=ABS_ERR, colour=GRP)) + geom_point(size=5, alpha=.5) +
-  geom_errorbar(aes(ymin=ABS_ERR-ci, ymax=ABS_ERR+ci)) + ylim(c(50,175))-> ALL
-
-grid.arrange(ALL, NOTNEAR, ncol=2)
-
-mean_CE <- summarySE(data=CLF, measurevar = "x_Err", groupvars = c("SUB", "GRP"))
-
-ggplot(mean_CE, aes(x = SUB, y=x_Err, colour=GRP)) + geom_point(size=5, alpha=.5) +
-  geom_errorbar(aes(ymin=x_Err-ci, ymax=x_Err+ci))
-
-lm_fits <- read.csv(text="SUB,rsq,a,b")
-
-row=1
-
-
-for(SUB in levels(CLF$SUB)){
-  tmp <- CLF[CLF$SUB==SUB, ]
-  model <- lm(ABS_ERR~ECC, data=tmp)
-  lm_fits[row, 1] <- SUB
-  lm_fits[row, 3:4] <- coefficients(model)[1:2]
-  lm_fits[row, 2] <- summary(model)$r.squared
-  row=row+1
-}
-
-
-med <- aggregate(ABS_ERR~SUB*ECC, median, data=CLF[CLF$targ_x > 300, ])
-
-mean_med <- aggregate(ABS_ERR~SUB, mean, data=med)
-
-ggplot(mean_med, aes(x=SUB, y=ABS_ERR))+ geom_point(size=5)
