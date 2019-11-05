@@ -7,15 +7,15 @@ library(tidyverse)
 
 #set working directory to where data is
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/control_data'
 #dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
 #on pc
 dataPath <- 'S:/groups/DMT/data/control'
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+anaPath <- 'S:/groups/DMT/analysis/lateral_reaching/control_data'
 setwd(dataPath)
 
 #variable information
-nParticipants = 2 #for testing
+nParticipants = 1:2 #for testing
 #nParticipants = 1:24 #for analysis
 nTasks = 1:4 #total number of tasks - free + peripheral reaching, visual detection (non-dominant, dominant)
 nSide = 1:2 #total number of sides tested - left, right
@@ -38,17 +38,18 @@ mm_perPix = 1/pixPer_mm;
 # for reaching only - visual detection analysed seperately
 for (x in nParticipants){
   # creating paths
-  ppID = sprintf("10%s", x)
-  ppPath = (file.path(dataPath, ppID))
+  setwd(dataPath)
+  controlID = sprintf("10%s", x)
+  ppPath = (file.path(dataPath, controlID))
   setwd(anaPath)
-  dir.create(ppID)
+  dir.create(controlID)
   
   resfiles = list.files(path=ppPath, full.names=TRUE, recursive = FALSE, 
                              include.dirs = FALSE, pattern = "*.csv")
   
   for (t in nTasks){
-    task_name = switch(t, "peripheral_left", "peripheral_right","free_left", "free_right",
-                       "detection_left", "detection_right")
+    setwd(dataPath) #make sure we are in this folder
+    task_name = switch(t, "peripheral_left", "peripheral_right","free_left", "free_right")
     res <- read.csv(resfiles[t])
     # assigning key data points to dataframe for each task
     res1 = data.frame(res$targ_x, res$targ_y, res$land_x, res$land_y,
@@ -59,10 +60,7 @@ for (x in nParticipants){
     # now to remove eye-move and void trials from each task
     res1 <- res1[res1$eye_move == 0, ]
     res1 <- res1[res1$void_trial == 0, ]
-    
-    #adding extra info columns
-    
-    
+
     # calculating x and y error for each targ location
     res1$xerr = res1$land_x - res1$targ_x
     res1$yerr = res1$land_y - res1$targ_y
@@ -86,14 +84,14 @@ for (x in nParticipants){
     assign(file_name, res1) #assigning csv file logical name, yay
     
     # saving filtered file as is to analysis folder for PP
-    pp_anaPath = file.path(anaPath, ppID)
+    pp_anaPath = file.path(anaPath, controlID)
     setwd(pp_anaPath)
     write.csv(res1, sprintf("%s_allData.csv", file_name), row.names = TRUE)
     
     #median for each target location
     targ_meds <- res1 %>% #creating another data frame
       group_by(target) %>% 
-      summarise(meds_mm = median(abserr_mm), meds_deg = median(abserr_deg))
+      summarise(AEmm = median(abserr_mm), AEdeg = median(abserr_deg))
     
     targ_meds$ecc <- substr(targ_meds$target, 1, 2) #adding column for eccentricity info only
     targ_meds$height <- substr(targ_meds$target, 3, 8) #adding column for height info only
@@ -105,30 +103,62 @@ for (x in nParticipants){
     medfile_name = sprintf("%s_meds", task_name)
     assign(medfile_name, targ_meds) 
     
-    #plot the medians - then save plot to each PP folder
-    ggplot(targ_meds, aes(x = ecc, y = meds_deg, colour = target)) +
-      geom_point(size = 4) + ylim(0,4) + 
-      geom_hline(yintercept = 1, linetype = 'dotted') +
-      theme_bw()
-    
   }
-
   
-  #append each median task to each other then calculate means for each task
+  setwd(pp_anaPath) #make sure we are in this folder
+  #append free-peripheral task-med frames for each side
+  left_data <- rbind(free_left_meds, peripheral_left_meds)
+  right_data <- rbind(free_right_meds, peripheral_right_meds)
+  # saving these
+  write.csv(left_data, sprintf("%s_leftmedians.csv", controlID), row.names = TRUE) 
+  write.csv(right_data, sprintf("%s_rightmedians.csv", controlID), row.names = TRUE)
   
+  #plot the medians - then save plot to each PP folder
+  # left
+  plot_name = sprintf('%s_leftmedians.png', controlID)
+  ggplot(left_data, aes(x = ecc, y = AEdeg, colour = task)) +
+    geom_point(size = 4) + ylim(0,5) + 
+    geom_hline(yintercept = 1, linetype = 'dotted') + 
+    labs(x = 'Target eccentricity (deg)', y = 'Absolute error (deg)') +
+    theme_bw()
+  ggsave(plot_name, plot = last_plot(), device = NULL,
+         path = pp_anaPath)
   
+  # right
+  plot_name = sprintf('%s_rightmedians.png', controlID)
+  ggplot(right_data, aes(x = ecc, y = AEdeg, colour = task)) +
+    geom_point(size = 4) + ylim(0,5) + 
+    geom_hline(yintercept = 1, linetype = 'dotted') + 
+    labs(x = 'Target eccentricity (deg)', y = 'Absolute error (deg)') +
+    theme_bw()
+  ggsave(plot_name, plot = last_plot(), device = NULL,
+         path = pp_anaPath)
+  
+  ## calculating means of medians
+  left_meanAE_mm = summarySE(data=left_data, measurevar = "AEmm", 
+                             groupvars = c("task", "ecc"))
+  left_meanAE_deg = summarySE(data=left_data, measurevar = "AEdeg",
+                              groupvars = c("task", "ecc"))
+  left_meanAE = left_meanAE_deg
+  # pp information to left mean data
+  left_meanAE$sub <- controlID
+  
+  right_meanAE_mm = summarySE(data=right_data, measurevar = "AEmm", 
+                             groupvars = c("task", "ecc"))
+  right_meanAE_deg = summarySE(data=right_data, measurevar = "AEdeg",
+                              groupvars = c("task", "ecc"))
+  right_meanAE = right_meanAE_deg
+  # pp information to left mean data
+  right_meanAE$sub <- controlID
+  
+  # put right and left together
+  meanAE <- rbind(left_meanAE, right_meanAE)
+  # caluclating overall means for each task + side
+  tot_meanAE <- summarySE(meanAE, measurevar = 'AEdeg', groupvars = 'task')
+  tot_meanAE$sub <- controlID
   
 }
   
-
-
-#boxplots
-ggplot(CLF, aes(x=SUB, y=ABS_ERR, colour=ECC)) +
-  geom_boxplot(outlier.alpha=0) +
-  geom_jitter(position=position_dodge(width=.8), size=4, alpha=.5) +
-  ylim(0,300) + geom_hline(yintercept=55, linetype="dotted")+
-  theme_bw()
-
 
 #mean of medians
 mean_AE <- summarySE(data=CLF, measurevar = "ABS_ERR", groupvars = c("SUB", "GRP"))
