@@ -7,11 +7,11 @@ library(tidyverse)
 
 #set working directory to where data is
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/control_data'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/control_data'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
 #on pc
-dataPath <- 'S:/groups/DMT/data/control'
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching/control_data'
+#dataPath <- 'S:/groups/DMT/data/control'
+#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching/control_data'
 setwd(dataPath)
 
 #variable information
@@ -33,6 +33,9 @@ pixPer_mm_x = x_res/x;
 pixPer_mm_y = y_res/y;
 pixPer_mm = (pixPer_mm_x+pixPer_mm_y)/2;
 mm_perPix = 1/pixPer_mm;
+
+left_PMIdata = data_frame() #empty dataframe for saving all PP data
+right_PMIdata = data_frame()
 
 #make complete list of RESULTS files (trial information)
 # for reaching only - visual detection analysed seperately
@@ -164,8 +167,16 @@ for (x in nParticipants){
   meanAE <- rbind(left_meanAE, right_meanAE)
   
   # caluclating overall means for each task + side
-  tot_meanAE <- summarySE(meanAE, measurevar = 'AEdeg', groupvars = 'task')
+  leftFmeans <- summarySE(free_left_meds, measurevar = 'AEdeg', groupvars = 'task')
+  leftPmeans <- summarySE(peripheral_left_meds, measurevar = 'AEdeg', groupvars = 'task')
+  rightFmeans <- summarySE(free_right_meds, measurevar = 'AEdeg', groupvars = 'task')
+  rightPmeans <- summarySE(peripheral_right_meds, measurevar = 'AEdeg', groupvars = 'task')
+  
+  tot_meanAE <- rbind(leftFmeans, leftPmeans, rightFmeans, rightPmeans)
   tot_meanAE$sub <- controlID
+  tot_meanAE$type <- rep(c("Free", "Peripheral"), 2)
+  tot_meanAE$side <- c(rep("Left", 2), rep("Right", 2))
+  
   # saving
   write.csv(meanAE, sprintf("%s_meanAE_targ.csv", controlID), row.names = TRUE) 
   write.csv(tot_meanAE, sprintf("%s_meanAE_tot.csv", controlID), row.names = TRUE) 
@@ -174,21 +185,39 @@ for (x in nParticipants){
   # mean for each eccentricity
   plot_name = sprintf('%s_meanAE_targs.png', controlID)
   means <- ggplot(meanAE, aes(x = ecc, y = AEdeg, colour = condition)) +
-    geom_point(size = 3, position = position_dodge(.5)) + ylim(0,5) + 
+    geom_point(size = 3, position = position_dodge(.5)) + ylim(0,6) + 
     geom_errorbar(aes(ymin = AEdeg-sd, ymax = AEdeg+sd), width = .2, 
                   size = 0.7, position = position_dodge(.5)) +
     geom_hline(yintercept = 1, linetype = 'dotted') + 
     scale_colour_manual(values = c('free'='grey60', 'peri'='black'), labels = c('free', 'peripheral')) +
     labs(x = 'Target eccentricity (deg)', y = 'Absolute error (deg)') + 
-    theme_bw() + theme(legend.position = 'right', legend.title = element_blank(),
+    theme_bw() + theme(legend.position = 'bottom', legend.title = element_blank(),
                        legend.box = 'vertical')
   
   means + facet_grid(cols = vars(side)) + theme(strip.text.x = element_text(size = 11))
+  plotPath = file.path(anaPath, 'plots')
   ggsave(plot_name, plot = last_plot(), device = NULL,
-         path = pp_anaPath)
+         path = plotPath)
   
+  ## this produces SAME result in all PP, why? FIX LATER
   # calculating PMI score - then plotting :)
+  left = tot_meanAE$AEdeg[2]-tot_meanAE$AEdeg[1]
+  right = tot_meanAE$AEdeg[4]-tot_meanAE$AEdeg[3]
+  PMI <- data_frame(c(PMI_left, PMI_right))
+  PMI$sub <- controlID
+  PMI$side <- c('Left', 'Right')
+  colnames(PMI)[1] <- 'PMI'
+
+  #PMIname = sprintf("%s_PMI", controlID)
+  #assign(PMIname, PMI)
   
+  left_PMIdata[x,] <- append(PMI[1,]) #creating big data-frames
+  right_PMIdata[x,] <- append(PMI[2,])
   
 }
+
+all_PMI = do.call(rbind, left_PMIdata, right_PMIdata)
+
+## compile all participant data
+
 
