@@ -226,7 +226,7 @@ PMIplot <- ggplot(all_PMI, aes(x = side, y = PMI, colour = sub)) +
   geom_point(size = 3, position = position_dodge(.2)) + ylim(0,6) + 
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'bar', group = 1, alpha = 0.3) +
-  labs(x = '', y = 'Peripheral misreaching index (deg)') + 
+  labs(x = '', y = 'Peripheral misreaching index (deg)', element_text(size = 13)) +
   theme_bw() + theme(legend.position = "none", legend.title = element_blank())
 
 ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
