@@ -139,7 +139,7 @@ for (x in nParticipants){
     geom_hline(yintercept = 1, linetype = 'dotted') + 
     labs(x = 'Target eccentricity (deg)', y = 'Median absolute error (deg)', title = 'Right side') + 
     theme_bw()
-  ggsave(plot_name, plot = last_plot(), device = NULL,
+  ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300,
          path = pp_anaPath)
   
   ## calculating means of medians
@@ -196,14 +196,13 @@ for (x in nParticipants){
   
   means + facet_grid(cols = vars(side)) + theme(strip.text.x = element_text(size = 11))
   plotPath = file.path(anaPath, 'plots')
-  ggsave(plot_name, plot = last_plot(), device = NULL,
+  ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, width = 7, height = 4,
          path = plotPath)
   
-  ## this produces SAME result in all PP, why? FIX LATER
   # calculating PMI score - then plotting :)
   left = tot_meanAE$AEdeg[2]-tot_meanAE$AEdeg[1]
   right = tot_meanAE$AEdeg[4]-tot_meanAE$AEdeg[3]
-  PMI <- data_frame(c(PMI_left, PMI_right))
+  PMI <- data_frame(c(left, right))
   PMI$sub <- controlID
   PMI$side <- c('Left', 'Right')
   colnames(PMI)[1] <- 'PMI'
@@ -211,13 +210,24 @@ for (x in nParticipants){
   #PMIname = sprintf("%s_PMI", controlID)
   #assign(PMIname, PMI)
   
-  left_PMIdata[x,] <- append(PMI[1,]) #creating big data-frames
-  right_PMIdata[x,] <- append(PMI[2,])
+  left_PMIdata <- rbind(left_PMIdata, PMI[1,]) #creating big data-frames
+  right_PMIdata <- rbind(right_PMIdata, PMI[2,])
   
 }
 
-all_PMI = do.call(rbind, left_PMIdata, right_PMIdata)
+#compile all participant data
+all_PMI = rbind(left_PMIdata, right_PMIdata)
+#summary data
+all_PMIsummary <- summarySE(all_PMI, measurevar = "PMI", groupvars = "side")
 
-## compile all participant data
+# plot left and right :)
+plot_name = 'PMI_allPP.png'
+PMIplot <- ggplot(all_PMI, aes(x = side, y = PMI, colour = sub)) +
+  geom_point(size = 3, position = position_dodge(.2)) + ylim(0,6) + 
+  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
+               geom = 'bar', group = 1, alpha = 0.3) +
+  labs(x = '', y = 'Peripheral misreaching index (deg)') + 
+  theme_bw() + theme(legend.position = "none", legend.title = element_blank())
 
-
+ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, width = 5, height = 6.5, path = plotPath)
