@@ -101,92 +101,59 @@ for (x in nParticipants){
       group_by(target) %>% 
       summarise(AEmm = median(abserr_mm), AEdeg = median(abserr_deg))
     
+    #median for each eccentricity
+    ecc_meds <- res1 %>%
+      group_by(ecc) %>%
+      summarise(AEmm = median(abserr_mm), AEdeg = median(abserr_deg), 
+                AEmm_SD = sd(abserr_mm), AEdeg_SD = sd(abserr_deg))
+    
     targ_meds$ecc <- substr(targ_meds$target, 1, 2) #adding column for eccentricity info only
     targ_meds$height <- substr(targ_meds$target, 3, 8) #adding column for height info only
 
     
     #adding name of task to data-frame for later compiling
     targ_meds$task <- file_name
-    #individually naming each data frame to task - to allow for compiling
+    ecc_meds$task <- file_name
+    #individually naming each data frame to task - to allow for compiling (median eccentricity)
     medfile_name = sprintf("%s_meds", task_name)
-    assign(medfile_name, targ_meds) 
+    assign(medfile_name, targ_meds)
+    
+    #individually naming each eccentricity median file 
+    eccfile_name = sprintf("%s_eccmeds", task_name)
+    assign(eccfile_name, ecc_meds)
     
   }
   
   setwd(pp_anaPath) #make sure we are in this folder
   #append free-peripheral task-med frames for each side
-  left_data <- rbind(free_left_meds, peripheral_left_meds)
-  right_data <- rbind(free_right_meds, peripheral_right_meds)
+  # median for each eccentricity
+  left_data <- rbind(free_left_eccmeds, peripheral_left_eccmeds)
+  left_data$side <- 'Left'
+  right_data <- rbind(free_right_eccmeds, peripheral_right_eccmeds)
+  right_data$side <- "Right"
+  median_data <- rbind(left_data, right_data)
   # saving these
-  write.csv(left_data, sprintf("%s_leftmedians.csv", controlID), row.names = TRUE) 
-  write.csv(right_data, sprintf("%s_rightmedians.csv", controlID), row.names = TRUE)
+  write.csv(median_data, sprintf("%s_AEmedians.csv", controlID), row.names = TRUE) 
+
+  median_data$condition <- substr(median_data$task, 1, 4)
+
   
-  #plot the medians - then save plot to each PP folder
-  # left
-  plot_name = sprintf('%s_leftmedians.png', controlID)
-  ggplot(left_data, aes(x = ecc, y = AEdeg, colour = task)) +
-    geom_point(size = 4) + ylim(0,5) + 
-    geom_hline(yintercept = 1, linetype = 'dotted') + 
-    labs(x = 'Target eccentricity (deg)', y = 'Median absolute error (deg)', title = 'Left side') +
-    theme_bw()
-  ggsave(plot_name, plot = last_plot(), device = NULL,
-         path = pp_anaPath)
+  ## calculating overall mean for each side
+  meanAE_mm = summarySE(data = median_data, measurevar = "AEmm", groupvars = c("task", "side"))
+  meanAE_deg = summarySE(data = median_data, measurevar = "AEdeg", groupvars = c("task", "side"))
   
-  # right
-  plot_name = sprintf('%s_rightmedians.png', controlID)
-  ggplot(right_data, aes(x = ecc, y = AEdeg, colour = task)) +
-    geom_point(size = 4) + ylim(0,8) + 
-    geom_hline(yintercept = 1, linetype = 'dotted') + 
-    labs(x = 'Target eccentricity (deg)', y = 'Median absolute error (deg)', title = 'Right side') + 
-    theme_bw()
-  ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300,
-         path = pp_anaPath)
-  
-  ## calculating means of medians
-  left_meanAE_mm = summarySE(data=left_data, measurevar = "AEmm", 
-                             groupvars = c("task", "ecc"))
-  left_meanAE_deg = summarySE(data=left_data, measurevar = "AEdeg",
-                              groupvars = c("task", "ecc"))
-  left_meanAE = left_meanAE_deg
+  meanAE = meanAE_deg
   # pp information to left mean data
-  left_meanAE$sub <- controlID
-  left_meanAE$side <- 'left'
-  left_meanAE$condition <- substr(left_meanAE$task, 1, 4)
-  
-  right_meanAE_mm = summarySE(data=right_data, measurevar = "AEmm", 
-                             groupvars = c("task", "ecc"))
-  right_meanAE_deg = summarySE(data=right_data, measurevar = "AEdeg",
-                              groupvars = c("task", "ecc"))
-  right_meanAE = right_meanAE_deg
-  # pp information to left mean data
-  right_meanAE$sub <- controlID
-  right_meanAE$side <- 'right'
-  right_meanAE$condition <- substr(right_meanAE$task, 1, 4)
-  
-  # put right and left together
-  meanAE <- rbind(left_meanAE, right_meanAE)
-  
-  # caluclating overall means for each task + side
-  leftFmeans <- summarySE(free_left_meds, measurevar = 'AEdeg', groupvars = 'task')
-  leftPmeans <- summarySE(peripheral_left_meds, measurevar = 'AEdeg', groupvars = 'task')
-  rightFmeans <- summarySE(free_right_meds, measurevar = 'AEdeg', groupvars = 'task')
-  rightPmeans <- summarySE(peripheral_right_meds, measurevar = 'AEdeg', groupvars = 'task')
-  
-  tot_meanAE <- rbind(leftFmeans, leftPmeans, rightFmeans, rightPmeans)
-  tot_meanAE$sub <- controlID
-  tot_meanAE$type <- rep(c("Free", "Peripheral"), 2)
-  tot_meanAE$side <- c(rep("Left", 2), rep("Right", 2))
-  
+  meanAE$sub <- controlID
   # saving
-  write.csv(meanAE, sprintf("%s_meanAE_targ.csv", controlID), row.names = TRUE) 
-  write.csv(tot_meanAE, sprintf("%s_meanAE_tot.csv", controlID), row.names = TRUE) 
+  write.csv(meanAE, sprintf("%s_meanAE.csv", controlID), row.names = TRUE) 
   
   # plotting! (each participant)
   # mean for each eccentricity
-  plot_name = sprintf('%s_meanAE_targs.png', controlID)
-  means <- ggplot(meanAE, aes(x = ecc, y = AEdeg, colour = condition)) +
-    geom_point(size = 3, position = position_dodge(.5)) + ylim(0,8) + 
-    geom_errorbar(aes(ymin = AEdeg-sd, ymax = AEdeg+sd), width = .2, 
+  plot_name = sprintf('%s_medians.png', controlID)
+  means <- ggplot(median_data, aes(x = ecc, y = AEdeg, colour = condition)) +
+    geom_point(size = 3, position = position_dodge(.5)) + ylim(-1,8) + 
+    geom_errorbar(aes(ymin = AEdeg-AEdeg_SD, ymax = AEdeg+AEdeg_SD), width = .2, 
                   size = 0.7, position = position_dodge(.5)) +
     geom_hline(yintercept = 1, linetype = 'dotted') + 
     scale_colour_manual(values = c('free'='grey60', 'peri'='black'), labels = c('free', 'peripheral')) +
@@ -200,8 +167,8 @@ for (x in nParticipants){
          path = plotPath)
   
   # calculating PMI score - then plotting :)
-  left = tot_meanAE$AEdeg[2]-tot_meanAE$AEdeg[1]
-  right = tot_meanAE$AEdeg[4]-tot_meanAE$AEdeg[3]
+  left = meanAE$AEdeg[3]-meanAE$AEdeg[1]
+  right = meanAE$AEdeg[4]-meanAE$AEdeg[2]
   PMI <- data_frame(c(left, right))
   PMI$sub <- controlID
   PMI$side <- c('Left', 'Right')
@@ -217,17 +184,36 @@ for (x in nParticipants){
 
 #compile all participant data
 all_PMI = rbind(left_PMIdata, right_PMIdata)
+all_PMI$side <- factor(all_PMI$side)
 #summary data
 all_PMIsummary <- summarySE(all_PMI, measurevar = "PMI", groupvars = "side")
 
 # plot left and right :)
+# need to get error bars on to this somehow - leave for now
 plot_name = 'PMI_allPP.png'
 PMIplot <- ggplot(all_PMI, aes(x = side, y = PMI, colour = sub)) +
-  geom_point(size = 3, position = position_dodge(.2)) + ylim(0,8) + 
+  geom_point(size = 3, position = position_dodge(.1)) + ylim(-1,8) + 
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'bar', group = 1, alpha = 0.3) +
+               geom = 'point', group = 1) + 
   labs(x = '', y = 'Peripheral misreaching index (deg)', element_text(size = 13)) +
-  theme_bw() + theme(legend.position = "none", legend.title = element_blank())
+  theme_bw() + theme(legend.position = "right", legend.title = element_blank())
 
 ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 5, height = 6.5, path = plotPath)
+
+## outlier calculation
+# median values for each side
+tmp <- aggregate(all_PMI$PMI,  by=list(side = all_PMI$side), FUN=median)
+names(tmp)[2] <- 'med'
+all_PMI <- merge(tmp, all_PMI)
+
+# calculating MAD for each (absolute value)
+all_PMI$AD <- abs(all_PMI$PMI - all_PMI$med)
+tmp <- aggregate(all_PMI$AD,  by=list(side = all_PMI$side), FUN=median)
+names(tmp)[2] <- 'MAD'
+all_PMI <- merge(all_PMI, tmp)
+
+# adjusted z-score from these values
+all_PMI$az <- (all_PMI$PMI - all_PMI$med)/(all_PMI$MAD * 1.4826)
+
+
