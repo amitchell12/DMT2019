@@ -201,6 +201,18 @@ PMIplot <- ggplot(all_PMI, aes(x = side, y = PMI, colour = sub)) +
 ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 5, height = 6.5, path = plotPath)
 
+plot_name = 'PMI_boxplot.png'
+PMIbox <- ggplot(all_PMI, aes(x = side, y = PMI)) +
+  geom_boxplot(size = 0.75, outlier.color = "black", outlier.shape = 16, 
+               outlier.size = 2, notch = FALSE) +
+  stat_summary(fun.y = mean, geom = 'point', shape = 18, size = 5) +
+  ylim(-1,6) + 
+  labs(x = '', y = 'Peripheral misreaching index (deg)', element_text(size = 13)) +
+  theme_classic() + theme(legend.position = "right", legend.title = element_blank())
+
+ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, width = 5, height = 6.5, path = plotPath)
+
 ## outlier calculation
 # median values for each side
 tmp <- aggregate(all_PMI$PMI,  by=list(side = all_PMI$side), FUN=median)
@@ -238,3 +250,6 @@ AZplot <- ggplot(all_PMI, aes(x = side, y = az, colour = sub)) +
 
 ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 5, height = 6.5, path = plotPath)
+
+
+sidecorr <- ggplot(all_PMI(x = ))
