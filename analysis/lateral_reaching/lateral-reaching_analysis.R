@@ -215,5 +215,26 @@ all_PMI <- merge(all_PMI, tmp)
 
 # adjusted z-score from these values
 all_PMI$az <- (all_PMI$PMI - all_PMI$med)/(all_PMI$MAD * 1.4826)
+all_PMI$z <- scale(all_PMI$PMI)
 
+plot_name = 'Zscore.png'
+Zplot <- ggplot(all_PMI, aes(x = side, y = z, colour = sub)) +
+  geom_point(size = 3, position = position_dodge(.1)) + ylim(-3,6) + 
+  stat_summary(aes(y = z, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', group = 1) + 
+  labs(x = '', y = 'Z-score', element_text(size = 13)) +
+  theme_bw() + theme(legend.position = "right", legend.title = element_blank())
 
+ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, width = 5, height = 6.5, path = plotPath)
+
+plot_name = 'adjustedZ.png'
+AZplot <- ggplot(all_PMI, aes(x = side, y = az, colour = sub)) +
+  geom_point(size = 3, position = position_dodge(.1)) + ylim(-3,6) + 
+  stat_summary(aes(y = az, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', group = 1) + 
+  labs(x = '', y = 'Adjusted z-score', element_text(size = 13)) +
+  theme_bw() + theme(legend.position = "right", legend.title = element_blank())
+
+ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, width = 5, height = 6.5, path = plotPath)
