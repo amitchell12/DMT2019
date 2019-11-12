@@ -10,13 +10,13 @@ library(tidyverse)
 #anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/control_data'
 #dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
 #on pc
-dataPath <- 'S:/groups/DMT/data/control'
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching/control_data'
+dataPath <- 'S:/groups/DMT/data/patient'
+anaPath <- 'S:/groups/DMT/analysis/lateral_reaching/patient_data'
 setwd(dataPath)
 
 #variable information
 #nParticipants = 1:2 #for testing
-nParticipants = 1:24 #for analysis
+nParticipants = 1:13 #for analysis
 nTasks = 1:4 #total number of tasks - free + peripheral reaching, visual detection (non-dominant, dominant)
 nSide = 1:2 #total number of sides tested - left, right
 nTargets = 1:9
@@ -47,7 +47,7 @@ for (x in nParticipants){
   }
   # creating paths
   setwd(dataPath)
-  controlID = sprintf("1%s", xx)
+  controlID = sprintf("2%s", xx)
   ppPath = (file.path(dataPath, controlID))
   setwd(anaPath)
   dir.create(controlID)
@@ -135,7 +135,7 @@ for (x in nParticipants){
   # right
   plot_name = sprintf('%s_rightmedians.png', controlID)
   ggplot(right_data, aes(x = ecc, y = AEdeg, colour = task)) +
-    geom_point(size = 4) + ylim(0,5) + 
+    geom_point(size = 4) + ylim(0,8) + 
     geom_hline(yintercept = 1, linetype = 'dotted') + 
     labs(x = 'Target eccentricity (deg)', y = 'Median absolute error (deg)', title = 'Right side') + 
     theme_bw()
@@ -185,7 +185,7 @@ for (x in nParticipants){
   # mean for each eccentricity
   plot_name = sprintf('%s_meanAE_targs.png', controlID)
   means <- ggplot(meanAE, aes(x = ecc, y = AEdeg, colour = condition)) +
-    geom_point(size = 3, position = position_dodge(.5)) + ylim(0,6) + 
+    geom_point(size = 3, position = position_dodge(.5)) + ylim(0,8) + 
     geom_errorbar(aes(ymin = AEdeg-sd, ymax = AEdeg+sd), width = .2, 
                   size = 0.7, position = position_dodge(.5)) +
     geom_hline(yintercept = 1, linetype = 'dotted') + 
@@ -223,7 +223,7 @@ all_PMIsummary <- summarySE(all_PMI, measurevar = "PMI", groupvars = "side")
 # plot left and right :)
 plot_name = 'PMI_allPP.png'
 PMIplot <- ggplot(all_PMI, aes(x = side, y = PMI, colour = sub)) +
-  geom_point(size = 3, position = position_dodge(.2)) + ylim(0,6) + 
+  geom_point(size = 3, position = position_dodge(.2)) + ylim(0,8) + 
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'bar', group = 1, alpha = 0.3) +
   labs(x = '', y = 'Peripheral misreaching index (deg)', element_text(size = 13)) +
