@@ -7,11 +7,11 @@ library(tidyverse)
 
 #set working directory to where data is
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/control_data'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/control_data'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
 #on pc
-#dataPath <- 'S:/groups/DMT/data/control'
-#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching/control_data'
+dataPath <- 'S:/groups/DMT/data/control'
+anaPath <- 'S:/groups/DMT/analysis/lateral_reaching/control_data'
 setwd(dataPath)
 
 #variable information
