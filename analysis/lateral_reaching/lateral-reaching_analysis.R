@@ -10,13 +10,13 @@ library(tidyverse)
 #anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/control_data'
 #dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
 #on pc
-dataPath <- 'S:/groups/DMT/data/patient'
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching/patient_data'
+dataPath <- 'S:/groups/DMT/data/control'
+anaPath <- 'S:/groups/DMT/analysis/lateral_reaching/control_data'
 setwd(dataPath)
 
 #variable information
 #nParticipants = 1:2 #for testing
-nParticipants = 1:13 #for analysis
+nParticipants = 1:24 #for analysis
 nTasks = 1:4 #total number of tasks - free + peripheral reaching, visual detection (non-dominant, dominant)
 nSide = 1:2 #total number of sides tested - left, right
 nTargets = 1:9
@@ -47,7 +47,7 @@ for (x in nParticipants){
   }
   # creating paths
   setwd(dataPath)
-  controlID = sprintf("2%s", xx)
+  controlID = sprintf("1%s", xx)
   ppPath = (file.path(dataPath, controlID))
   setwd(anaPath)
   dir.create(controlID)
