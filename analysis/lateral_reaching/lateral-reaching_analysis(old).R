@@ -4,18 +4,16 @@ library(Rmisc)
 library(gridExtra)
 library(plyr)
 library(tidyverse)
-library(reshape2)
 
 #set working directory to where data is
 #on mac
 #anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/control_data'
 #dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
 #on pc
-dataPath <- 'S:/groups/DMT/data'
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+dataPath <- 'S:/groups/DMT/data/control'
+anaPath <- 'S:/groups/DMT/analysis/lateral_reaching/control_data'
 setwd(dataPath)
 
-########### variable info ###########
 #variable information
 #nParticipants = 1:2 #for testing
 nParticipants = 1:24 #for analysis
@@ -35,22 +33,6 @@ pixPer_mm_x = x_res/x;
 pixPer_mm_y = y_res/y;
 pixPer_mm = (pixPer_mm_x+pixPer_mm_y)/2;
 mm_perPix = 1/pixPer_mm;
-
-############ file info ############
-#getting all datafiles and compiling (patient + control)
-filenames <- dir(dataPath, recursive = TRUE, full.names = FALSE, pattern = '.csv')
-
-# name of csv file
-# get key information from each csv file and then compile
-### contine tomorrow/email Rob
-for (file in filenames){
-  if (substr(filenames[file], 16, 16)=="p"){
-    tmp <- filenames[file]
-    filelist <- rbind(filelist, tmp)
-  }
-}
-
-
 
 left_PMIdata = data_frame() #empty dataframe for saving all PP data
 right_PMIdata = data_frame()
