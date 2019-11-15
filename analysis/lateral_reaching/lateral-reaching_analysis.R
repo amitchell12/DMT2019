@@ -8,11 +8,11 @@ library(reshape2)
 
 #set working directory to where data is
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/control_data'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
 #on pc
-dataPath <- 'S:/groups/DMT/data'
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+#dataPath <- 'S:/groups/DMT/data'
+#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 ########### variable info ###########
@@ -39,16 +39,20 @@ mm_perPix = 1/pixPer_mm;
 ############ file info ############
 #getting all datafiles and compiling (patient + control)
 filenames <- dir(dataPath, recursive = TRUE, full.names = FALSE, pattern = '.csv')
+# making results file
+res <- read.csv(text = "subject_nr,targ_x,targ_y,land_x,land_y,target_onset,touch_offset,reach_duration,eye_move,void")
 
 # name of csv file
 # get key information from each csv file and then compile
 ### contine tomorrow/email Rob
 for (file in filenames){
-  if (substr(filenames[file], 16, 16)=="p"){
-    tmp <- filenames[file]
-    filelist <- rbind(filelist, tmp)
+  if (isTRUE(substr(file, 16, 16)=="p")){
+    tmp <- read.csv(file)[, c(14:16,11:12,17,19,13,9,22)]
+    res <- rbind(res, tmp)
   }
 }
+
+#adding key details to data-frame
 
 
 
