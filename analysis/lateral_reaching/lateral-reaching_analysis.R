@@ -86,59 +86,25 @@ ggplot(res) + geom_point(aes(x = targ_x, y = targ_y), shape = 4, size = 3) +
   facet_wrap(. ~subject_nr*task) -> allPP_plot
 
 ######### data aggregation + plotting ############
-res_medians <- aggregate(AEdeg ~ ecc * side * subject_nr * group, median, data = res)
-res_means <- aggredate(AEdeg ~ ecc * side * subject_nr * group)
-
-ggplot(res_medians) + geom_point(aes(x = ecc, y = AEdeg, colour = subject_nr)) +
-  facet_wrap(~side)
-
-left_PMIdata = data_frame() #empty dataframe for saving all PP data
-right_PMIdata = data_frame()
-
+res_medians <- aggregate(AEdeg ~ ecc * side * task * subject_nr * group, median, data = res)
+res_means <- aggregate(AEdeg ~ task * side * subject_nr * group, mean, data = res_medians)
+# save means
+write.csv(res_means, 'lateral-reaching_means.csv', row.names = FALSE)
+# to calculate PMI need to cast by task....
+####!!!! reached here needs fixing
+PMI <- dcast(res_means, side ~ task, AEdeg)
 
 
-  
-  setwd(pp_anaPath) #make sure we are in this folder
-  #append free-peripheral task-med frames for each side
-  # median for each eccentricity
-  left_data <- rbind(free_left_eccmeds, peripheral_left_eccmeds)
-  left_data$side <- 'Left'
-  right_data <- rbind(free_right_eccmeds, peripheral_right_eccmeds)
-  right_data$side <- "Right"
-  median_data <- rbind(left_data, right_data)
-  # saving these
-  write.csv(median_data, sprintf("%s_AEmedians.csv", controlID), row.names = TRUE) 
+# median plot - fix and save :)
+ggplot(res_medians, aes(x = ecc, y = AEdeg, colour = group)) + 
+  geom_point(shape = 1, size = 4, position = position_dodge(.2)) +
+  geom_line(aes(group = subject_nr), size = 0.7, alpha = .5, 
+            position = position_dodge(.2)) +
+  facet_grid(cols = vars(side), rows = vars(task)) + theme_bw()
 
-  median_data$condition <- substr(median_data$task, 1, 4)
+# mean plot - samesies
+ggplot(res_means)
 
-  
-  ## calculating overall mean for each side
-  meanAE_mm = summarySE(data = median_data, measurevar = "AEmm", groupvars = c("task", "side"))
-  meanAE_deg = summarySE(data = median_data, measurevar = "AEdeg", groupvars = c("task", "side"))
-  
-  meanAE = meanAE_deg
-  # pp information to left mean data
-  meanAE$sub <- controlID
-  # saving
-  write.csv(meanAE, sprintf("%s_meanAE.csv", controlID), row.names = TRUE) 
-  
-  # plotting! (each participant)
-  # mean for each eccentricity
-  plot_name = sprintf('%s_medians.png', controlID)
-  means <- ggplot(median_data, aes(x = ecc, y = AEdeg, colour = condition)) +
-    geom_point(size = 3, position = position_dodge(.5)) + ylim(-1,8) + 
-    geom_errorbar(aes(ymin = AEdeg-AEdeg_SD, ymax = AEdeg+AEdeg_SD), width = .2, 
-                  size = 0.7, position = position_dodge(.5)) +
-    geom_hline(yintercept = 1, linetype = 'dotted') + 
-    scale_colour_manual(values = c('free'='grey60', 'peri'='black'), labels = c('free', 'peripheral')) +
-    labs(x = 'Target eccentricity (deg)', y = 'Absolute error (deg)') + 
-    theme_bw() + theme(legend.position = 'bottom', legend.title = element_blank(),
-                       legend.box = 'vertical')
-  
-  means + facet_grid(cols = vars(side)) + theme(strip.text.x = element_text(size = 11))
-  plotPath = file.path(anaPath, 'plots')
-  ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, width = 7, height = 4,
-         path = plotPath)
   
   # calculating PMI score - then plotting :)
   left = meanAE$AEdeg[3]-meanAE$AEdeg[1]
