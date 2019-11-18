@@ -8,20 +8,14 @@ library(reshape2)
 
 #set working directory to where data is
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
 #on pc
-dataPath <- 'S:/groups/DMT/data'
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+#dataPath <- 'S:/groups/DMT/data'
+#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 ########### variable info ###########
-#variable information
-#nParticipants = 1:2 #for testing
-nParticipants = 1:24 #for analysis
-nTasks = 1:4 #total number of tasks - free + peripheral reaching, visual detection (non-dominant, dominant)
-nSide = 1:2 #total number of sides tested - left, right
-nTargets = 1:9
 # screen information
 x = 310
 y = 175
@@ -53,7 +47,7 @@ for (file in filenames){
   }
 }
 
-# removing df
+# removing df (subject number = 300)
 res <- res[res$subject_nr < 300, ]
 
 # adding key details to data-frame
@@ -70,96 +64,39 @@ res$group <- factor(substr(res$subject_nr, 1, 1)) # adding group: 1 = HC, 2 = pa
 # counting eye-move per participant
 nEye_move <- aggregate(res$eye_move, by=list(subject_nr = res$subject_nr), FUN=sum)
 nVoid <- aggregate(res$void, by=list(subject_nr = res$subject_nr), FUN=sum)
-# removing
-res <- res[which(res$eye_move == 0 & res$void == 0), c(1,11,2:8,12:15)]
 
-###### reached here :)! ###### rename them!
-# calculating mm and pix values
 # calculating x and y error for each targ location
-res1$xerr = res1$land_x - res1$targ_x
-res1$yerr = res1$land_y - res1$targ_y
-# transforming pixels into mm 
-res1$xerr_mm = res1$xerr*mm_perPix
-res1$yerr_mm = res1$yerr*mm_perPix
-# transforming pixels into degrees
-res1$xerr_deg = res1$xerr*deg_perpix
-res1$yerr_deg = res1$yerr*deg_perpix
+res$xerr_mm = (res$land_x - res$targ_x)*mm_perPix # in mm
+res$yerr_mm = (res$land_y - res$targ_y)*mm_perPix
+res$xerr_deg = (res$land_x - res$targ_x)*deg_perpix # in deg
+res$yerr_deg = (res$land_y - res$targ_y)*deg_perpix
 
 #absolute error in mm
-res1$abserr_mm = sqrt(res1$xerr_mm^2 + res1$yerr_mm^2)
-res1$abserr_deg = sqrt(res1$xerr_deg^2 + res1$yerr_deg^2)
+res$AEmm = sqrt(res$xerr_mm^2 + res$yerr_mm^2)
+res$AEdeg = sqrt(res$xerr_deg^2 + res$yerr_deg^2)
 
+# removing and reorganising
+res <- res[which(res$eye_move == 0 & res$void == 0), c(1,11,2:5,17:22,6:8,12:16)]
+
+setwd(anaPath)
+write.csv(res, "lateral-reaching_compiled.csv", row.names = FALSE)
+
+ggplot(res) + geom_point(aes(x = targ_x, y = targ_y), shape = 4, size = 3) +
+  geom_point(aes(x = land_x, y = land_y, colour = ecc), shape = 1, size = 2) +
+  facet_wrap(. ~subject_nr*task) -> allPP_plot
+
+######### data aggregation + plotting ############
+res_medians <- aggregate(AEdeg ~ ecc * side * subject_nr * group, median, data = res)
+res_means <- aggredate(AEdeg ~ ecc * side * subject_nr * group)
+
+ggplot(res_medians) + geom_point(aes(x = ecc, y = AEdeg, colour = subject_nr)) +
+  facet_wrap(~side)
 
 left_PMIdata = data_frame() #empty dataframe for saving all PP data
 right_PMIdata = data_frame()
 
-#make complete list of RESULTS files (trial information)
-# for reaching only - visual detection analysed seperately
-for (x in nParticipants){
-  if (x < 10){ #getting around issue of added '0' on PP 1-9
-    xx = sprintf('0%d', x)
-  } else {
-    xx = x
-  }
-  # creating paths
-  setwd(dataPath)
-  controlID = sprintf("1%s", xx)
-  ppPath = (file.path(dataPath, controlID))
-  setwd(anaPath)
-  dir.create(controlID)
-  
-  resfiles = list.files(path=ppPath, full.names=TRUE, recursive = FALSE, 
-                             include.dirs = FALSE, pattern = "*.csv")
-  
-  for (t in nTasks){
-    setwd(dataPath) #make sure we are in this folder
-    task_name = switch(t, "peripheral_left", "peripheral_right","free_left", "free_right")
-    res <- read.csv(resfiles[t])
-    # assigning key data points to dataframe for each task
-    res1 = data.frame(res$targ_x, res$targ_y, res$land_x, res$land_y,
-                      res$reach_duration, res$time_touch_offset, res$target_onset,
-                      res$eye_move, res$void_trial)
-    names(res1) <- gsub("res.", "", names(res1)) #renaming vectors without 'res.'
-    
-   
-    
-    
-   
-    file_name = sprintf("%s", task_name)
-    assign(file_name, res1) #assigning csv file logical name, yay
-    
-    # saving filtered file as is to analysis folder for PP
-    pp_anaPath = file.path(anaPath, controlID)
-    setwd(pp_anaPath)
-    write.csv(res1, sprintf("%s_allData.csv", file_name), row.names = TRUE)
-    
-    #median for each target location
-    targ_meds <- res1 %>% #creating another data frame
-      group_by(target) %>% 
-      summarise(AEmm = median(abserr_mm), AEdeg = median(abserr_deg))
-    
-    #median for each eccentricity
-    ecc_meds <- res1 %>%
-      group_by(ecc) %>%
-      summarise(AEmm = median(abserr_mm), AEdeg = median(abserr_deg), 
-                AEmm_SD = sd(abserr_mm), AEdeg_SD = sd(abserr_deg))
-    
-    targ_meds$ecc <- substr(targ_meds$target, 1, 2) #adding column for eccentricity info only
-    targ_meds$height <- substr(targ_meds$target, 3, 8) #adding column for height info only
 
-    
-    #adding name of task to data-frame for later compiling
-    targ_meds$task <- file_name
-    ecc_meds$task <- file_name
-    #individually naming each data frame to task - to allow for compiling (median eccentricity)
-    medfile_name = sprintf("%s_meds", task_name)
-    assign(medfile_name, targ_meds)
-    
-    #individually naming each eccentricity median file 
-    eccfile_name = sprintf("%s_eccmeds", task_name)
-    assign(eccfile_name, ecc_meds)
-    
-  }
+
   
   setwd(pp_anaPath) #make sure we are in this folder
   #append free-peripheral task-med frames for each side
@@ -217,7 +154,7 @@ for (x in nParticipants){
   left_PMIdata <- rbind(left_PMIdata, PMI[1,]) #creating big data-frames
   right_PMIdata <- rbind(right_PMIdata, PMI[2,])
   
-}
+
 
 #compile all participant data
 all_PMI = rbind(left_PMIdata, right_PMIdata)
