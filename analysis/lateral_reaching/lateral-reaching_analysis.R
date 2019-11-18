@@ -8,11 +8,11 @@ library(reshape2)
 
 #set working directory to where data is
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
 #on pc
-#dataPath <- 'S:/groups/DMT/data'
-#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+dataPath <- 'S:/groups/DMT/data'
+anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 ########### variable info ###########
@@ -40,21 +40,54 @@ mm_perPix = 1/pixPer_mm;
 #getting all datafiles and compiling (patient + control)
 filenames <- dir(dataPath, recursive = TRUE, full.names = FALSE, pattern = '.csv')
 # making results file
-res <- read.csv(text = "subject_nr,targ_x,targ_y,land_x,land_y,target_onset,touch_offset,reach_duration,eye_move,void")
+res <- read.csv(text = "subject_nr,targ_x,targ_y,land_x,land_y,target_onset,touch_offset,reach_duration,eye_move,void,task")
 
 # name of csv file
 # get key information from each csv file and then compile
 ### contine tomorrow/email Rob
 for (file in filenames){
-  if (isTRUE(substr(file, 16, 16)=="p")){
+  if (isTRUE(substr(basename(file), 12, 12)=="p")){
     tmp <- read.csv(file)[, c(14:16,11:12,17,19,13,9,22)]
+    tmp$task <- substr(basename(file), 28, 28)
     res <- rbind(res, tmp)
   }
 }
 
-######!! reached here
-#adding key details to data-frame
+# removing df
+res <- res[res$subject_nr < 300, ]
 
+# adding key details to data-frame
+res$task <- factor(res$task) # task = factor
+res$task = revalue(res$task, c('i'='periph', 'r'='free')) #renaming task
+res$side <- factor(res$targ_x < 0, label = c('right', 'left')) #adding factor of side
+res$ecc <- factor(cut(abs(res$targ_x), 3), labels = c('28', '33', '38')) #adding eccentricity
+res$height <- factor(cut(res$targ_y, 3, labels = c('top', 'mid', 'bottom'))) #adding target height
+#finally - target location
+res$target <- paste0(res$ecc, res$height)
+res$group <- factor(substr(res$subject_nr, 1, 1)) # adding group: 1 = HC, 2 = patient
+
+# eye move and void trials
+# counting eye-move per participant
+nEye_move <- aggregate(res$eye_move, by=list(subject_nr = res$subject_nr), FUN=sum)
+nVoid <- aggregate(res$void, by=list(subject_nr = res$subject_nr), FUN=sum)
+# removing
+res <- res[which(res$eye_move == 0 & res$void == 0), c(1,11,2:8,12:15)]
+
+###### reached here :)! ###### rename them!
+# calculating mm and pix values
+# calculating x and y error for each targ location
+res1$xerr = res1$land_x - res1$targ_x
+res1$yerr = res1$land_y - res1$targ_y
+# transforming pixels into mm 
+res1$xerr_mm = res1$xerr*mm_perPix
+res1$yerr_mm = res1$yerr*mm_perPix
+# transforming pixels into degrees
+res1$xerr_deg = res1$xerr*deg_perpix
+res1$yerr_deg = res1$yerr*deg_perpix
+
+#absolute error in mm
+res1$abserr_mm = sqrt(res1$xerr_mm^2 + res1$yerr_mm^2)
+res1$abserr_deg = sqrt(res1$xerr_deg^2 + res1$yerr_deg^2)
 
 
 left_PMIdata = data_frame() #empty dataframe for saving all PP data
@@ -88,29 +121,10 @@ for (x in nParticipants){
                       res$eye_move, res$void_trial)
     names(res1) <- gsub("res.", "", names(res1)) #renaming vectors without 'res.'
     
-    # now to remove eye-move and void trials from each task
-    res1 <- res1[res1$eye_move == 0, ]
-    res1 <- res1[res1$void_trial == 0, ]
-
-    # calculating x and y error for each targ location
-    res1$xerr = res1$land_x - res1$targ_x
-    res1$yerr = res1$land_y - res1$targ_y
-    # transforming pixels into mm 
-    res1$xerr_mm = res1$xerr*mm_perPix
-    res1$yerr_mm = res1$yerr*mm_perPix
-    # transforming pixels into degrees
-    res1$xerr_deg = res1$xerr*deg_perpix
-    res1$yerr_deg = res1$yerr*deg_perpix
+   
     
-    #absolute error in mm
-    res1$abserr_mm = sqrt(res1$xerr_mm^2 + res1$yerr_mm^2)
-    res1$abserr_deg = sqrt(res1$xerr_deg^2 + res1$yerr_deg^2)
     
-    #group variables
-    res1$ecc <- factor(cut(res1$targ_x, 3, label=c('28','33','38')))
-    res1$height <- factor(cut(res1$targ_y, 3, label=c('top', 'mid', 'bottom')))
-    res1$target <- paste0(res1$ecc, res1$height)
-    
+   
     file_name = sprintf("%s", task_name)
     assign(file_name, res1) #assigning csv file logical name, yay
     
