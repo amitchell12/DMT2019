@@ -8,11 +8,11 @@ library(reshape2)
 
 #set working directory to where data is
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
 #on pc
-#dataPath <- 'S:/groups/DMT/data'
-#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+dataPath <- 'S:/groups/DMT/data'
+anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 ########### variable info ###########
@@ -106,6 +106,11 @@ ggplot(res_medians, aes(x = ecc, y = AEdeg, colour = group)) +
 ggplot(res_means)
 
   
+
+
+
+
+
   # calculating PMI score - then plotting :)
   left = meanAE$AEdeg[3]-meanAE$AEdeg[1]
   right = meanAE$AEdeg[4]-meanAE$AEdeg[2]
