@@ -87,12 +87,15 @@ ggplot(res) + geom_point(aes(x = targ_x, y = targ_y), shape = 4, size = 3) +
 
 ######### data aggregation + plotting ############
 res_medians <- aggregate(AEdeg ~ ecc * side * task * subject_nr * group, median, data = res)
-res_means <- aggregate(AEdeg ~ task * side * subject_nr * group, mean, data = res_medians)
-# save means
-write.csv(res_means, 'lateral-reaching_means.csv', row.names = FALSE)
+colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed' #change name to be more logical
+res_means <- aggregate(AEmed ~ task * side * subject_nr * group, mean, data = res_medians)
+colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
+# save data
+write.csv(res_medians, 'lateral-reaching_medians.csv', row.names = FALSE)
 # to calculate PMI need to cast by task....
-####!!!! reached here needs fixing
-PMI <- dcast(res_means, side ~ task, AEdeg)
+PMIdata <- dcast(res_means, subject_nr+group+side ~ task) #different data-frame
+PMIdata$PMI <- PMIdata$periph - PMIdata$free
+write.csv(PMIdata, 'lateral-reaching_PMI.csv', row.names = FALSE)
 
 
 # median plot - fix and save :)
@@ -106,33 +109,16 @@ ggplot(res_medians, aes(x = ecc, y = AEdeg, colour = group)) +
 ggplot(res_means)
 
   
+# changing levels of PMI for plotting
+
+# PMI plot 
+ggplot(PMIdata, aes(x = side, y = PMI, colour = group), position = position_dodge(.2)) + 
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = subject_nr)) + facet_wrap(~group) +
+  theme_bw()
 
 
-
-
-
-  # calculating PMI score - then plotting :)
-  left = meanAE$AEdeg[3]-meanAE$AEdeg[1]
-  right = meanAE$AEdeg[4]-meanAE$AEdeg[2]
-  PMI <- data_frame(c(left, right))
-  PMI$sub <- controlID
-  PMI$side <- c('Left', 'Right')
-  colnames(PMI)[1] <- 'PMI'
-
-  #PMIname = sprintf("%s_PMI", controlID)
-  #assign(PMIname, PMI)
-  
-  left_PMIdata <- rbind(left_PMIdata, PMI[1,]) #creating big data-frames
-  right_PMIdata <- rbind(right_PMIdata, PMI[2,])
-  
-
-
-#compile all participant data
-all_PMI = rbind(left_PMIdata, right_PMIdata)
-all_PMI$side <- factor(all_PMI$side)
-#summary data
-all_PMIsummary <- summarySE(all_PMI, measurevar = "PMI", groupvars = "side")
-
+########## old plots
 # plot left and right :)
 # need to get error bars on to this somehow - leave for now
 plot_name = 'PMI_allPP.png'
