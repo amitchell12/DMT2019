@@ -98,78 +98,64 @@ PMIdata$PMI <- PMIdata$periph - PMIdata$free
 write.csv(PMIdata, 'lateral-reaching_PMI.csv', row.names = FALSE)
 
 
-# median plot - fix and save :)
-ggplot(res_medians, aes(x = ecc, y = AEdeg, colour = group)) + 
-  geom_point(shape = 1, size = 4, position = position_dodge(.2)) +
-  geom_line(aes(group = subject_nr), size = 0.7, alpha = .5, 
-            position = position_dodge(.2)) +
-  facet_grid(cols = vars(side), rows = vars(task)) + theme_bw()
+# changing levels of PMI for plotting
+res_means$side <- factor(res_means$side, levels = c('left', 'right'))
+levels(res_means$side) <- c('Left', 'Right')
+levels(res_means$group) <- c('Control', 'AD') #changing group name from 1 = control, 2 = AD
+levels(res_means$task) <- c('Peripheral', 'Free')
 
-# mean plot - samesies
-ggplot(res_means)
+# mean plot 
+ggplot(res_means, aes(x = side, y = AEmean, colour = group)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(task), rows = vars(group)) + ylim(-.5,8) +
+  labs(x = 'Side', y = 'Mean AE (deg)', element_text(size = 12)) +
+  scale_colour_manual(values = c('black', 'grey50')) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 8)) -> meansPlot
+
+ggsave('allmeans_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
 
   
 # changing levels of PMI for plotting
+PMIdata$side <- factor(PMIdata$side, levels = c('left', 'right'))
+levels(PMIdata$side) <- c('Left', 'Right')
+levels(PMIdata$group) <- c('Control', 'AD') #changing group name from 1 = control, 2 = AD
 
 # PMI plot 
 ggplot(PMIdata, aes(x = side, y = PMI, colour = group), position = position_dodge(.2)) + 
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = subject_nr)) + facet_wrap(~group) +
-  theme_bw()
-
-
-########## old plots
-# plot left and right :)
-# need to get error bars on to this somehow - leave for now
-plot_name = 'PMI_allPP.png'
-PMIplot <- ggplot(all_PMI, aes(x = side, y = PMI, colour = sub)) +
-  geom_point(size = 3, position = position_dodge(.1)) + ylim(-1,8) + 
+  geom_point(shape = 1, size = 1.5, stroke = .8) +
+  geom_line(aes(group = subject_nr), alpha = .5, size = .5) +
+  scale_colour_manual(values = c('grey40', 'grey40')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', group = 1) + 
-  labs(x = '', y = 'Peripheral misreaching index (deg)', element_text(size = 13)) +
-  theme_bw() + theme(legend.position = "right", legend.title = element_blank())
+               geom = 'point', shape = 3, stroke = 1, size = 2, group = 1) +
+  ylim(-.5,8) + labs(x = 'Side', y = 'PMI (deg)', element_text(size = 12)) +
+  facet_wrap(~group) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 8)) -> PMIplot
 
-ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 5, height = 6.5, path = plotPath)
+ggsave('allPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
 
-plot_name = 'PMI_boxplot.png'
-PMIbox <- ggplot(all_PMI, aes(x = side, y = PMI)) +
-  geom_boxplot(size = 0.75, outlier.color = "black", outlier.shape = 16, 
-               outlier.size = 2, notch = FALSE) +
-  stat_summary(fun.y = mean, geom = 'point', shape = 18, size = 5) +
-  ylim(-1,6) + 
-  labs(x = '', y = 'Peripheral misreaching index (deg)', element_text(size = 13)) +
-  theme_classic() + theme(legend.position = "right", legend.title = element_blank())
 
-ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 5, height = 6.5, path = plotPath)
+## outlier calculation, for controls only
+controlData <- PMIdata[PMIdata$subject_nr < 200, ]
 
-## outlier calculation
 # median values for each side
-tmp <- aggregate(all_PMI$PMI,  by=list(side = all_PMI$side), FUN=median)
+tmp <- aggregate(controlData$PMI,  by=list(side = controlData$side), FUN=median)
 names(tmp)[2] <- 'med'
-all_PMI <- merge(tmp, all_PMI)
+controlData <- merge(tmp, controlData)
 
 # calculating MAD for each (absolute value)
-all_PMI$AD <- abs(all_PMI$PMI - all_PMI$med)
-tmp <- aggregate(all_PMI$AD,  by=list(side = all_PMI$side), FUN=median)
+controlData$AD <- abs(controlData$PMI - controlData$med)
+tmp <- aggregate(controlData$AD,  by=list(side = controlData$side), FUN=median)
 names(tmp)[2] <- 'MAD'
-all_PMI <- merge(all_PMI, tmp)
+controlData <- merge(controlData, tmp)
 
 # adjusted z-score from these values
-all_PMI$az <- (all_PMI$PMI - all_PMI$med)/(all_PMI$MAD * 1.4826)
-all_PMI$z <- scale(all_PMI$PMI)
-
-plot_name = 'Zscore.png'
-Zplot <- ggplot(all_PMI, aes(x = side, y = z, colour = sub)) +
-  geom_point(size = 3, position = position_dodge(.1)) + ylim(-3,6) + 
-  stat_summary(aes(y = z, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', group = 1) + 
-  labs(x = '', y = 'Z-score', element_text(size = 13)) +
-  theme_bw() + theme(legend.position = "right", legend.title = element_blank())
-
-ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 5, height = 6.5, path = plotPath)
+controlData$az <- (controlData$PMI - controlData$med)/(controlData$MAD * 1.4826)
+controlData$z <- scale(controlData$PMI)
 
 plot_name = 'adjustedZ.png'
 AZplot <- ggplot(all_PMI, aes(x = side, y = az, colour = sub)) +
@@ -183,4 +169,4 @@ ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, width = 5, height = 6.5, path = plotPath)
 
 
-sidecorr <- ggplot(all_PMI(x = ))
+########### next steps: comparing patients to controls
