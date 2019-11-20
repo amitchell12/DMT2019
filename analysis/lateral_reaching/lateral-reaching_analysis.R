@@ -183,7 +183,31 @@ res_reach_means <- aggregate(
   reach_duration ~ task * side * subject_nr * group, mean, data = res_reach_medians)
 
 # plotting means
+# offset
+ggplot(res_offset_means, aes(x = side, y = time_touch_offset, colour = group)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(task), rows = vars(group)) +
+  labs(x = 'Side', y = 'Touch offset RT (ms)', element_text(size = 12)) +
+  scale_colour_manual(values = c('black', 'grey50')) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 8)) -> touchoffsetPlot
 
+ggsave('touchoffset_meansPlot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, width = 5, height = 6.5, path = anaPath)
+
+#reach
+ggplot(res_reach_means, aes(x = side, y = reach_duration, colour = group)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(task), rows = vars(group)) +
+  labs(x = 'Side', y = 'Reach duration (ms)', element_text(size = 12)) +
+  scale_colour_manual(values = c('black', 'grey50')) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 8)) -> reachPlot
+
+ggsave('reachDur_meansPlot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, width = 5, height = 6.5, path = anaPath)
 
 ########### next steps: comparing patients to controls
 
