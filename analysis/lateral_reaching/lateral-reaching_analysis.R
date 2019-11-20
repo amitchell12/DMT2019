@@ -169,4 +169,22 @@ ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, width = 5, height = 6.5, path = plotPath)
 
 
+### analysis of response times
+# do in the same manner as with absolute error
+# medians
+res_offset_medians <- aggregate(
+  time_touch_offset ~ ecc * side * task * subject_nr * group, median, data = res)
+res_reach_medians <- aggregate(
+  reach_duration ~ ecc * side * task * subject_nr * group, median, data = res)
+# means of medians
+res_offset_means <- aggregate(
+  time_touch_offset ~ task * side * subject_nr * group, mean, data = res_offset_medians)
+res_reach_means <- aggregate(
+  reach_duration ~ task * side * subject_nr * group, mean, data = res_reach_medians)
+
+# plotting means
+
+
 ########### next steps: comparing patients to controls
+
+
