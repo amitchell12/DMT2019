@@ -1,7 +1,11 @@
 library(readr)
 
-dataPath <- 'S:/groups/DMT/data'
-anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
+#on mac
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#on pc
+#dataPath <- 'S:/groups/DMT/data'
+#anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
 setwd(dataPath)
 
 files <- list.files(path=dataPath, pattern = "*.TRJ", full.names = TRUE, recursive = TRUE)
@@ -27,40 +31,8 @@ for(file in files) {
   row_x <- row_x + 1
 }
   
-  
-  
-  
-    
-      optodat[row_x, 1:9] <- c("LEFT", VIEW, TRIAL, tmp[c(1:6,9:10)])
-      row_x <- row_x+1
-    } else if (SIDE == "R") {
-      optodat[row_x, 1:9] <- c("RIGHT", VIEW, TRIAL, tmp[c(1:6,9:10)])
-      row_x <- row_x+1
-    } else {
-      caldat[row_c, 1:2] <- tmp[10:11]
-      row_c <- row_c+1
-    }
-  } else {
-    optodat[row_x, 1:11]
-  }
-    
-}
+#finding and removing particular rows from iddat (trials removed from kinematic)
 
-
-caldat$POSITION <- c(-100,-200,-300,-400,100,200,300,400)
-
-
-row_x <- 1
-row_c <- 1
-
-## unsure whether this is needed - do not need to compile TRJ files by side/condition
-# needed only for patients 202 and 201, as it stands this doesn't work - figure it out later
-
-
-
-optodat$TRIAL <- as.numeric(optodat$TRIAL)
-optodat$SIDE <- factor(optodat$SIDE)
-optodat$VIEW <- factor(optodat$VIEW)
 
 tst <- merge(optodat, iddat)
 
