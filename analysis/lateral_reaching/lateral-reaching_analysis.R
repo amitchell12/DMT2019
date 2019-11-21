@@ -5,6 +5,8 @@ library(gridExtra)
 library(plyr)
 library(tidyverse)
 library(reshape2)
+library(Hmisc)
+library(ggpubr)
 
 #set working directory to where data is
 #on mac
@@ -166,7 +168,7 @@ AZplot <- ggplot(all_PMI, aes(x = side, y = az, colour = sub)) +
   theme_bw() + theme(legend.position = "right", legend.title = element_blank())
 
 ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 5, height = 6.5, path = plotPath)
+       scale = 1, width = 5, height = 6.5, path = anaPath)
 
 
 ### analysis of response times
@@ -208,6 +210,29 @@ ggplot(res_reach_means, aes(x = side, y = reach_duration, colour = group)) +
 
 ggsave('reachDur_meansPlot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 5, height = 6.5, path = anaPath)
+
+# correlating peripheral reach duration with PMI
+# cast 
+rt_offset <- dcast(res_offset_means, subject_nr+group+side ~ task)
+rt_reach <- dcast(res_reach_means, subject_nr+group+side ~ task) #different data-frame
+#correlations
+corrData <- data.frame(PMIdata$PMI)
+colnames(corrData)[colnames(corrData) == 'PMIdata.PMI'] <- 'PMI' #renaming
+corrData$pAE <- PMIdata$periph
+corrData$reachRT <- rt_reach$periph
+corrData$offsetRT <- rt_offset$periph
+corrData$group <- PMIdata$group
+corrData$side <- PMIdata$side
+
+# reach dur plot
+ggscatter(corrData, x = "pAE", y = "reachRT", add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, cor.method = 'pearson') + 
+  facet_grid(cols = vars(side), rows = vars(group))
+# touch offset plot
+ggscatter(corrData, x = "pAE", y = "offsetRT", add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, cor.method = 'pearson') + 
+  facet_grid(cols = vars(side), rows = vars(group))
+
 
 ########### next steps: comparing patients to controls
 
