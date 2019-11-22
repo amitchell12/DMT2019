@@ -68,6 +68,15 @@ ggplot(res) + geom_point(aes(x = calx, y = caly, colour = POSITION), shape = 3) 
 
 ##### data analysis #####
 # subtracting cal from reach endpoint
+res$LANDx <- res$mx - res$calx
+res$LANDy <- res$my - res$caly
+
+# plotting position vs land_y
+ggplot(res) + geom_point(aes(x = POSITION, y = LANDy, colour = VIEW)) +
+  facet_wrap(~PPT) + ylim(-100, 100)
+
+ggsave('radial-reach_yErr.png', plot = last_plot(), device = NULL, 
+       path = anaPath, scale = 1, width = 15, height = 10, units = 'in')
 
 
 
