@@ -1,4 +1,5 @@
 library(readr)
+library(ggplot2)
 
 #on mac
 #anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
@@ -37,23 +38,37 @@ for(file in files) {
 iddat <- iddat[-c(122, 3485, 3895, 3917, 4160),]
 
 #merging id data and optotrak data
-tst <- merge(data.frame(optodat, row.names = NULL),
+res <- merge(data.frame(optodat, row.names = NULL),
              data.frame(iddat, row.names = NULL), by = 0, all = TRUE)[-1] 
-tst <- tst[order(tst$COUNT, decreasing = FALSE), ] #ordering by count (so all in order)
+res <- res[order(res$COUNT, decreasing = FALSE), ] #ordering by count (so all in order)
+# removing DF
+res <- res[!res$PPT == 'DMT300', ]
 # saving combined file
 setwd(anaPath)
+write.csv(res, "radial-reaching_compiled.csv", row.names = FALSE)
 
-tst <- merge(tst,caldat)
+##### calibration data #####
+# calibration data-frame
+caldat <- res[res$VIEW == 'CAL', ]
+colnames(caldat)[colnames(caldat) == 'mx'] <- 'calx' #renaming for merging
+colnames(caldat)[colnames(caldat) == 'my'] <- 'caly'
+#remove unnecessary trials
+caldat <- caldat[c(7,8,10,14)]
 
-DMT201 <- tst
+res <- res[!res$VIEW =='CAL', ] #data-frame without cal trials, not needed
 
-DMT201[DMT201 == -32768] <- NA
+# merging data-frames with new cal-value
+res <- merge(res, caldat, by = c('PPT','POSITION'), all = TRUE) #SO HAPPY THIS FUNCT EXISTS
+res[res == -32768] <- NA
 
-#DMT201[6] <- as.numeric(DMT201[6])
+# plotting to get a look at data
+ggplot(res) + geom_point(aes(x = calx, y = caly, colour = POSITION), shape = 3) +
+  geom_point(aes(x = mx, y = my, colour = POSITION)) +
+  facet_wrap(~PPT*VIEW)
+
+##### data analysis #####
+# subtracting cal from reach endpoint
 
 
 
-
-
-write.csv(DMT201, "DMT201.csv", row.names = FALSE)
 
