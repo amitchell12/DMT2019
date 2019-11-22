@@ -10,11 +10,11 @@ library(ggpubr)
 
 #set working directory to where data is
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/rawdata'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on pc
-dataPath <- 'S:/groups/DMT/data'
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+#dataPath <- 'S:/groups/DMT/data'
+#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 ########### variable info ###########
@@ -97,6 +97,11 @@ write.csv(res_medians, 'lateral-reaching_medians.csv', row.names = FALSE)
 # to calculate PMI need to cast by task....
 PMIdata <- dcast(res_means, subject_nr+group+side ~ task) #different data-frame
 PMIdata$PMI <- PMIdata$periph - PMIdata$free
+
+# changing levels of PMI for plotting
+PMIdata$side <- factor(PMIdata$side, levels = c('left', 'right'))
+levels(PMIdata$side) <- c('Left', 'Right')
+levels(PMIdata$group) <- c('Control', 'AD') #changing group name from 1 = control, 2 = AD
 write.csv(PMIdata, 'lateral-reaching_PMI.csv', row.names = FALSE)
 
 
@@ -119,11 +124,6 @@ ggplot(res_means, aes(x = side, y = AEmean, colour = group)) +
 ggsave('allmeans_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-  
-# changing levels of PMI for plotting
-PMIdata$side <- factor(PMIdata$side, levels = c('left', 'right'))
-levels(PMIdata$side) <- c('Left', 'Right')
-levels(PMIdata$group) <- c('Control', 'AD') #changing group name from 1 = control, 2 = AD
 
 # PMI plot 
 ggplot(PMIdata, aes(x = side, y = PMI, colour = group), position = position_dodge(.2)) + 
@@ -132,7 +132,8 @@ ggplot(PMIdata, aes(x = side, y = PMI, colour = group), position = position_dodg
   scale_colour_manual(values = c('grey40', 'grey40')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 2, group = 1) +
-  ylim(-.5,8) + labs(x = 'Side', y = 'PMI (deg)', element_text(size = 12)) +
+  ylim(-.5,8) + labs(title = 'Lateral Reaching', x = 'Side', y = 'PMI (deg)', 
+                     element_text(size = 12)) +
   facet_wrap(~group) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 8)) -> PMIplot
