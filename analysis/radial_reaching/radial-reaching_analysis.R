@@ -4,11 +4,11 @@ library(reshape2)
 library(ggpubr)
 
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on pc
-#dataPath <- 'S:/groups/DMT/data'
-#anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
+dataPath <- 'S:/groups/DMT/data'
+anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
 setwd(dataPath)
 
 files <- list.files(path=dataPath, pattern = "*.TRJ", full.names = TRUE, recursive = TRUE)
@@ -110,7 +110,7 @@ res$GRP <- factor(substr(res$PPT, 4, 4))
 write.csv(res, "radial-reaching_compiled.csv", row.names = FALSE)
 
 # summary data
-res_medians <- aggregate(AEdeg ~ POSITION*VIEW*SIDE*PPT*GRP, median, data = res)
+res_medians <- aggregate(AEdeg ~ POSITION*VIEW*SIDE*PPT*GRP, mean, data = res)
 colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed'
 res_means <- aggregate(AEmed ~ VIEW*SIDE*PPT*GRP, mean, data = res_medians)
 colnames(res_means)[colnames(res_means)=='AEmed'] <- 'AEmean'

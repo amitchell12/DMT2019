@@ -10,11 +10,11 @@ library(ggpubr)
 
 #set working directory to where data is
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on pc
-#dataPath <- 'S:/groups/DMT/data'
-#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+dataPath <- 'S:/groups/DMT/data'
+anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 ########### variable info ###########
@@ -88,7 +88,7 @@ ggplot(res) + geom_point(aes(x = targ_x, y = targ_y), shape = 4, size = 3) +
   facet_wrap(. ~subject_nr*task) -> allPP_plot
 
 ######### data aggregation + plotting ############
-res_medians <- aggregate(AEdeg ~ ecc * side * task * subject_nr * group, median, data = res)
+res_medians <- aggregate(AEdeg ~ ecc * side * task * subject_nr * group, mean, data = res)
 colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed' #change name to be more logical
 res_means <- aggregate(AEmed ~ task * side * subject_nr * group, mean, data = res_medians)
 colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
