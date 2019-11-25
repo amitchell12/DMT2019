@@ -18,6 +18,13 @@ dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 setwd(dataPath)
 
 ########### variable info ###########
+visAngle <- function(size, distance){
+  # this function calculates visual angle
+  # size and distance must be in the same units
+  Rad = 2*atan(size/(2*distance))
+  Ang = Rad*(180/pi)
+  return(Ang)
+}
 # screen information
 x = 310
 y = 175
@@ -70,8 +77,8 @@ nVoid <- aggregate(res$void, by=list(subject_nr = res$subject_nr), FUN=sum)
 # calculating x and y error for each targ location
 res$xerr_mm = (res$land_x - res$targ_x)*mm_perPix # in mm
 res$yerr_mm = (res$land_y - res$targ_y)*mm_perPix
-res$xerr_deg = (res$land_x - res$targ_x)*deg_perpix # in deg
-res$yerr_deg = (res$land_y - res$targ_y)*deg_perpix
+res$xerr_deg = visAngle(size= res$xerr_mm, distance= 400) # in deg
+res$yerr_deg = visAngle(size= res$yerr_mm, distance= 400)
 
 #absolute error in mm
 res$AEmm = sqrt(res$xerr_mm^2 + res$yerr_mm^2)
