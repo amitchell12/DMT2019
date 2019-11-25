@@ -5,13 +5,16 @@ library(reshape2)
 library(ggpubr)
 
 ##### correlations #####
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis' #mac
+anaPath <- 'S:/groups/DMT/analysis' #pc
 # loading lateral reaching data
-latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+#latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(latPath)
 latData <- read.csv('lateral-reaching_PMI.csv')
 # loading radial reaching data
-radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+radPath <- 'S:/groups/DMT/analysis/radial_reaching'
 setwd(radPath)
 radData <- read.csv('radial-reaching_PMI.csv')
 
@@ -31,10 +34,10 @@ dat <- rbind(latData, radData)
 corrdat <- dcast(dat, PPT+GRP+SIDE ~ TASK, value.var = 'PMI')
 
 ggscatter(corrdat, x = 'Lateral', y = 'Radial', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, cor.method = 'pearson') + 
+          cor.coef = TRUE, cor.method = 'spearman') + 
   facet_wrap(~GRP) + ylab('Radial reaching PMI (deg)') + xlab('Lateral reaching PMI (deg)')
 
-ggsave('task_correlations.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('task_correlations_spearman.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 
