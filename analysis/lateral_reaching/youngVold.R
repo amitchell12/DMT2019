@@ -64,14 +64,35 @@ res_medians <- aggregate(AEdeg ~ ecc * side * task * subject_nr, median, data = 
 colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed' #change name to be more logical
 res_means <- aggregate(AEmed ~ task * side * subject_nr, mean, data = res_medians)
 colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
-# save data
-write.csv(res_medians, 'lateral-reaching_medians.csv', row.names = FALSE)
-# to calculate PMI need to cast by task....
-PMIdata <- dcast(res_means, subject_nr+group+side ~ task) #different data-frame
-PMIdata$PMI <- PMIdata$periph - PMIdata$free
 
 ## load lateral reaching means to plot and compare
 latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
 setwd(latPath)
+# load data
+lat_means <- read.csv('lateral-reaching_means.csv')
+lat_means <- lat_means[lat_means$group == '1', c(1:3,5)]
+lat_means <- lat_means[lat_means$task == 'periph', ]
+colnames(lat_means)[colnames(lat_means) == 'AEdeg'] <- 'AEmean'
+
+#compiling data
+all_means <- rbind(lat_means, res_means)
+all_means$group <- factor(substr(all_means$subject_nr, 1, 1))
+levels(all_means$group) <- c('Elderly', 'Young')
+
+# plotting periphral reaching data
+ggplot(all_means, aes(x = side, y = AEmean, colour = group)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
+  facet_wrap(~group) + ylim(-.5,5) +
+  labs(x = 'Side', y = 'Mean AE (deg)', element_text(size = 12)) +
+  scale_colour_manual(values = c('black', 'grey50')) +
+  stat_summary(aes(y = AEmean, group = 1), fun.y = mean, colour = "red", 
+               geom = 'point', shape = 3, stroke = 1, size = 2, group = 1, alpha = .7) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 8)) -> meansPlot
+
+ggsave('young-old_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
 
 
