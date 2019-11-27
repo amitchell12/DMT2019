@@ -10,11 +10,11 @@ library(ggpubr)
 
 #set working directory to where data is
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on pc
-dataPath <- 'S:/groups/DMT/data'
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+#dataPath <- 'S:/groups/DMT/data'
+#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 ########### variable info ###########
@@ -95,7 +95,7 @@ ggplot(res) + geom_point(aes(x = targ_x, y = targ_y), shape = 4, size = 3) +
   facet_wrap(. ~subject_nr*task) -> allPP_plot
 
 ######### data aggregation + plotting ############
-res_medians <- aggregate(AEdeg ~ ecc * side * task * subject_nr * group, mean, data = res)
+res_medians <- aggregate(AEdeg ~ ecc * side * task * subject_nr * group, median, data = res)
 colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed' #change name to be more logical
 res_means <- aggregate(AEmed ~ task * side * subject_nr * group, mean, data = res_medians)
 colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
@@ -148,8 +148,58 @@ ggplot(PMIdata, aes(x = side, y = PMI, colour = group), position = position_dodg
 ggsave('allPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
+# summary
+meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('group', 'side'),
+                       na.rm = TRUE)
+meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('group'),
+                         na.rm = TRUE)
 
-## outlier calculation, for controls only
+###### directional error calc ######
+dir_medians <- aggregate(xerr_deg ~ ecc * side * task * subject_nr * group, median, data = res)
+colnames(dir_medians)[colnames(dir_medians)=='xerr_deg'] <- 'xerr_med' #change name to be more logical
+dir_means <- aggregate(xerr_med ~ task * side * subject_nr * group, mean, data = dir_medians)
+colnames(dir_means)[colnames(dir_means) == 'xerr_med'] <- 'xerr_mean'
+
+# PMI for directional data (DMI - directional misreaching index)
+dPMIdata <- dcast(dir_means, subject_nr+group+side ~ task) #different data-frame
+dPMIdata$PMI <- dPMIdata$periph - dPMIdata$free
+
+# plotting this
+ggplot(dir_means, aes(x = task, y = xerr_mean, colour = group)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(side), rows = vars(group)) + ylim(-8,8) +
+  labs(x = 'Side', y = 'Directional error (deg)', element_text(size = 12)) +
+  scale_colour_manual(values = c('black', 'grey50')) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 8)) -> meansPlot
+
+ggsave('directional_means_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# dPMI plot 
+ggplot(dPMIdata, aes(x = side, y = PMI, colour = group), position = position_dodge(.2)) + 
+  geom_point(shape = 1, size = 1.5, stroke = .8) +
+  geom_line(aes(group = subject_nr), alpha = .5, size = .5) +
+  scale_colour_manual(values = c('grey40', 'grey40')) +
+  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 2, group = 1) +
+  ylim(-8,8) + labs(title = 'Lateral Reaching', x = 'Side', y = 'dPMI (deg)', 
+                     element_text(size = 12)) +
+  facet_wrap(~group) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 8)) -> dPMIplot
+
+ggsave('dPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+## summary dPMI
+meandPMI <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('group', 'side'),
+                          na.rm = TRUE)
+meandPMI_all <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('group', 'side'),
+                         na.rm = TRUE)
+
+##### outlier calculation, for controls only
 controlData <- PMIdata[PMIdata$subject_nr < 200, ]
 
 # median values for each side
