@@ -24,7 +24,19 @@ visAngle <- function(size, distance){
   return(Ang)
 }
 
-############ file info ############
+# screen information
+x = 310
+y = 175
+pixels_perdeg = 43.76
+deg_perpix = 1/pixels_perdeg
+x_res = 1920
+y_res = 1080
+sd = 40
+
+pixPer_mm_x = x_res/x;
+pixPer_mm_y = y_res/y;
+pixPer_mm = (pixPer_mm_x+pixPer_mm_y)/2;
+mm_perPix = 1/pixPer_mm;############ file info ############
 #getting all datafiles and compiling (patient + control)
 filenames <- dir(dataPath, recursive = TRUE, full.names = FALSE, pattern = '.csv')
 
@@ -42,7 +54,7 @@ for (file in filenames){
 
 # adding key details to data-frame
 res$task <- factor(res$task) # task = factor
-res$task = revalue(res$task, c('i'='periph', 'r'='free')) #renaming task
+#res$task = revalue(res$task, c('i'='periph', 'r'='free')) #renaming task
 res$side <- factor(res$targ_x < 0, label = c('right', 'left')) #adding factor of side
 res$ecc <- factor(cut(abs(res$targ_x), 3), labels = c('28', '33', '38')) #adding eccentricity
 res$height <- factor(cut(res$targ_y, 3, labels = c('top', 'mid', 'bottom'))) #adding target height
@@ -78,6 +90,7 @@ colnames(lat_means)[colnames(lat_means) == 'AEdeg'] <- 'AEmean'
 all_means <- rbind(lat_means, res_means)
 all_means$group <- factor(substr(all_means$subject_nr, 1, 1))
 levels(all_means$group) <- c('Elderly', 'Young')
+levels(all_means$side) <- c('Left', 'Right')
 
 # plotting periphral reaching data
 ggplot(all_means, aes(x = side, y = AEmean, colour = group)) +
@@ -85,9 +98,9 @@ ggplot(all_means, aes(x = side, y = AEmean, colour = group)) +
   geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
   facet_wrap(~group) + ylim(-.5,5) +
   labs(x = 'Side', y = 'Mean AE (deg)', element_text(size = 12)) +
-  scale_colour_manual(values = c('black', 'grey50')) +
-  stat_summary(aes(y = AEmean, group = 1), fun.y = mean, colour = "red", 
-               geom = 'point', shape = 3, stroke = 1, size = 2, group = 1, alpha = .7) +
+  scale_colour_manual(values = c('grey40', 'grey40')) +
+  stat_summary(aes(y = AEmean, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 2, group = 1) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 8)) -> meansPlot
 

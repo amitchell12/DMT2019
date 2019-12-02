@@ -14,6 +14,20 @@ setwd(dataPath)
 files <- list.files(path=dataPath, pattern = "*.TRJ", full.names = TRUE, recursive = TRUE)
 idfiles <- list.files(path=dataPath, pattern = "*.dmt", full.names = TRUE, recursive = TRUE)
 
+# screen information
+x = 310
+y = 175
+pixels_perdeg = 43.76
+deg_perpix = 1/pixels_perdeg
+x_res = 1920
+y_res = 1080
+sd = 40
+
+pixPer_mm_x = x_res/x;
+pixPer_mm_y = y_res/y;
+pixPer_mm = (pixPer_mm_x+pixPer_mm_y)/2;
+mm_perPix = 1/pixPer_mm;
+
 ##### variables #####
 visAngle <- function(size, distance){
   # this function calculates visual angle
@@ -145,7 +159,7 @@ ggsave('allmeans_plot.png', plot = last_plot(), device = NULL, dpi = 300,
 
 # PMI plot
 ggplot(PMIdata, aes(x = SIDE, y = PMI, colour = GRP), position = position_dodge(.2)) + 
-  geom_point(shape = 1, size = 1.5, stroke = .8) +
+  geom_point(shape = 1, size = 2) +
   geom_line(aes(group = PPT), alpha = .5, size = .5) +
   scale_colour_manual(values = c('grey40', 'grey40')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
