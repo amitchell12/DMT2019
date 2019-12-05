@@ -4,7 +4,7 @@ libTVA <- function(x, filename, filepath) {
   # Write trial number into the output file
   output.name <- paste0(filepath, filename, ".dat")
   exp_blocks <- subset(x, Block != 0) # Exclude practice trials
-  write.table(length(exp_blocks$Block), file = output.name, quote = FALSE, col.names = FALSE, row.names = FALSE, sep = "\t", append = FALSE)
+  write.table(length(exp_blocks$Block), file = output.name, quote = FALSE, col.names = FALSE, row.names = FALSE, sep = "/t", append = FALSE)
   
   # Whole report data
   #for(cond in c(5:10)) { # 1 = Eccentricity small, 2 = eccentricity large, 
