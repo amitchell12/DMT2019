@@ -13,6 +13,8 @@ library(ggpubr)
 #on mac
 dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/pointing'
 anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis'
+#on pc
+dataPath <- 'M:/Alex_Files/Experiments/DMT2019/raw_data/'
 setwd(dataPath)
 
 ########### variable info ###########

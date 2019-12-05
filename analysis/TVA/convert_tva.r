@@ -36,9 +36,12 @@ for(i in tva.files) {
 # Screen accuracy data
 tva_accuracies <- data.frame(subject_nr = NA, accuracy = NA)
 for (i in 1:length(tva.files)) {
-  i_accuracies <- read.csv(paste0(raw_data_path, tva.files[i]))[seq(72, 468, 36), c("accumulated_accuracy", "subject_nr")]
-  tva_accuracies <- rbind(tva_accuracies, c(unique(i_accuracies$subject_nr), mean(as.numeric(as.character(i_accuracies$accumulated_accuracy)))))
+  file = tva.files[i]
+  if (isTRUE(substr(basename(file), 16, 16)=="w")){
+    i_accuracies <- read.csv(paste0(dataPath, tva.files[i]))[c(10, 22)]
+    tva_accuracies <- rbind(tva_accuracies, c(unique(i_accuracies$subject_nr), mean(as.numeric(as.character(i_accuracies$accumulated_accuracy)), na.rm = TRUE)))
+  }
 }
 
-boxplot(tva.accuracies$accuracy)
-summary(tva.accuracies$accuracy)
+boxplot(tva_accuracies$accuracy)
+summary(tva_accuracies$accuracy)
