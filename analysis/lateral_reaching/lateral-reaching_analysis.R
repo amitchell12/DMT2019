@@ -10,11 +10,11 @@ library(ggpubr)
 
 #set working directory to where data is
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on pc
-dataPath <- 'S:/groups/DMT/data'
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+#dataPath <- 'S:/groups/DMT/data'
+#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 ########### variable info ###########
@@ -155,6 +155,41 @@ meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('group', 'si
 meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('group'),
                          na.rm = TRUE)
 
+# plot by eccentricity
+# controls
+meds_control <- res_medians[res_medians$group == 1 ,]
+  
+ggplot(meds_control, aes(x = ecc, y = AEmed, colour = side)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(side), rows = vars(task)) + ylim(-.5,10) +
+  labs(title = 'Control', x = 'Eccentricity (deg)', 
+       y = 'Mean AE (deg)', element_text(size = 12)) +
+  scale_colour_manual(values = c('black', 'grey50')) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                    strip.text.x = element_text(size = 10)) -> eccPlot
+
+
+ggsave('control_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# patients
+meds_patient <- res_medians[res_medians$group == 2 ,]
+
+ggplot(meds_patient, aes(x = ecc, y = AEmed, colour = side)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(side), rows = vars(task)) + ylim(-.5,12) +
+  labs(title = 'Patient', x = 'Eccentricity (deg)', 
+       y = 'Mean AE (deg)', element_text(size = 12)) +
+  scale_colour_manual(values = c('black', 'grey50')) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)) -> eccPlot
+
+
+ggsave('patient_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
 ###### directional error calc ######
 dir_medians <- aggregate(xerr_deg ~ ecc * side * task * subject_nr * group, median, data = res)
 colnames(dir_medians)[colnames(dir_medians)=='xerr_deg'] <- 'xerr_med' #change name to be more logical
@@ -242,30 +277,34 @@ res_offset_means <- aggregate(
   time_touch_offset ~ task * side * subject_nr * group, mean, data = res_offset_medians)
 res_reach_means <- aggregate(
   reach_duration ~ task * side * subject_nr * group, mean, data = res_reach_medians)
+levels(res_offset_means$group) <- c('Control', 'Patient')
+levels(res_reach_means$group) <- c('Control', 'Patient')
 
 # plotting means
 # offset
 ggplot(res_offset_means, aes(x = side, y = time_touch_offset, colour = group)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(task), rows = vars(group)) +
-  labs(x = 'Side', y = 'Touch offset RT (ms)', element_text(size = 12)) +
+  facet_grid(cols = vars(task), rows = vars(group)) + ylim(0, 1000) +
+  labs(title = 'Touch Offset', x = 'Side', 
+       y = 'Touch offset RT (ms)', element_text(size = 12)) +
   scale_colour_manual(values = c('black', 'grey50')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8)) -> touchoffsetPlot
+                     strip.text.x = element_text(size = 10)) -> touchoffsetPlot
 
 ggsave('touchoffset_meansPlot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 5, height = 6.5, path = anaPath)
-
+  
 #reach
 ggplot(res_reach_means, aes(x = side, y = reach_duration, colour = group)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(task), rows = vars(group)) +
-  labs(x = 'Side', y = 'Reach duration (ms)', element_text(size = 12)) +
+  facet_grid(cols = vars(task), rows = vars(group)) + ylim(0, 1000) +
+  labs(title = 'Reach Duration', x = 'Side', 
+       y = 'Reach duration (ms)', element_text(size = 12)) +
   scale_colour_manual(values = c('black', 'grey50')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8)) -> reachPlot
+                     strip.text.x = element_text(size = 10)) -> reachPlot
 
 ggsave('reachDur_meansPlot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 5, height = 6.5, path = anaPath)
