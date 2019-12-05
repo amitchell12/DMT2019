@@ -4,13 +4,14 @@
 ###########################################################################################################
 
 #creating folder to sae data in
-setwd("M:/Alex_Files/Experiments/DMT2019/raw_data/") # Enter path to 
+dataPath <- ("S:/groups/DMT/data/") # Enter path to data
+wPath <- "M:/GitHub/DMT2019/analysis/TVA/"
+# Enter directory to save converted files to
+setwd(dataPath)
 dir.create("formatted_TVA")
+outputPath <- ("S:/groups/DMT/data/formatted_TVA/")
 #back to script WD
-setwd("M:/GitHub/DMT2019/analysis/TVA/")
-
-raw_data_path <- "M:/Alex_Files/Experiments/DMT2019/raw_data/" # Enter directory to raw data
-output_path <- "M:/Alex_Files/Experiments/DMT2019/DMT2019_rawdata/formatted_TVA/" # Enter directory to save converted files to
+setwd(wPath)
 
 
 # Prepare files for MatLab fitting
@@ -19,19 +20,28 @@ if(readline("Have you removed all previously converted files? [y/n] ") == "n") {
 }
 
 source("libTVA.r")
-tva.files <- list.files(raw_data_path, ".csv")
+# listing all .csv files in data path
+tva.files <- list.files(dataPath, ".csv", recursive = TRUE)
+# finding those that just have 'TVA' in the title
+
 
 for(i in tva.files) {
-  i.tva <- read.csv(paste0(raw_data_path, tva.files[which(tva.files == i)]))
-  libTVA(i.tva, filename = gsub(".csv", "", i), filepath = output_path)
+  if (isTRUE(substr(basename(i), 16, 16)=="w")){
+    i.tva <- read.csv(paste0(dataPath, tva.files[which(tva.files == i)]))
+    filename = gsub(".csv", "", i)
+    libTVA(i.tva, basename(filename), filepath = outputPath)
+  }
 }
 
 # Screen accuracy data
 tva_accuracies <- data.frame(subject_nr = NA, accuracy = NA)
 for (i in 1:length(tva.files)) {
-  i_accuracies <- read.csv(paste0(raw_data_path, tva.files[i]))[seq(72, 468, 36), c("accumulated_accuracy", "subject_nr")]
-  tva_accuracies <- rbind(tva_accuracies, c(unique(i_accuracies$subject_nr), mean(as.numeric(as.character(i_accuracies$accumulated_accuracy)))))
+  file = tva.files[i]
+  if (isTRUE(substr(basename(file), 16, 16)=="w")){
+    i_accuracies <- read.csv(paste0(dataPath, tva.files[i]))[c(10, 22)]
+    tva_accuracies <- rbind(tva_accuracies, c(unique(i_accuracies$subject_nr), mean(as.numeric(as.character(i_accuracies$accumulated_accuracy)), na.rm = TRUE)))
+  }
 }
 
-boxplot(tva.accuracies$accuracy)
-summary(tva.accuracies$accuracy)
+boxplot(tva_accuracies$accuracy)
+summary(tva_accuracies$accuracy)

@@ -4,11 +4,11 @@ library(reshape2)
 library(ggpubr)
 
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on pc
-#dataPath <- 'S:/groups/DMT/data'
-#anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
+dataPath <- 'S:/groups/DMT/data'
+anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
 setwd(dataPath)
 
 files <- list.files(path=dataPath, pattern = "*.TRJ", full.names = TRUE, recursive = TRUE)
@@ -133,7 +133,7 @@ colnames(res_means)[colnames(res_means)=='AEmed'] <- 'AEmean'
 res_means$VIEW <- factor(res_means$VIEW) #changing so only 2 levels recorded
 res_means$SIDE <- factor(res_means$SIDE, levels = c('LEFT', 'RIGHT'))
 levels(res_means$SIDE) <- c('Left', 'Right')
-levels(res_means$GRP) <- c('Control', 'AD') #changing group name from 1 = control, 2 = AD
+levels(res_means$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
 levels(res_means$VIEW) <- c('Free', 'Peripheral')
 res_means$PPT <- substr(res_means$PPT, 4, 6)
 
@@ -171,7 +171,7 @@ ggplot(PMIdata, aes(x = SIDE, y = PMI, colour = GRP), position = position_dodge(
                      strip.text.x = element_text(size = 12)) -> PMIplot
 
 ggsave('allPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+       scale = 1, width = 7, height = 4, path = anaPath)
 
 ## summary data
 meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('GRP', 'SIDE'),
