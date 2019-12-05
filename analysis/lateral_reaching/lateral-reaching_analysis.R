@@ -10,11 +10,11 @@ library(ggpubr)
 
 #set working directory to where data is
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on pc
-#dataPath <- 'S:/groups/DMT/data'
-#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+dataPath <- 'S:/groups/DMT/data'
+anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 ########### variable info ###########
@@ -101,6 +101,7 @@ res_means <- aggregate(AEmed ~ task * side * subject_nr * group, mean, data = re
 colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
 # save data
 write.csv(res_medians, 'lateral-reaching_medians.csv', row.names = FALSE)
+write.csv(res_means, 'lateral-reaching_means.csv', row.names = FALSE)
 # to calculate PMI need to cast by task....
 PMIdata <- dcast(res_means, subject_nr+group+side ~ task) #different data-frame
 PMIdata$PMI <- PMIdata$periph - PMIdata$free
@@ -108,14 +109,14 @@ PMIdata$PMI <- PMIdata$periph - PMIdata$free
 # changing levels of PMI for plotting
 PMIdata$side <- factor(PMIdata$side, levels = c('left', 'right'))
 levels(PMIdata$side) <- c('Left', 'Right')
-levels(PMIdata$group) <- c('Control', 'AD') #changing group name from 1 = control, 2 = AD
+levels(PMIdata$group) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
 write.csv(PMIdata, 'lateral-reaching_PMI.csv', row.names = FALSE)
 
 
 # changing levels of PMI for plotting
 res_means$side <- factor(res_means$side, levels = c('left', 'right'))
 levels(res_means$side) <- c('Left', 'Right')
-levels(res_means$group) <- c('Control', 'AD') #changing group name from 1 = control, 2 = AD
+levels(res_means$group) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
 levels(res_means$task) <- c('Peripheral', 'Free')
 
 # mean plot 
@@ -143,10 +144,10 @@ ggplot(PMIdata, aes(x = side, y = PMI, colour = group), position = position_dodg
                      element_text(size = 14)) +
   facet_wrap(~group) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
-                     strip.text.x = element_text(size = 10)) -> PMIplot
+                     strip.text.x = element_text(size = 12)) -> PMIplot
 
 ggsave('allPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+       scale = 1, width = 7, height = 4, path = anaPath)
 
 # summary
 meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('group', 'side'),

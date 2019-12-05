@@ -11,10 +11,11 @@ library(ggpubr)
 
 #set working directory to where data is
 #on mac
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/pointing'
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/pointing'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis'
 #on pc
-dataPath <- 'M:/Alex_Files/Experiments/DMT2019/raw_data/'
+dataPath <- 'M:/Alex_Files/Experiments/DMT2019/raw_data/healthy'
+anaPath <- 'S:/groups/DMT/analysis/'
 setwd(dataPath)
 
 ########### variable info ###########
@@ -46,12 +47,17 @@ filenames <- dir(dataPath, recursive = TRUE, full.names = FALSE, pattern = '.csv
 res <- read.csv(text = "subject_nr,targ_x,targ_y,land_x,land_y,task")
 
 for (file in filenames){
-  if (isTRUE(substr(basename(file), 8, 8)=='9')){
-  tmp <- read.csv(file)[, c(12,14:15,7:8)]
-  tmp$task <- 'periph'
-  
-  res<- rbind(tmp, res)
+  if (isTRUE(substr(file, 1, 1)=='s')){
+    tmp <- read.csv(file)[, c(12,14:15,7:8)]
+    tmp$task <- 'periph'
+    res<- rbind(tmp, res)
   }
+  else if (isTRUE(substr(file, 33, 33)=='x')) {
+    tmp <- read.csv(file)[, c(14:16,11:12)]
+    tmp$task <- 'periph'
+    res<- rbind(tmp, res)
+  }
+
 }
 
 # adding key details to data-frame
@@ -80,7 +86,10 @@ res_means <- aggregate(AEmed ~ task * side * subject_nr, mean, data = res_median
 colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
 
 ## load lateral reaching means to plot and compare
-latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+#on mac
+#latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+#on pc
+latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(latPath)
 # load data
 lat_means <- read.csv('lateral-reaching_means.csv')
@@ -96,18 +105,19 @@ levels(all_means$side) <- c('Left', 'Right')
 
 # plotting periphral reaching data
 ggplot(all_means, aes(x = side, y = AEmean, colour = group)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_wrap(~group) + ylim(-.5,5) +
-  labs(x = 'Side', y = 'Mean AE (deg)', element_text(size = 12)) +
+  geom_point(shape = 1, size = 4) +
+  geom_line(aes(group = subject_nr), size = 0.8, alpha = .5) +
+  facet_wrap(~group) + ylim(-.5,8) +
+  labs(title = 'Controls: young vs old', x = 'Side', y = 'Mean AE (deg)', 
+       element_text(size = 14)) +
   scale_colour_manual(values = c('grey40', 'grey40')) +
   stat_summary(aes(y = AEmean, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 2, group = 1) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8)) -> meansPlot
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
+                     strip.text.x = element_text(size = 12)) -> meansPlot
 
 ggsave('young-old_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+       scale = 1, width = 7, height = 4, path = anaPath)
 
 
 
