@@ -94,18 +94,19 @@ levels(all_means$side) <- c('Left', 'Right')
 
 # plotting periphral reaching data
 ggplot(all_means, aes(x = side, y = AEmean, colour = group)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_wrap(~group) + ylim(-.5,5) +
-  labs(x = 'Side', y = 'Mean AE (deg)', element_text(size = 12)) +
+  geom_point(shape = 1, size = 4) +
+  geom_line(aes(group = subject_nr), size = .8, alpha = .5) +
+  facet_wrap(~group) + ylim(-.5,8) +
+  labs(title = 'Controls: young vs. old', x = 'Side', y = 'Mean error (deg)', 
+       element_text(size = 14)) +
   scale_colour_manual(values = c('grey40', 'grey40')) +
   stat_summary(aes(y = AEmean, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 2, group = 1) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8)) -> meansPlot
+               geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
+                     strip.text.x = element_text(size = 12)) -> meansPlot
 
 ggsave('young-old_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+       scale = 1, width = 7.5, height = 4, path = anaPath)
 
 
 

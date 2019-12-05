@@ -159,16 +159,16 @@ ggsave('allmeans_plot.png', plot = last_plot(), device = NULL, dpi = 300,
 
 # PMI plot
 ggplot(PMIdata, aes(x = SIDE, y = PMI, colour = GRP), position = position_dodge(.2)) + 
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = PPT), alpha = .5, size = .5) +
+  geom_point(shape = 1, size = 4) +
+  geom_line(aes(group = PPT), alpha = .5, size = .8) +
   scale_colour_manual(values = c('grey40', 'grey40')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 2, group = 1) +
+               geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
   ylim(-.5,8) + labs(title = 'Radial reaching', x = 'Side', y = 'PMI (deg)', 
-                     element_text(size = 12)) +
+                     element_text(size = 14)) +
   facet_wrap(~GRP) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8)) -> PMIplot
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
+                     strip.text.x = element_text(size = 12)) -> PMIplot
 
 ggsave('allPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)

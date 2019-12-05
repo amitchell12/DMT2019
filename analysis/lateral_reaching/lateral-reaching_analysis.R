@@ -138,15 +138,15 @@ ggplot(PMIdata, aes(x = side, y = PMI, colour = group), position = position_dodg
   geom_line(aes(group = subject_nr), alpha = .5, size = .8) +
   scale_colour_manual(values = c('grey40', 'grey40')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+               geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
   ylim(-.5,8) + labs(title = 'Lateral Reaching', x = 'Side', y = 'PMI (deg)', 
                      element_text(size = 14)) +
   facet_wrap(~group) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
-                     strip.text.x = element_text(size = 10)) -> PMIplot
+                     strip.text.x = element_text(size = 12)) -> PMIplot
 
 ggsave('allPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+       scale = 1, width = 7.5, height = 4, path = anaPath)
 
 # summary
 meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('group', 'side'),
@@ -183,12 +183,12 @@ ggplot(dPMIdata, aes(x = side, y = PMI, colour = group), position = position_dod
   geom_line(aes(group = subject_nr), alpha = .5, size = .5) +
   scale_colour_manual(values = c('grey40', 'grey40')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 2, group = 1) +
+               geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
   ylim(-8,8) + labs(title = 'Lateral Reaching', x = 'Side', y = 'dPMI (deg)', 
                      element_text(size = 12)) +
   facet_wrap(~group) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8)) -> dPMIplot
+                     strip.text.x = element_text(size = 10)) -> dPMIplot
 
 ggsave('dPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
