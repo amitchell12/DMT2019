@@ -7,8 +7,8 @@
 % speed (k)
 
 %% Extracting data
-dataDir = 'M:\Alex_Files\Experiments\DMT2019\raw_data\formatted_TVA';
-anaDir = 'M:\Alex_Files\Experiments\DMT2019\analysed_data\';
+dataDir = 'S:\groups\DMT\data\formatted_TVA';
+anaDir = 'S:\groups\DMT\analysis\TVA\fits';
 cd(dataDir)
 files = dir(fullfile(dataDir, 'subject*.dat'));
 
@@ -16,6 +16,7 @@ files = dir(fullfile(dataDir, 'subject*.dat'));
 for i = 1:length(files)
     cd(dataDir)
     participantID = files(i).name(1:10);
+    filename = files(i).name(end-8:end-4);
     filecheck = tvacheckdatafile(files(i).name) %leave open
     % load data
     % need to include the 'STD' [5 6] for masked conditions
@@ -40,15 +41,15 @@ for i = 1:length(files)
     xlim([0 8]); ylim([0 4]);
     
     % second figure by exposure duration (unmasked intermixed)
-    figure()
-    plot(tt,pp,'*')
-    ylabel('Mean score (k)'); xlabel('Exposure duration (ms)');
-    xlim([0 250]); ylim([0 4]);
+%     figure()
+%     plot(tt,pp,'*')
+%     ylabel('Mean score (k)'); xlabel('Exposure duration (ms)');
+%     xlim([0 250]); ylim([0 4]);
     
     %% Saving individual data
     cd(anaDir)
     save fit theta tvamodel tvadata
-    datafilename = sprintf('%s_fits.csv', participantID);
+    datafilename = sprintf('%s_%s_fits.txt', participantID, filename);
     tvaexport(datafilename, 'DIR', 'fit.mat');
 end
 

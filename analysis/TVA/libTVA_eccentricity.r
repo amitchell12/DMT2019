@@ -2,7 +2,7 @@
 
 libTVA <- function(x, filename, filepath) {
   # Write trial number into the output file
-  output.name <- paste0(filepath, filename, ".dat")
+  output.name <- paste0(filepath, filename, 'ALLtr', ".dat")
   output.name3 <- paste0(filepath, filename, 'ECC-3', '.dat')
   output.name9 <- paste0(filepath, filename, 'ECC-9', '.dat')
   
