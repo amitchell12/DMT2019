@@ -149,13 +149,15 @@ ggplot(res_periph, aes(x = side, y = AEmean, colour = group), position = positio
                      strip.text.x = element_text(size = 12)) -> PMIplot
 
 ggsave('periphmean_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 7.5, height = 4, path = anaPath)
+       scale = 1, width = 7, height = 4, path = anaPath)
 
 # summary
 meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('group', 'side'),
                        na.rm = TRUE)
 meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('group'),
                          na.rm = TRUE)
+mean_periph_all <- summarySE(res_periph, measurevar = 'AEmean', groupvar = c('group')
+                             na.rm = TRUE)
 
 # plot by eccentricity
 # controls
