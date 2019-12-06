@@ -19,7 +19,7 @@ if(readline("Have you removed all previously converted files? [y/n] ") == "n") {
   stop("Please delete or move the existing files.")
 }
 
-source("libTVA.r")
+source("libTVA_eccentricity.r")
 # listing all .csv files in data path
 tva.files <- list.files(dataPath, ".csv", recursive = TRUE)
 # finding those that just have 'TVA' in the title
