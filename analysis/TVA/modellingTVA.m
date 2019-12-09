@@ -20,7 +20,7 @@ for i = 1:length(files)
     filecheck = tvacheckdatafile(files(i).name) %leave open
     % load data
     % need to include the 'STD' [5 6] for masked conditions
-    tvadata = tvaloader(files(i).name, 'STD', [5 6]);
+    tvadata = tvaloader(files(i).name, 'STD', [6 7]);
     % tva report on data
     tvareport(tvadata) %leave open to view
     

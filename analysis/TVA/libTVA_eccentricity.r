@@ -39,7 +39,6 @@ libTVA <- function(x, filename, filepath) {
       , targets
       , distractors
       , response = tva_data$response
-      , eccentricity = tva_data$Eccentricity
     )
     
     ## Write whole report data to file
@@ -73,7 +72,6 @@ libTVA <- function(x, filename, filepath) {
       , targets
       , distractors
       , response = tva_smallecc$response
-      , eccentricity = tva_smallecc$Eccentricity
     )
     
     ## Write whole report data to file
@@ -107,7 +105,6 @@ libTVA <- function(x, filename, filepath) {
       , targets
       , distractors
       , response = tva_largeecc$response
-      , eccentricity = tva_largeecc$Eccentricity
     )
     
     ## Write whole report data to file
