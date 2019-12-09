@@ -8,7 +8,7 @@
 
 %% Extracting data
 dataDir = 'S:\groups\DMT\data\formatted_TVA';
-anaDir = 'S:\groups\DMT\analysis\TVA\fits';
+anaDir = 'S:\groups\DMT\analysis\TVA';
 cd(dataDir)
 files = dir(fullfile(dataDir, 'subject*.dat'));
 
@@ -40,6 +40,10 @@ for i = 1:length(files)
     ylabel('Mean score (k)'); xlabel('Exposure duration (ms)');
     xlim([0 8]); ylim([0 4]);
     
+    cd([anaDir filesep 'plots'])
+    png_name = sprintf('%s_%s.png', participantID, filename);
+    saveas(gcf, png_name)
+    
     % second figure by exposure duration (unmasked intermixed)
 %     figure()
 %     plot(tt,pp,'*')
@@ -47,7 +51,7 @@ for i = 1:length(files)
 %     xlim([0 250]); ylim([0 4]);
     
     %% Saving individual data
-    cd(anaDir)
+    cd([anaDir filesep 'fits'])
     save fit theta tvamodel tvadata
     datafilename = sprintf('%s_%s_fits.txt', participantID, filename);
     tvaexport(datafilename, 'DIR', 'fit.mat');
