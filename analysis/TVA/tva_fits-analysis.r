@@ -144,15 +144,15 @@ write.csv(tva_values_all, 'tva_data_ECC.csv', row.names = FALSE)
 ##### PLOTTING ######
 # processing speed
 ggplot(tva_values_all, aes(x = COND, y = C, colour = GRP)) + 
-  geom_jitter(aes(colour = GRP), position = position_jitter(0.1)) + 
+  geom_point(aes(colour = GRP), shape = 1, size = 2) + 
   scale_color_manual(values = c('black', 'grey50')) +
-  
+  geom_line(aes(group = SUB), size = 0.5, alpha = 0.5) +
   facet_wrap(~GRP) +
-  labs(title = 'Processing speed (C)', x = 'Group', y = 'C (item/s)', 
+  labs(title = 'Processing speed (C)', x = 'Eccentricity (deg)', y = 'C (item/s)', 
        element_text(size = 12)) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 12))
 
-ggsave('processing-speed.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('ECCprocessing-speed.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 # find t0 for each participant (from other data set, don't need for now)
