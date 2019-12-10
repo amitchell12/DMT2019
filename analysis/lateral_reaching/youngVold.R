@@ -85,6 +85,9 @@ colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed' #change name to
 res_means <- aggregate(AEmed ~ task * side * subject_nr, mean, data = res_medians)
 colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
 
+# means
+young_means <- summarySE(res_means, measurevar = 'AEmean')
+
 ## load lateral reaching means to plot and compare
 #on mac
 #latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
