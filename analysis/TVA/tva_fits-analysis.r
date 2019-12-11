@@ -37,16 +37,16 @@ for (i in 1:length(txt_filelist)) {
  
 ##### extracting key data #####
 # create data-frame
-tva_values <- read.csv(text = 'SUB,COND,K,C,T0')
+tva_values <- read.csv(text = 'SUB,COND,K,C,T0,MU')
 tva_filelist <- dir(fitPath, recursive = TRUE, full.names = FALSE, pattern = '.csv')
 ##### BOTH ECCs #####
 # key values from .csv files - ALL COND FIRST
 for (file in tva_filelist){
   if (isTRUE(str_sub(basename(file), -10, -10)=='r')){
-    tmp <- read.csv(file)[, c(2,15,28)]
+    tmp <- read.csv(file)[, c(2,15,10,13)]
     tmp$COND <- 'all'
     tmp$SUB <- substr(basename(file), 8, 10)
-    tmp <- tmp[, c(5,4,1:3)]
+    tmp <- tmp[, c(6,5,1:4)]
     tva_values <- rbind(tva_values, tmp)
   }
   
@@ -97,11 +97,11 @@ ggsave('perceptual-thresh.png', plot = last_plot(), device = NULL, dpi = 300,
 
 ##### ECC-3 #####
 setwd(fitPath)
-tva_values_ecc3 <- read.csv(text = 'SUB,COND,K,C,T0')
+tva_values_ecc3 <- read.csv(text = 'SUB,COND,K,C,T0,MU')
 # key values from .csv files - ECC-3
 for (file in tva_filelist){
   if (isTRUE(str_sub(basename(file), -10, -10)=='3')){
-    tmp <- read.csv(file)[, c(2,15,28)]
+    tmp <- read.csv(file)[, c(2,15,10,13)]
     tmp$COND <- '3'
     tmp$SUB <- substr(basename(file), 8, 10)
     tmp <- tmp[, c(5,4,1:3)]
