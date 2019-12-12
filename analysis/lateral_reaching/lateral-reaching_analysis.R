@@ -313,6 +313,25 @@ ggplot(res_reach_means, aes(x = side, y = reach_duration, colour = group)) +
 ggsave('reachDur_meansPlot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 5, height = 6.5, path = anaPath)
 
+#means of both sides
+res_reach_meansall <- aggregate(reach_duration~task * subject_nr * group, mean, 
+                                data= res_reach_means) 
+res_reach_meansall$task <- with(res_reach_meansall, factor(task, levels = rev(levels(task))))
+
+ggplot(res_reach_meansall, aes(x = task, y = reach_duration, colour = group)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
+  facet_wrap(~group) + ylim(0, 1000) +
+  labs(title = 'Lateral reaching', x = 'Task', 
+       y = 'Reach duration (ms)', element_text(size = 12)) +
+  scale_colour_manual(values = c('black', 'grey50')) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)) -> reachPlot
+
+ggsave('reachDur_meansPlot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+
 # correlating peripheral reach duration with PMI
 # cast 
 rt_offset <- dcast(res_offset_means, subject_nr+group+side ~ task)

@@ -232,14 +232,72 @@ ggsave('dPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, path = anaPath)
 
 ##### summary response time #####
-res_mt_posmean <- aggregate(RT ~ POSITION*VIEW*SIDE*PPT*GRP, mean, data = res)
-res_mt_means <- aggregate(RT ~ VIEW*SIDE*PPT*GRP, mean, data = res)
+#response time
+res_rt_posmean <- aggregate(RT ~ POSITION*VIEW*SIDE*PPT*GRP, mean, data = res)
+res_rt_means <- aggregate(RT ~ VIEW*SIDE*PPT*GRP, mean, data = res)
 
-res_means$VIEW <- factor(res_means$VIEW) #changing so only 2 levels recorded
-res_means$SIDE <- factor(res_means$SIDE, levels = c('LEFT', 'RIGHT'))
-levels(res_means$SIDE) <- c('Left', 'Right')
-levels(res_means$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
-levels(res_means$VIEW) <- c('Free', 'Peripheral')
-res_means$PPT <- substr(res_means$PPT, 4, 6)
+res_rt_means$VIEW <- factor(res_rt_means$VIEW) #changing so only 2 levels recorded
+res_rt_means$SIDE <- factor(res_rt_means$SIDE, levels = c('LEFT', 'RIGHT'))
+levels(res_rt_means$SIDE) <- c('Left', 'Right')
+levels(res_rt_means$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
+levels(res_rt_means$VIEW) <- c('Free', 'Peripheral')
+res_rt_means$PPT <- substr(res_rt_means$PPT, 4, 6)
 
+#movement time
+res_mt_posmean <- aggregate(MT ~ POSITION*VIEW*SIDE*PPT*GRP, mean, data = res)
+res_mt_means <- aggregate(MT ~ VIEW*SIDE*PPT*GRP, mean, data = res)
+
+res_mt_means$VIEW <- factor(res_mt_means$VIEW) #changing so only 2 levels recorded
+res_mt_means$SIDE <- factor(res_mt_means$SIDE, levels = c('LEFT', 'RIGHT'))
+levels(res_mt_means$SIDE) <- c('Left', 'Right')
+levels(res_mt_means$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
+levels(res_mt_means$VIEW) <- c('Free', 'Peripheral')
+res_mt_means$PPT <- substr(res_mt_means$PPT, 4, 6)
+
+# plotting movement time
+# per target position (eccentricity)
+ggplot(res_mt_posmean, aes(x = POSITION, y = MT, colour = GRP), position = position_dodge(.2)) + 
+  geom_point(shape = 1, size = 1.5, stroke = .8) +
+  facet_grid(cols = vars(VIEW), rows = vars(GRP)) +
+  scale_colour_manual(values = c('grey40', 'grey40')) +
+  stat_summary(aes(y = MT, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 2, group = 1) +
+  ylim(400,1100) + labs(title = 'Radial reaching', x = 'Target position (mm)', y = 'Movement time (ms)', 
+                    element_text(size = 12)) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)) -> MTPosplot
+
+ggsave('MT_position.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# all target positions - by side
+ggplot(res_mt_means, aes(x = SIDE, y = MT, colour = GRP), position = position_dodge(.2)) + 
+  geom_point(shape = 1, size = 1.5, stroke = .8) +
+  facet_grid(cols = vars(VIEW), rows = vars(GRP)) +
+  geom_line(aes(group = PPT), alpha = .5, size = .5) +
+  scale_colour_manual(values = c('black', 'grey40')) +
+  ylim(400,1100) + labs(title = 'Radial reaching', x = 'Side', y = 'Movement time (ms)', 
+                        element_text(size = 12)) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)) -> MTplot
+
+ggsave('MT_side.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+
+# plot for everything
+res_mt_meansall <- aggregate(MT~VIEW*PPT*GRP, mean, data = res_mt_means)
+
+ggplot(res_mt_meansall, aes(x = VIEW, y = MT, colour = GRP), position = position_dodge(.2)) + 
+  geom_point(shape = 1, size = 1.5, stroke = .8) +
+  facet_wrap(~GRP) +
+  geom_line(aes(group = PPT), alpha = .5, size = .5) +
+  scale_colour_manual(values = c('black', 'grey40')) +
+  ylim(400,1000) + labs(title = 'Radial reaching', x = 'Viewing condition', y = 'Movement time (ms)', 
+                        element_text(size = 12)) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)) -> MTplot
+
+ggsave('MT.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
 
