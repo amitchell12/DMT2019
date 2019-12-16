@@ -301,3 +301,49 @@ ggplot(res_mt_meansall, aes(x = VIEW, y = MT, colour = GRP), position = position
 ggsave('MT.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
+# plotting reaction time
+# per target position (eccentricity)
+ggplot(res_rt_posmean, aes(x = POSITION, y = RT, colour = GRP), position = position_dodge(.2)) + 
+  geom_point(shape = 1, size = 1.5, stroke = .8) +
+  facet_grid(cols = vars(VIEW), rows = vars(GRP)) +
+  scale_colour_manual(values = c('grey40', 'grey40')) +
+  stat_summary(aes(y = RT, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 2, group = 1) +
+  ylim(400,1100) + labs(title = 'Radial reaching', x = 'Target position (mm)', y = 'Reaction time (ms)', 
+                        element_text(size = 12)) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)) -> RTPosplot
+
+ggsave('RT_position.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# all target positions - by side
+ggplot(res_rt_means, aes(x = SIDE, y = RT, colour = GRP), position = position_dodge(.2)) + 
+  geom_point(shape = 1, size = 1.5, stroke = .8) +
+  facet_grid(cols = vars(VIEW), rows = vars(GRP)) +
+  geom_line(aes(group = PPT), alpha = .5, size = .5) +
+  scale_colour_manual(values = c('black', 'grey40')) +
+  ylim(400,1100) + labs(title = 'Radial reaching', x = 'Side', y = 'Reaction time (ms)', 
+                        element_text(size = 12)) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)) -> RTplot
+
+ggsave('RT_side.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+
+# plot for everything
+res_rt_meansall <- aggregate(RT~VIEW*PPT*GRP, mean, data = res_rt_means)
+
+ggplot(res_rt_meansall, aes(x = VIEW, y = RT, colour = GRP), position = position_dodge(.2)) + 
+  geom_point(shape = 1, size = 1.5, stroke = .8) +
+  facet_wrap(~GRP) +
+  geom_line(aes(group = PPT), alpha = .5, size = .5) +
+  scale_colour_manual(values = c('black', 'grey40')) +
+  ylim(400,1000) + labs(title = 'Radial reaching', x = 'Viewing condition', y = 'Reaction time (ms)', 
+                        element_text(size = 12)) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)) -> RTplot
+
+ggsave('RT.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
