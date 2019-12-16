@@ -4,11 +4,11 @@ library(reshape2)
 library(ggpubr)
 
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on pc
-#dataPath <- 'S:/groups/DMT/data'
-#anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
+dataPath <- 'S:/groups/DMT/data'
+anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
 setwd(dataPath)
 
 files <- list.files(path=dataPath, pattern = "*.TRJ", full.names = TRUE, recursive = TRUE)
