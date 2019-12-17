@@ -18,6 +18,7 @@ setwd(fitPath)
 ##### functions #####
 library(stringr)
 library(ggplot2)
+library(reshape2)
 
 # list all files in working directory
 txt_filelist <- list.files(fitPath, ".txt")
@@ -37,16 +38,18 @@ for (i in 1:length(txt_filelist)) {
  
 ##### extracting key data #####
 # create data-frame
-tva_values <- read.csv(text = 'SUB,COND,K,C,T0,MU')
+tva_values <- read.csv(
+  text = 'SUB,ECC,K,C,t0,MU,t1,t2,t3,t4,t5,t6,t7'
+  )
 tva_filelist <- dir(fitPath, recursive = TRUE, full.names = FALSE, pattern = '.csv')
 ##### BOTH ECCs #####
 # key values from .csv files - ALL COND FIRST
 for (file in tva_filelist){
   if (isTRUE(str_sub(basename(file), -10, -10)=='r')){
-    tmp <- read.csv(file)[, c(2,15,10,13)]
-    tmp$COND <- 'all'
+    tmp <- read.csv(file)[, c(2,15,10,13,28:34)]
+    tmp$ECC <- 'all'
     tmp$SUB <- substr(basename(file), 8, 10)
-    tmp <- tmp[, c(6,5,1:4)]
+    tmp <- tmp[, c(12,13,1:11)]
     tva_values <- rbind(tva_values, tmp)
   }
   
@@ -55,7 +58,36 @@ for (file in tva_filelist){
 tva_values$GRP <- factor(substr(tva_values$SUB, 1, 1))
 levels(tva_values$GRP) <- c('Control', 'Patient')
 tva_values$SUB <- factor(tva_values$SUB)
-names(tva_values)[5] <- 't0'
+# placing group higher up
+tva_values <- tva_values[, c(1,2,14,3:13)]
+
+#adding processing speed
+#adding mu to ExpDurc6 and c7
+tva_values$ExpDurC6 <- tva_values$ExpDurC6 + tva_values$mu
+tva_values$ExpDurC7 <- tva_values$ExpDurC7 + tva_values$mu
+#melting so have information by condition
+tva_dat <- ans <- melt(
+  tva_values, 
+  id.vars = c('ECC','SUB','GRP','K','C','t0','mu'), 
+  measure.vars = c('ExpDurC1','ExpDurC2','ExpDurC3', 'ExpDurC4', 'ExpDurC5', 'ExpDurC6', 'ExpDurC7'))
+#sort new melted data frame
+tva_dat <- tva_dat[order(tva_dat$SUB) ,]
+#ranaming conditions (1-7) and columns, before adding other columns of value
+colnames(tva_dat)[colnames(tva_dat)=="variable"] <- "COND"
+tva_dat$COND <- factor(substr(tva_dat$COND, 8, 8))
+colnames(tva_dat)[colnames(tva_dat)=="value"] <- "DUR"
+
+## other important variables (predicted k) - compile into variable and add to data-frame
+for (file in tva_filelist){
+  if (isTRUE(str_sub(basename(file), -10, -10)=='r')){
+    tmp <- read.csv(file)[, c(2,15,10,13,28:34)]
+    tmp$ECC <- 'all'
+    tmp$SUB <- substr(basename(file), 8, 10)
+    tmp <- tmp[, c(12,13,1:11)]
+    tva_values <- rbind(tva_values, tmp)
+  }
+  
+}
 
 #save tva-values
 setwd(anaPath)
