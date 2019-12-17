@@ -78,16 +78,29 @@ tva_dat$COND <- factor(substr(tva_dat$COND, 8, 8))
 colnames(tva_dat)[colnames(tva_dat)=="value"] <- "DUR"
 
 ## other important variables (predicted k) - compile into variable and add to data-frame
+#empty t-tmp data-frame
+ttmp <- data.frame(pMS=numeric(), 
+                   SUB=factor(),
+                   COND=factor(),
+                 stringsAsFactors=FALSE) 
+
 for (file in tva_filelist){
   if (isTRUE(str_sub(basename(file), -10, -10)=='r')){
-    tmp <- read.csv(file)[, c(2,15,10,13,28:34)]
-    tmp$ECC <- 'all'
+    tmp <- read.csv(file)[, c(88:94)]
+    tmp <- as.data.frame(t(tmp))
     tmp$SUB <- substr(basename(file), 8, 10)
-    tmp <- tmp[, c(12,13,1:11)]
-    tva_values <- rbind(tva_values, tmp)
+    tmp$COND <- matrix(1:7, nrow = 7, ncol = 1)
+    ttmp <- rbind(ttmp,tmp)
+    
   }
   
 }
+
+# merging the two data-frames by SUB and COND
+tva_dat <- merge(tva_dat, ttmp, by = c('SUB','COND'), all.y = TRUE)
+# renaming
+colnames(tva_dat)[colnames(tva_dat)=='V1'] <- 'PMS'
+
 
 #save tva-values
 setwd(anaPath)
