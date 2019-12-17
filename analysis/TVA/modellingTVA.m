@@ -18,6 +18,7 @@ for i = 1:length(files)
     participantID = files(i).name(1:10);
     filename = files(i).name(end-8:end-4);
     filecheck = tvacheckdatafile(files(i).name) %leave open
+    
     % load data
     % need to include the 'STD' [5 6] for masked conditions
     tvadata = tvaloader(files(i).name, 'STD', [6 7]);
@@ -25,7 +26,7 @@ for i = 1:length(files)
     tvareport(tvadata) %leave open to view
     
     %% Fitting model
-    [theta, tvamodel, tvadata, df] = tvafit(tvadata);
+    [theta, tvamodel, tvadata, df] = tvafit(tvadata, [], 'TRAD');
     %see the fitted values
     tvareport(tvadata, tvamodel, theta);
     

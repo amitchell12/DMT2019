@@ -104,9 +104,13 @@ colnames(tva_dat)[colnames(tva_dat)=='V1'] <- 'PMS'
 
 #save tva-values
 setwd(anaPath)
-write.csv(tva_values, 'tva_data.csv', row.names = FALSE)
+write.csv(tva_dat, 'tva_data.csv', row.names = FALSE)
 
-##### plotting #####
+##### plotting fits #####
+ggplot(tva_dat, aes(x = DUR, y = PMS)) + 
+  geom_point() + facet_wrap(~SUB)
+
+##### plotting outcome vars #####
 # processing speed
 ggplot(tva_values, aes(x = GRP, y = C)) + 
   geom_jitter(aes(colour = GRP), position = position_jitter(0.1)) + 
