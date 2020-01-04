@@ -11,11 +11,11 @@ library(ggpubr)
 
 #set working directory to where data is
 #on mac
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/pointing'
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/pointing'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis'
 #on pc
-dataPath <- 'M:/Alex_Files/Experiments/DMT2019/raw_data/healthy'
-anaPath <- 'S:/groups/DMT/analysis/'
+#dataPath <- 'M:/Alex_Files/Experiments/DMT2019/raw_data/healthy'
+#anaPath <- 'S:/groups/DMT/analysis/'
 setwd(dataPath)
 
 ########### variable info ###########
@@ -90,9 +90,9 @@ young_means <- summarySE(res_means, measurevar = 'AEmean')
 
 ## load lateral reaching means to plot and compare
 #on mac
-#latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
 #on pc
-latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+#latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(latPath)
 # load data
 lat_means <- read.csv('lateral-reaching_means.csv')
@@ -111,7 +111,7 @@ ggplot(all_means, aes(x = side, y = AEmean, colour = group)) +
   geom_point(shape = 1, size = 4) +
   geom_line(aes(group = subject_nr), size = .8, alpha = .5) +
   facet_wrap(~group) + ylim(-.5,8) +
-  labs(title = 'Controls: young vs old', x = 'Side', y = 'Mean AE (deg)', 
+  labs(title = 'Peripheral reaching', x = 'Side', y = 'Reaching error (deg)', 
        element_text(size = 14)) +
   scale_colour_manual(values = c('grey40', 'grey40')) +
   stat_summary(aes(y = AEmean, group = 1), fun.y = mean, colour = "black", 
@@ -120,6 +120,18 @@ ggplot(all_means, aes(x = side, y = AEmean, colour = group)) +
                      strip.text.x = element_text(size = 12)) -> meansPlot
 
 ggsave('young-old_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, width = 7, height = 4, path = anaPath)
+
+ggplot(all_means, aes(x = group, y = AEmean), jitter(group, 0.5)) +
+  geom_point(shape = 1, size = 4, alpha = 0.5) + ylim(-.5,6) +
+  labs(title = 'Peripheral reaching', x = 'Side', y = 'Reaching error (deg)', 
+       element_text(size = 14)) +
+  stat_summary(aes(y = AEmean, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 4, stroke = 1, size = 5, group = 1) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
+                     strip.text.x = element_text(size = 12)) -> meansPlot
+
+ggsave('young-old_allplot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 7, height = 4, path = anaPath)
 
 
