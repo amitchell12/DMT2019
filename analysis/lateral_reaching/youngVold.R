@@ -123,7 +123,7 @@ ggsave('young-old_plot.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, width = 7, height = 4, path = anaPath)
 
 ggplot(all_means, aes(x = group, y = AEmean), jitter(group, 0.5)) +
-  geom_point(shape = 1, size = 4, alpha = 0.5) + ylim(-.5,6) +
+  geom_point(shape = 1, size = 4, alpha = 0.5) + ylim(0,5) +
   labs(title = 'Peripheral reaching', x = 'Side', y = 'Reaching error (deg)', 
        element_text(size = 14)) +
   stat_summary(aes(y = AEmean, group = 1), fun.y = mean, colour = "black", 
@@ -132,7 +132,7 @@ ggplot(all_means, aes(x = group, y = AEmean), jitter(group, 0.5)) +
                      strip.text.x = element_text(size = 12)) -> meansPlot
 
 ggsave('young-old_allplot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 7, height = 4, path = anaPath)
+       scale = 1, width = 6, height = 4, path = anaPath)
 
 
 
