@@ -155,7 +155,7 @@ ggsave('fits3.pdf', plot = last_plot(), device = NULL, dpi = 300,
 ggplot(tva_dat, aes(x = DUR, y = MS)) + 
   geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
   facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
-                      strip.position = 'top', page = 3) +
+                      strip.position = 'top', page = 4) +
   labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
        element_text(size = 6)) + theme_bw() + 
   theme(legend.position = 'none', text = element_text(size = 10))
@@ -167,7 +167,7 @@ ggsave('fits4.pdf', plot = last_plot(), device = NULL, dpi = 300,
 ggplot(tva_dat, aes(x = DUR, y = MS)) + 
   geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
   facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
-                      strip.position = 'top', page = 3) +
+                      strip.position = 'top', page = 5) +
   labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
        element_text(size = 6)) + theme_bw() + 
   theme(legend.position = 'none', text = element_text(size = 10))
@@ -179,7 +179,7 @@ ggsave('fits5.pdf', plot = last_plot(), device = NULL, dpi = 300,
 ggplot(tva_dat, aes(x = DUR, y = MS)) + 
   geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
   facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
-                      strip.position = 'top', page = 3) +
+                      strip.position = 'top', page = 6) +
   labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
        element_text(size = 6)) + theme_bw() + 
   theme(legend.position = 'none', text = element_text(size = 10))
@@ -191,12 +191,36 @@ ggsave('fits6.pdf', plot = last_plot(), device = NULL, dpi = 300,
 ggplot(tva_dat, aes(x = DUR, y = MS)) + 
   geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
   facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
-                      strip.position = 'top', page = 3) +
+                      strip.position = 'top', page = 7) +
   labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
        element_text(size = 6)) + theme_bw() + 
   theme(legend.position = 'none', text = element_text(size = 10))
 
 ggsave('fits7.pdf', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# 206-209
+ggplot(tva_dat, aes(x = DUR, y = MS)) + 
+  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+                      strip.position = 'top', page = 8) +
+  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
+       element_text(size = 6)) + theme_bw() + 
+  theme(legend.position = 'none', text = element_text(size = 10))
+
+ggsave('fits8.pdf', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# 210,213
+ggplot(tva_dat, aes(x = DUR, y = MS)) + 
+  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+                      strip.position = 'top', page = 9) +
+  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
+       element_text(size = 6)) + theme_bw() + 
+  theme(legend.position = 'none', text = element_text(size = 10))
+
+ggsave('fits9.pdf', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 ##### plotting outcome vars #####
