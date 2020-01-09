@@ -19,6 +19,8 @@ setwd(fitPath)
 library(stringr)
 library(ggplot2)
 library(reshape2)
+library(ggforce)
+library(xpose)
 
 # list all files in working directory
 txt_filelist <- list.files(fitPath, ".txt")
@@ -79,15 +81,20 @@ colnames(tva_dat)[colnames(tva_dat)=="value"] <- "DUR"
 
 ## other important variables (predicted k) - compile into variable and add to data-frame
 #empty t-tmp data-frame
-ttmp <- data.frame(pMS=numeric(), 
+ttmp <- data.frame(MS=numeric(),
+                   pMS=numeric(), 
                    SUB=factor(),
                    COND=factor(),
                  stringsAsFactors=FALSE) 
 
 for (file in tva_filelist){
   if (isTRUE(str_sub(basename(file), -10, -10)=='r')){
-    tmp <- read.csv(file)[, c(88:94)]
-    tmp <- as.data.frame(t(tmp))
+    MS <- t(read.csv(file)[, c(81:87)])
+    pMS <- t(read.csv(file)[, c(88:94)])
+    row.names(MS) <- NULL
+    row.names(pMS) <- NULL
+    tmp <- as.data.frame(MS)
+    tmp$pMS <- pMS
     tmp$SUB <- substr(basename(file), 8, 10)
     tmp$COND <- matrix(1:7, nrow = 7, ncol = 1)
     ttmp <- rbind(ttmp,tmp)
@@ -99,16 +106,98 @@ for (file in tva_filelist){
 # merging the two data-frames by SUB and COND
 tva_dat <- merge(tva_dat, ttmp, by = c('SUB','COND'), all.y = TRUE)
 # renaming
-colnames(tva_dat)[colnames(tva_dat)=='V1'] <- 'PMS'
+colnames(tva_dat)[colnames(tva_dat)=='V1'] <- 'MS'
 
 
 #save tva-values
 setwd(anaPath)
 write.csv(tva_dat, 'tva_data.csv', row.names = FALSE)
 
-##### plotting fits #####
-ggplot(tva_dat, aes(x = DUR, y = PMS)) + 
-  geom_point() + facet_wrap(~SUB)
+# plotting predicted duration for each participant
+# seperate plots for every 4 participants
+# 101-104
+ggplot(tva_dat, aes(x = DUR, y = MS)) + 
+  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+                      strip.position = 'top', page = 1) +
+  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
+       element_text(size = 6)) + theme_bw() + 
+  theme(legend.position = 'none', text = element_text(size = 10))
+
+ggsave('fits1.pdf', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# 105-108
+ggplot(tva_dat, aes(x = DUR, y = MS)) + 
+  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+                      strip.position = 'top', page = 2) +
+  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
+       element_text(size = 6)) + theme_bw() + 
+  theme(legend.position = 'none', text = element_text(size = 10))
+
+ggsave('fits2.pdf', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# 109-112
+ggplot(tva_dat, aes(x = DUR, y = MS)) + 
+  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+                      strip.position = 'top', page = 3) +
+  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
+       element_text(size = 6)) + theme_bw() + 
+  theme(legend.position = 'none', text = element_text(size = 10))
+
+ggsave('fits3.pdf', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# 113-116
+ggplot(tva_dat, aes(x = DUR, y = MS)) + 
+  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+                      strip.position = 'top', page = 3) +
+  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
+       element_text(size = 6)) + theme_bw() + 
+  theme(legend.position = 'none', text = element_text(size = 10))
+
+ggsave('fits4.pdf', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# 117-120
+ggplot(tva_dat, aes(x = DUR, y = MS)) + 
+  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+                      strip.position = 'top', page = 3) +
+  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
+       element_text(size = 6)) + theme_bw() + 
+  theme(legend.position = 'none', text = element_text(size = 10))
+
+ggsave('fits5.pdf', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# 121-124
+ggplot(tva_dat, aes(x = DUR, y = MS)) + 
+  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+                      strip.position = 'top', page = 3) +
+  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
+       element_text(size = 6)) + theme_bw() + 
+  theme(legend.position = 'none', text = element_text(size = 10))
+
+ggsave('fits6.pdf', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# 201-204
+ggplot(tva_dat, aes(x = DUR, y = MS)) + 
+  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+                      strip.position = 'top', page = 3) +
+  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
+       element_text(size = 6)) + theme_bw() + 
+  theme(legend.position = 'none', text = element_text(size = 10))
+
+ggsave('fits7.pdf', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
 
 ##### plotting outcome vars #####
 # processing speed
