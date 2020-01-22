@@ -10,11 +10,11 @@ library(ggpubr)
 
 #set working directory to where data is
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on pc
-#dataPath <- 'S:/groups/DMT/data'
-#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+dataPath <- 'S:/groups/DMT/data'
+anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 ########### variable info ###########
@@ -88,7 +88,7 @@ res$AEdeg = sqrt(res$xerr_deg^2 + res$yerr_deg^2)
 res <- res[which(res$eye_move == 0 & res$void == 0), c(1,11,2:5,17:22,6:8,12:16)]
 
 setwd(anaPath)
-write.csv(res, "lateral-reaching_compiled.csv", row.names = FALSE)
+write.csv(res, "lateral-reaching_all.csv", row.names = FALSE)
 
 ggplot(res) + geom_point(aes(x = targ_x, y = targ_y), shape = 4, size = 3) +
   geom_point(aes(x = land_x, y = land_y, colour = ecc), shape = 1, size = 2) +
@@ -109,7 +109,7 @@ PMIdata$PMI <- PMIdata$periph - PMIdata$free
 # changing levels of PMI for plotting
 PMIdata$side <- factor(PMIdata$side, levels = c('left', 'right'))
 levels(PMIdata$side) <- c('Left', 'Right')
-levels(PMIdata$group) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
+levels(PMIdata$group) <- c('Control', 'Patient', 'PCA') #changing group name from 1 = control, 2 = AD
 write.csv(PMIdata, 'lateral-reaching_PMI.csv', row.names = FALSE)
 
 
@@ -136,19 +136,19 @@ ggsave('allmeans_plot.png', plot = last_plot(), device = NULL, dpi = 300,
 res_periph <- res_means[res_means$task == 'Peripheral' ,]
 
 # PMI plot 
-ggplot(res_periph, aes(x = side, y = AEmean, colour = group), position = position_dodge(.2)) + 
+ggplot(PMIdata, aes(x = side, y = PMI, colour = group), position = position_dodge(.2)) + 
   geom_point(shape = 1, size = 4) +
   geom_line(aes(group = subject_nr), alpha = .5, size = .8) +
-  scale_colour_manual(values = c('grey40', 'grey40')) +
-  stat_summary(aes(y = AEmean, group = 1), fun.y = mean, colour = "black", 
+  scale_colour_manual(values = c('grey40', 'grey40', 'grey40')) +
+  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
-  ylim(-.5,8) + labs(title = 'Lateral Reaching', x = 'Side', y = 'Mean AE (deg)', 
+  ylim(-.5,8) + labs(title = 'Lateral Reaching', x = 'Side', y = 'PMI (deg)', 
                      element_text(size = 14)) +
   facet_wrap(~group) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
                      strip.text.x = element_text(size = 12)) -> PMIplot
 
-ggsave('periphmean_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('PMI.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 7, height = 4, path = anaPath)
 
 # summary
@@ -156,7 +156,7 @@ meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('group', 'si
                        na.rm = TRUE)
 meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('group'),
                          na.rm = TRUE)
-mean_periph_all <- summarySE(res_periph, measurevar = 'AEmean', groupvar = c('group')
+mean_periph_all <- summarySE(res_periph, measurevar = 'AEmean', groupvar = c('group'),
                              na.rm = TRUE)
 
 # plot by eccentricity
@@ -358,3 +358,25 @@ ggscatter(corrData, x = "pAE", y = "offsetRT", add = 'reg.line', conf.int = TRUE
 ########### next steps: comparing patients to controls
 
 
+
+
+### isolating P12
+for (i in 1:length(res_means$task)){ 
+  if (isTRUE(res_means$subject_nr[i] == '212')){ 
+    res_means$group <- as.numeric(res_means$group)
+    res_means$group[i] = 3}
+  }
+res_means$group <- factor(res_means$group)
+
+## plotting
+ggplot(res_means, aes(x = side, y = AEmean, colour = group)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(task), rows = vars(group)) + ylim(-.5,8) +
+  labs(x = 'Side', y = 'Mean AE (deg)', element_text(size = 12)) +
+  scale_colour_manual(values = c('black', 'grey50', 'red')) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 8)) -> meansPlot
+
+
+## PMI
