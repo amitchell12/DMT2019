@@ -59,7 +59,7 @@ for(file in files) {
 }
 
 #finding and removing particular rows from iddat (trials removed from kinematic)
-iddat <- iddat[-c(122, 3485, 3895, 3917, 4160),]
+iddat <- iddat[-c(1, 3485, 3895, 3917, 4160),]
 
 #merging id data and optotrak data
 res <- merge(data.frame(optodat, row.names = NULL),
@@ -105,12 +105,6 @@ ggplot(res) + geom_point(aes(x = calx, y = caly, colour = POSITION), shape = 3) 
 ggsave('radial-reach_Err.png', plot = last_plot(), device = NULL, 
        path = anaPath, scale = 1, width = 15, height = 10, units = 'in')
 
-# plotting position vs land_y
-ggplot(res) + geom_point(aes(x = POSITION, y = LANDy, colour = VIEW)) +
-  facet_wrap(~PPT) + ylim(-100, 100)
-
-ggsave('radial-reach_yErr.png', plot = last_plot(), device = NULL, 
-       path = anaPath, scale = 1, width = 15, height = 10, units = 'in')
 
 # tranforming to degrees
 res$LANDx_deg <- visAngle(size= res$LANDx, distance = 500) #using visual angle function above
@@ -148,7 +142,7 @@ write.csv(PMIdata, 'radial-reaching_PMI.csv', row.names = FALSE)
 ggplot(res_means, aes(x = SIDE, y = AEmean, colour = GRP)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(VIEW), rows = vars(GRP)) + ylim(-.5,8) +
+  facet_grid(cols = vars(VIEW), rows = vars(GRP)) + ylim(-0.5,7) +
   labs(x = 'Side', y = 'Mean AE (deg)', element_text(size = 12)) +
   scale_colour_manual(values = c('black', 'grey50')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
@@ -167,7 +161,7 @@ ggplot(res_periph, aes(x = SIDE, y = AEmean, colour = GRP), position = position_
   scale_colour_manual(values = c('grey40', 'grey40')) +
   stat_summary(aes(y = AEmean, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
-  ylim(-.5,8) + labs(title = 'Radial reaching', x = 'Side', y = 'Mean AE (deg)', 
+  ylim(-.5,8) + labs(title = 'Radial reaching', x = 'Side', y = 'PMI (deg)', 
                      element_text(size = 14)) +
   facet_wrap(~GRP) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
@@ -271,12 +265,12 @@ ggsave('MT_position.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, path = anaPath)
 
 # all target positions - by side
-ggplot(res_mt_means, aes(x = SIDE, y = MT, colour = GRP), position = position_dodge(.2)) + 
+ggplot(res_mt_means, aes(x = VIEW, y = MT, colour = GRP), position = position_dodge(.2)) + 
   geom_point(shape = 1, size = 1.5, stroke = .8) +
-  facet_grid(cols = vars(VIEW), rows = vars(GRP)) +
+  facet_grid(cols = vars(SIDE), rows = vars(GRP)) +
   geom_line(aes(group = PPT), alpha = .5, size = .5) +
   scale_colour_manual(values = c('black', 'grey40')) +
-  ylim(400,1100) + labs(title = 'Radial reaching', x = 'Side', y = 'Movement time (ms)', 
+  ylim(400,1100) + labs(title = 'Radial reaching', x = 'View', y = 'Movement time (ms)', 
                         element_text(size = 12)) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 10)) -> MTplot
@@ -318,12 +312,12 @@ ggsave('RT_position.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, path = anaPath)
 
 # all target positions - by side
-ggplot(res_rt_means, aes(x = SIDE, y = RT, colour = GRP), position = position_dodge(.2)) + 
+ggplot(res_rt_means, aes(x = VIEW, y = RT, colour = GRP), position = position_dodge(.2)) + 
   geom_point(shape = 1, size = 1.5, stroke = .8) +
-  facet_grid(cols = vars(VIEW), rows = vars(GRP)) +
+  facet_grid(cols = vars(SIDE), rows = vars(GRP)) +
   geom_line(aes(group = PPT), alpha = .5, size = .5) +
   scale_colour_manual(values = c('black', 'grey40')) +
-  ylim(0,1000) + labs(title = 'Radial reaching', x = 'Side', y = 'Reaction time (ms)', 
+  ylim(0,1000) + labs(title = 'Radial reaching', x = 'View', y = 'Reaction time (ms)', 
                         element_text(size = 12)) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 10)) -> RTplot
