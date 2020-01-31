@@ -64,7 +64,7 @@ for (i in 1:length(tva_values$GRP)){
     tva_values$GRP[i] = 1
   }
 }
-
+tva_values$GRP <- factor(tva_values$GRP)
 levels(tva_values$GRP) <- c('Control', 'Patient')
 tva_values$SUB <- factor(tva_values$SUB)
 # placing group higher up
@@ -74,6 +74,10 @@ tva_values <- tva_values[, c(1,2,14,3:13)]
 #adding mu to ExpDurc6 and c7
 tva_values$ExpDurC6 <- tva_values$ExpDurC6 + tva_values$mu
 tva_values$ExpDurC7 <- tva_values$ExpDurC7 + tva_values$mu
+# saving tva-values
+setwd(anaPath)
+write.csv(tva_values, 'tva_values.csv', row.names = FALSE)
+
 #melting so have information by condition
 tva_dat <- ans <- melt(
   tva_values, 
@@ -118,7 +122,7 @@ colnames(tva_dat)[colnames(tva_dat)=='V1'] <- 'MS'
 
 #save tva-values
 setwd(anaPath)
-write.csv(tva_dat, 'tva_data.csv', row.names = FALSE)
+write.csv(tva_dat, 'tva_fits.csv', row.names = FALSE)
 
 # plotting predicted duration for each participant
 # seperate plots for every 4 participants
@@ -230,6 +234,9 @@ ggplot(tva_dat, aes(x = DUR, y = MS)) +
 ggsave('fits9.pdf', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
+## average predicted duration for group
+
+
 ##### plotting outcome vars #####
 # processing speed
 ggplot(tva_values, aes(x = GRP, y = C)) + 
@@ -273,7 +280,7 @@ for (file in tva_filelist){
     tmp <- read.csv(file)[, c(2,15,10,13)]
     tmp$COND <- '3'
     tmp$SUB <- substr(basename(file), 8, 10)
-    tmp <- tmp[, c(5,4,1:3)]
+    tmp <- tmp[, c(6,5,1:4)]
     
     tva_values_ecc3 <- rbind(tva_values_ecc3, tmp)
   }
@@ -284,14 +291,14 @@ for (file in tva_filelist){
 tva_values_ecc3 <- tva_values_ecc3[tva_values_ecc3$C < 1000 ,]
 
 ##### ECC-9 #####
-tva_values_ecc9 <- read.csv(text = 'SUB,COND,K,C,T0')
+tva_values_ecc9 <- read.csv(text = 'SUB,COND,K,C,T0,MU')
 # key values from .csv files - ECC-3
 for (file in tva_filelist){
   if (isTRUE(str_sub(basename(file), -10, -10)=='9')){
-    tmp <- read.csv(file)[, c(2,15,28)]
+    tmp <- read.csv(file)[, c(2,15,10,13)]
     tmp$COND <- '9'
     tmp$SUB <- substr(basename(file), 8, 10)
-    tmp <- tmp[, c(5,4,1:3)]
+    tmp <- tmp[, c(6,5,1:4)]
     
     tva_values_ecc9 <- rbind(tva_values_ecc9, tmp)
   }
@@ -302,6 +309,13 @@ for (file in tva_filelist){
 tva_values_all <- rbind(tva_values_ecc3, tva_values_ecc9)
 
 tva_values_all$GRP <- factor(substr(tva_values_all$SUB, 1, 1))
+for (i in 1:length(tva_values_all$GRP)){
+  if (isTRUE(tva_values_all$GRP[i] == '3')){
+    tva_values_all$GRP[i] = 1
+  }
+}
+tva_values_all$GRP <- factor(tva_values_all$GRP)
+tva_values_all
 levels(tva_values_all$GRP) <- c('Control', 'Patient')
 tva_values_all$SUB <- factor(tva_values_all$SUB)
 names(tva_values_all)[5] <- 't0'
@@ -324,13 +338,4 @@ ggplot(tva_values_all, aes(x = COND, y = C, colour = GRP)) +
 ggsave('ECCprocessing-speed.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-# find t0 for each participant (from other data set, don't need for now)
-setwd(dataPath)
-dat_filelist <- dir(dataPath, recursive = TRUE, full.names = TRUE, pattern = '.dat')
-for (file in dat_filelist){
-  if (isTRUE(str_sub(basename(file), -5, -5)=="r")){
-    tmp <- read.table(file, header=FALSE, sep="\t")
-    timing <- tmp[,2] #column of timing variables
-    t <- min(timing, na.rm = TRUE) #getting minimum values
-  }
-}
+
