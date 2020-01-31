@@ -58,6 +58,13 @@ for (file in tva_filelist){
 }
 
 tva_values$GRP <- factor(substr(tva_values$SUB, 1, 1))
+#Norwich control data = 3, convert to 1 for same group
+for (i in 1:length(tva_values$GRP)){
+  if (isTRUE(tva_values$GRP[i] == '3')){
+    tva_values$GRP[i] = 1
+  }
+}
+
 levels(tva_values$GRP) <- c('Control', 'Patient')
 tva_values$SUB <- factor(tva_values$SUB)
 # placing group higher up

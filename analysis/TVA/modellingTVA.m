@@ -41,7 +41,7 @@ for i = 1:length(files)
     ylabel('Mean score (k)'); xlabel('Exposure duration (ms)');
     xlim([0 8]); ylim([0 4]);
     
-    cd([anaDir filesep 'plots'])
+    cd([anaDir filesep 'fit-plots'])
     png_name = sprintf('%s_%s.png', participantID, filename);
     saveas(gcf, png_name)
     
