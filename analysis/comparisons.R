@@ -34,11 +34,23 @@ dat <- rbind(latData, radData)
 corrdat <- dcast(dat, PPT+GRP+SIDE ~ TASK, value.var = 'PMI')
 
 ggscatter(corrdat, x = 'Lateral', y = 'Radial', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, cor.method = 'spearman') + 
+          cor.coef = TRUE, cor.method = 'pearson') + 
   facet_wrap(~GRP) + ylab('Radial reaching PMI (deg)') + xlab('Lateral reaching PMI (deg)')
 
-ggsave('task_correlations_spearman.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('task_correlations_pearson.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
+#file with data organised by participant
+names(latData)[4] <- 'Free_lat'
+names(latData)[5] <- 'Perip_lat'
+names(latData)[6] <- 'PMI_lat'
+names(radData)[4] <- 'Free_rad'
+names(radData)[5] <- 'Perip_rad'
+names(radData)[6] <- 'PMI_rad'
+allDat <- merge(latData, radData, by = c('PPT', 'GRP', 'SIDE'), all = FALSE)
+allDat <- allDat[c(1:5, 8:9, 6, 10) ]
+
+setwd(anaPath)
+write.csv(allDat, 'lat-rad-reaching_res.csv', row.names = FALSE)
 
 
