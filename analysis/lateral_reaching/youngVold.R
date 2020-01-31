@@ -84,6 +84,9 @@ res_medians <- aggregate(AEdeg ~ ecc * side * task * subject_nr, median, data = 
 colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed' #change name to be more logical
 res_means <- aggregate(AEmed ~ task * side * subject_nr, mean, data = res_medians)
 colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
+# saving this data
+setwd(anaPath)
+write.csv(res, "lateral-reaching_young-compiled.csv", row.names = FALSE)
 
 # means
 young_means <- summarySE(res_means, measurevar = 'AEmean')
@@ -133,6 +136,10 @@ ggplot(all_means, aes(x = group, y = AEmean), jitter(group, 0.5)) +
 
 ggsave('young-old_allplot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 6, height = 4, path = anaPath)
+
+
+##### looking at data by target eccentricity #####
+
 
 
 
