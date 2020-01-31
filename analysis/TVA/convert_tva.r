@@ -43,5 +43,11 @@ for (i in 1:length(tva.files)) {
   }
 }
 
+# removing first row (NA vals)
+tva_accuracies <- tva_accuracies[-c(1), ]
 boxplot(tva_accuracies$accuracy)
 summary(tva_accuracies$accuracy)
+# writing accuracy file
+anaPath = 'S:/groups/DMT/analysis/TVA'
+setwd(anaPath)
+write.csv(tva_accuracies, 'TVAaccuracy.csv', row.names = FALSE)
