@@ -57,7 +57,7 @@ for (file in filenames){
 }
 
 # removing df (subject number = 300)
-res <- res[res$subject_nr < 300, ]
+res <- res[res$subject_nr != 300, ]
 
 # adding key details to data-frame
 res$task <- factor(res$task) # task = factor
@@ -68,6 +68,12 @@ res$height <- factor(cut(res$targ_y, 3, labels = c('top', 'mid', 'bottom'))) #ad
 #finally - target location
 res$target <- paste0(res$ecc, res$height)
 res$group <- factor(substr(res$subject_nr, 1, 1)) # adding group: 1 = HC, 2 = patient
+# group '4' = patients from norwich, change to group = 2
+for (i in 1:length(res$group)){
+  if (isTRUE(res$group[i] == "4")){
+    res$group[i] = 2
+  }
+}
 
 # eye move and void trials
 # counting eye-move per participant
