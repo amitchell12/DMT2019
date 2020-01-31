@@ -138,7 +138,7 @@ ggplot(res_means, aes(x = side, y = AEmean, colour = group)) +
 ggsave('allmeans_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-# isolating peripheral data
+# isolating peripheral data (for other plotting)
 res_periph <- res_means[res_means$task == 'Peripheral' ,]
 
 # PMI plot 
