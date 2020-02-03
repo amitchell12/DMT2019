@@ -6,7 +6,7 @@ library(ggpubr)
 
 ##### correlations #####
 #anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis' #mac
-anaPath <- 'S:/groups/DMT/analysis' #pc
+anaPath <- 'S:/groups/DMT/analysis/task-correlations' #pc
 # loading lateral reaching data
 #latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
 latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
@@ -40,11 +40,11 @@ dat <- aggregate(PMI ~ TASK * GRP * PPT, mean, data = dat_side)
 corrDat <- dcast(dat, PPT+GRP ~ TASK, value.var = 'PMI')
 
 ggscatter(corrDat_side, x = 'Lateral', y = 'Radial', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, cor.method = 'pearson') + 
+          cor.coef = TRUE, cor.method = 'spearman') + 
   facet_grid(cols = vars(SIDE), rows = vars(GRP)) + 
   ylab('Radial reaching PMI (deg)') + xlab('Lateral reaching PMI (deg)')
 
-ggsave('task_correlations_pearson.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('reaching_correlations_spearman.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 #file with data organised by participant
@@ -66,4 +66,85 @@ allDat <- merge(allDat, TVAData, by = c('PPT', 'GRP'), all = TRUE)
 
 setwd(anaPath)
 write.csv(allDat, 'all-task_results.csv', row.names = FALSE)
+
+# removing NA values for plotting
+corr_allDat <- na.omit(allDat)
+
+##### TVA lateral reaching
+### correlate K and lateral reaching
+ggscatter(corr_allDat, x = 'PMI_lat', y = 'K', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, cor.method = 'spearman') + 
+  facet_grid(cols = vars(SIDE), rows = vars(GRP)) + 
+  ylab('vSTM') + xlab('Lateral reaching PMI (deg)')
+
+ggsave('LAT-k_side.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# collapsed across side
+KLAT <- aggregate(PMI_lat ~ K * PPT * GRP, mean, data = corr_allDat)
+ggscatter(KLAT, x = 'PMI_lat', y = 'K', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, cor.method = 'spearman') + 
+  facet_wrap(~GRP) + 
+  ylab('vSTM') + xlab('Lateral reaching PMI (deg)')
+
+ggsave('LAT-k_grp.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+### correlate C and lateral reaching
+ggscatter(corr_allDat, x = 'PMI_lat', y = 'C', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, cor.method = 'spearman') + 
+  facet_grid(cols = vars(SIDE), rows = vars(GRP)) + 
+  ylab('Processing speed (ms)') + xlab('Lateral reaching PMI (deg)')
+
+ggsave('LAT-C_side.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# collapsed across side
+CLAT <- aggregate(PMI_lat ~ C * PPT * GRP, mean, data = corr_allDat)
+ggscatter(CLAT, x = 'PMI_lat', y = 'C', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, cor.method = 'spearman') + 
+  facet_wrap(~GRP) + 
+  ylab('Processing speed (ms)') + xlab('Lateral reaching PMI (deg)')
+
+ggsave('LAT-C_grp.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+### correlate K and radial reaching
+ggscatter(corr_allDat, x = 'PMI_rad', y = 'K', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, cor.method = 'spearman') + 
+  facet_grid(cols = vars(SIDE), rows = vars(GRP)) + 
+  ylab('vSTM') + xlab('Radial reaching PMI (deg)')
+
+ggsave('RAD-k_side.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# collapsed across side
+KRAD <- aggregate(PMI_rad ~ K * PPT * GRP, mean, data = corr_allDat)
+ggscatter(KRAD, x = 'PMI_rad', y = 'K', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, cor.method = 'spearman') + 
+  facet_wrap(~GRP) + 
+  ylab('vSTM') + xlab('Lateral reaching PMI (deg)')
+
+ggsave('RAD-k_grp.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+### correlate C and radial reaching
+ggscatter(corr_allDat, x = 'PMI_rad', y = 'C', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, cor.method = 'spearman') + 
+  facet_grid(cols = vars(SIDE), rows = vars(GRP)) + 
+  ylab('Processing speed (ms)') + xlab('Radial reaching PMI (deg)')
+
+ggsave('RAD-C_side.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# collapsed across side
+CRAD <- aggregate(PMI_rad ~ C * PPT * GRP, mean, data = corr_allDat)
+ggscatter(CRAD, x = 'PMI_rad', y = 'C', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, cor.method = 'spearman') + 
+  facet_wrap(~GRP) + 
+  ylab('Processing speed (ms)') + xlab('Lateral reaching PMI (deg)')
+
+ggsave('RAD-C_grp.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
 
