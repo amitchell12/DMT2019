@@ -361,3 +361,49 @@ ggplot(plotNMTPS, aes(x=POSITION, y=NMTPS, colour=GRP, group=GRP)) +
 
 ggsave('normMTafterPS.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 8, height = 7, path = anaPath)
+
+### correlate reaching error with NMTPS
+# creating relevant data-frame
+NMTPS_mean <- aggregate(NMTPS ~  VIEW*SIDE*PPT*GRP, mean, data = res)
+NMTPS_mean <- dcast(NMTPS_mean, PPT+GRP+SIDE ~ VIEW)
+# rename columns
+levels(NMTPS_mean$SIDE) <- c('Left', 'Right')
+levels(NMTPS_mean$GRP) <- c('Control', 'Patient') 
+names(NMTPS_mean)[4] <- 'NMTPS_Free'
+names(NMTPS_mean)[5] <- 'NMTPS_Periph'
+NMTPS_mean$PPT <- substr(NMTPS_mean$PPT, 4, 6)
+NMTPS_mean$COST <- NMTPS_mean$NMTPS_FREE - NMTPS_mean$NMTPS_PERIPH
+
+# merge with PMI
+test <- merge(PMIdata, NMTPS_mean, by = c('PPT','GRP', 'SIDE'), all = TRUE)
+Periphav <- aggregate(Peripheral ~ PPT * GRP, mean, data = test)
+NMTPSav <- aggregate(NMTPS_Free ~ PPT * GRP, mean, data = test)
+testav <- merge(Periphav, NMTPSav, by = c('PPT', 'GRP'), all = TRUE)
+
+# plot correlation
+ggscatter(test, x = 'Peripheral', y = 'NMTPS_Free', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, cor.method = 'pearson') + 
+  facet_grid(cols = vars(SIDE), rows = vars(GRP)) + 
+  ylab('Normalised MTAPS (free)') + xlab('Peripheral reaching error (deg)')
+
+# plot correlation - averaged across sides
+ggscatter(testav, x = 'Peripheral', y = 'NMTPS_Free', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, cor.method = 'spearman') + 
+  facet_wrap(~GRP) + 
+  ylab('Normalised MTAPS (free)') + xlab('Peripheral reaching error (deg)')
+
+ggsave('normMTAPS-accuracy_correlation.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+#### time to peak speed
+plotTPS <- summarySE(data=res, measurevar = "TPS", 
+                     groupvars = c("GRP", "POSITION", "VIEW"), na.rm = TRUE)
+plotTPS <- na.omit(plotTPS)
+
+ggplot(plotTPS, aes(x=POSITION, y=TPS, colour=GRP, group=GRP)) +
+  geom_point(size=5, alpha=.5, position=position_dodge(width=.3)) +
+  geom_errorbar(aes(ymin=TPS-ci, ymax=TPS+ci), width=.4, position=position_dodge(width=.3)) +
+  geom_line(position=position_dodge(width=.3)) +
+  facet_wrap(~VIEW) +
+  theme_bw()
+
