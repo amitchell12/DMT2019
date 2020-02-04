@@ -2,6 +2,7 @@ library(readr)
 library(ggplot2)
 library(reshape2)
 library(ggpubr)
+library(Rmisc)
 
 #on mac
 #anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
@@ -341,3 +342,22 @@ ggplot(res_rt_meansall, aes(x = VIEW, y = RT, colour = GRP), position = position
 
 ggsave('RT.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
+
+
+
+###### normalised movement time after peak speed
+res$NMTPS <- (res$MT - res$TPS)/res$MT
+plotNMTPS <- summarySE(data=res, measurevar = "NMTPS", 
+                       groupvars = c("GRP", "POSITION", "VIEW"), na.rm = TRUE)
+plotNMTPS <- na.omit(plotNMTPS)
+
+# plot
+ggplot(plotNMTPS, aes(x=POSITION, y=NMTPS, colour=GRP, group=GRP)) +
+  geom_point(size=5, alpha=.5, position=position_dodge(width=.3)) +
+  geom_errorbar(aes(ymin=NMTPS-ci, ymax=NMTPS+ci), width=.4, position=position_dodge(width=.3)) +
+  geom_line(position=position_dodge(width=.3)) +
+  facet_wrap(~VIEW) +
+  theme_bw()
+
+ggsave('normMTafterPS.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 8, height = 7, path = anaPath)
