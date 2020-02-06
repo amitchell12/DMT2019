@@ -12,11 +12,13 @@ latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/late
 #latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(latPath)
 latData <- read.csv('lateral-reaching_PMI.csv')
+latData_dir <- read.csv('lateral-reaching_dPMI.csv')
 # loading radial reaching data
 radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
 #radPath <- 'S:/groups/DMT/analysis/radial_reaching'
 setwd(radPath)
 radData <- read.csv('radial-reaching_PMI.csv')
+radData_dir <- read.csv('radial-reaching_dPMI.csv')
 # TVA path
 TVApath <- radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA'
 #TVApath <- 'S:/groups/DMT/analysis/TVA/'
@@ -30,11 +32,17 @@ names(latData)[3] <- 'SIDE'
 names(latData)[4] <- 'Peripheral'
 names(latData)[5] <- 'Free'
 latData <- latData[c(1,2,3,5,4,6)] #reorgansing to fit radData
+levels(radData$GRP) <- c('Patient', 'Control')
 
 # adding extra info necessary to merge
 latData$TASK <- 'Lateral'
 radData$TASK <- 'Radial'
-# merge
+
+#adding directional PMI into data-frame (along x-axis only)
+latData$dPMI <- latData_dir$PMI
+radData$dPMI <- radData_dir$PMI
+
+##### PMI data ######
 dat_side <- rbind(latData, radData)
 corrDat_side <- dcast(dat_side, PPT+GRP+SIDE ~ TASK, value.var = 'PMI')
 dat <- aggregate(PMI ~ TASK * GRP * PPT, mean, data = dat_side) 
@@ -47,6 +55,19 @@ ggscatter(corrDat_side, x = 'Lateral', y = 'Radial', add = 'reg.line', conf.int 
 
 ggsave('reaching_correlations_spearman.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
+
+##### PMI data ######
+corrDat_dir <- dcast(dat_side, PPT+GRP+SIDE ~ TASK, value.var = 'dPMI')
+
+ggscatter(corrDat_dir, x = 'Lateral', y = 'Radial', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, cor.method = 'spearman') + 
+  facet_grid(cols = vars(SIDE), rows = vars(GRP)) + 
+  ylab('Radial reaching PMI (deg)') + xlab('Lateral reaching PMI (deg)')
+
+ggsave('reaching_correlations_spearman.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+
 
 #file with data organised by participant
 names(latData)[4] <- 'Free_lat'

@@ -115,7 +115,7 @@ PMIdata$PMI <- PMIdata$periph - PMIdata$free
 # changing levels of PMI for plotting
 PMIdata$side <- factor(PMIdata$side, levels = c('left', 'right'))
 levels(PMIdata$side) <- c('Left', 'Right')
-levels(PMIdata$group) <- c('Control', 'Patient', 'PCA') #changing group name from 1 = control, 2 = AD
+levels(PMIdata$group) <- c('Control', 'AD', 'PCA') #changing group name from 1 = control, 2 = AD
 write.csv(PMIdata, 'lateral-reaching_PMI.csv', row.names = FALSE)
 
 
@@ -209,6 +209,7 @@ colnames(dir_means)[colnames(dir_means) == 'xerr_med'] <- 'xerr_mean'
 # PMI for directional data (DMI - directional misreaching index)
 dPMIdata <- dcast(dir_means, subject_nr+group+side ~ task) #different data-frame
 dPMIdata$PMI <- dPMIdata$periph - dPMIdata$free
+write.csv(dPMIdata, 'lateral-reaching_dPMI.csv', row.names = FALSE)
 
 # plotting this
 ggplot(dir_means, aes(x = task, y = xerr_mean, colour = group)) +
