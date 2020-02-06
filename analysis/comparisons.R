@@ -64,7 +64,7 @@ ggscatter(corrDat_dir, x = 'Lateral', y = 'Radial', add = 'reg.line', conf.int =
   facet_grid(cols = vars(SIDE), rows = vars(GRP)) + 
   ylab('Radial reaching PMI (deg)') + xlab('Lateral reaching PMI (deg)')
 
-ggsave('reaching_correlations_spearman.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('dir_reaching_correlations_spearman.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 
