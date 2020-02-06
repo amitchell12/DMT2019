@@ -4,13 +4,13 @@
 
 ##### file info #####
 #on mac
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/formatted_TVA'
-#fitPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/fits/'
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/formatted_TVA'
+fitPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/fits/'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/'
 # on pc
-dataPath <- 'S:/groups/DMT/data/formatted_TVA/'
-fitPath <- ("S:/groups/DMT/analysis/TVA/fits/") # Enter path to data
-anaPath <- "S:/groups/DMT/analysis/TVA/"
+#fitPath <- ("S:/groups/DMT/analysis/TVA/fits/") # Enter path to data
+#dataPath <- 'S:/groups/DMT/data/formatted_TVA/'
+#anaPath <- "S:/groups/DMT/analysis/TVA/"
 
 # Enter directory to save converted files to
 setwd(fitPath)
