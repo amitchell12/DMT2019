@@ -20,6 +20,7 @@ libTVA <- function(x, filename, filepath) {
   tva_data$response[tva_data$response == "NONE" | tva_data$response == ""] <- "-" # Code missing as "-"
     
   ## Sort targets by position (1-3 top left - bot left, 4-6 top right - bot right)
+  ###### unsure about how to work this- keep going
   for (l in 1:length(tva_data$Block)){
     if (isTRUE(tva_data$Eccentricity[l] == '1')){
       positions <- tva_data[, paste0("3posLet", c(1:4))]
