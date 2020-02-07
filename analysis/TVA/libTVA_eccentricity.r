@@ -20,9 +20,18 @@ libTVA <- function(x, filename, filepath) {
   tva_data$response[tva_data$response == "NONE" | tva_data$response == ""] <- "-" # Code missing as "-"
     
   ## Sort targets by position (1-3 top left - bot left, 4-6 top right - bot right)
+  for (l in 1:length(tva_data$Block)){
+    if (isTRUE(tva_data$Eccentricity[l] == '1')){
+      positions <- tva_data[, paste0("3posLet", c(1:4))]
+    }
+    else 
+      positions <- tva_data[, paste0("9posLet", c(1:4))]
+  }
   positions <- tva_data[, paste0("posLet", c(1:4))]
   letters <- tva_data[, paste0("L", c(1:4))]
     
+  # create target and letter columns dependent on eccentricity
+  
   t1 <- t(letters)[t(positions == "top left")]
   t2 <- t(letters)[t(positions == "bot left")]
   t3 <- t(letters)[t(positions == "top right")]
@@ -32,6 +41,9 @@ libTVA <- function(x, filename, filepath) {
     
   distractors <- rep("000000", length(tva_data$Block)) # No distractors in whole report condition
     
+
+  
+  
   ## Combine variables that are needed for the TVA parameter estimate
   whole_data <- cbind(
       condition = tva_data$Timing
@@ -39,6 +51,7 @@ libTVA <- function(x, filename, filepath) {
       , targets
       , distractors
       , response = tva_data$response
+      , ecc = tva_data$eEccentricity #adding eccentricity file
     )
     
     ## Write whole report data to file
