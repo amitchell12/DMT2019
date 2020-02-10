@@ -33,10 +33,7 @@ libTVA <- function(x, filename, filepath) {
 
   targets <- paste0(t1, t2, t3, t4)
     
-  distractors <- rep("000000", length(tva_data$Block)) # No distractors in whole report condition
-    
-
-  
+  distractors <- rep("000000", length(tva_data$Block)) # No distractors in whole report conditions
   
   ## Combine variables that are needed for the TVA parameter estimate
   whole_data <- cbind(
@@ -51,71 +48,73 @@ libTVA <- function(x, filename, filepath) {
     ## Write whole report data to file
     write.table(whole_data, file=output.name, quote=FALSE, col.names=FALSE, row.names=FALSE, sep="\t", append=TRUE)
 
+    
+    ## not sure this is needed - commented out for now
     ##### small eccentricity set #####
     # by eccentricity
-    tva_smallecc <- tva_data[tva_data$Eccentricity == 1 ,]
-    exp_blocks <- subset(tva_smallecc, Block != 0) # Exclude practice trials
-    write.table(length(exp_blocks$Block), file = output.name3, quote = FALSE, col.names = FALSE, row.names = FALSE, sep = "/t", append = FALSE)
+    #tva_smallecc <- tva_data[tva_data$Eccentricity == 1 ,]
+    #exp_blocks <- subset(tva_smallecc, Block != 0) # Exclude practice trials
+    #write.table(length(exp_blocks$Block), file = output.name3, quote = FALSE, col.names = FALSE, row.names = FALSE, sep = "/t", append = FALSE)
     
     ## Sort targets by position (1-3 top left - bot left, 4-6 top right - bot right)
-    positions <- tva_smallecc[, paste0("posLet", c(1:4))]
-    letters <- tva_smallecc[, paste0("L", c(1:4))]
+    #positions <- tva_smallecc[, paste0("posLet", c(1:4))]
+    #letters <- tva_smallecc[, paste0("L", c(1:4))]
     
-    t1 <- t(letters)[t(positions == "top left")]
-    t2 <- t(letters)[t(positions == "bot left")]
-    t3 <- t(letters)[t(positions == "top right")]
-    t4 <- t(letters)[t(positions == "bot right")]
+    #t1 <- t(letters)[t(positions == "top left")]
+    #t2 <- t(letters)[t(positions == "bot left")]
+    #t3 <- t(letters)[t(positions == "top right")]
+    #t4 <- t(letters)[t(positions == "bot right")]
     
-    targets <- paste0(t1, t2, t3, t4)
+    #targets <- paste0(t1, t2, t3, t4)
     
-    distractors <- rep("000000", length(tva_smallecc$Block)) # No distractors in whole report condition
+    #distractors <- rep("000000", length(tva_smallecc$Block)) # No distractors in whole report condition
     
     
     
     # small ecc set
-    whole_data_ecc3 <- cbind(
-      condition = tva_smallecc$Timing
-      , letter_duration = tva_smallecc$Letter_duration
-      , targets
-      , distractors
-      , response = tva_smallecc$response
-    )
+    #whole_data_ecc3 <- cbind(
+    #  condition = tva_smallecc$Timing
+    #  , letter_duration = tva_smallecc$Letter_duration
+    #  , targets
+    #  , distractors
+    #  , response = tva_smallecc$response
+    #)
     
     ## Write whole report data to file
-    write.table(whole_data_ecc3, file=output.name3, quote=FALSE, col.names=FALSE, row.names=FALSE, sep="\t", append=TRUE)
+    #write.table(whole_data_ecc3, file=output.name3, quote=FALSE, col.names=FALSE, row.names=FALSE, sep="\t", append=TRUE)
     
     ##### large eccentricity set #####
-    tva_largeecc <- tva_data[tva_data$Eccentricity == 2 ,]
-    exp_blocks <- subset(tva_largeecc, Block != 0) # Exclude practice trials
-    write.table(length(exp_blocks$Block), file = output.name9, quote = FALSE, col.names = FALSE, row.names = FALSE, sep = "/t", append = FALSE)
+    #tva_largeecc <- tva_data[tva_data$Eccentricity == 2 ,]
+    #exp_blocks <- subset(tva_largeecc, Block != 0) # Exclude practice trials
+    #write.table(length(exp_blocks$Block), file = output.name9, quote = FALSE, col.names = FALSE, row.names = FALSE, sep = "/t", append = FALSE)
     
     
     ## Sort targets by position (1-3 top left - bot left, 4-6 top right - bot right)
-    positions <- tva_largeecc[, paste0("posLet", c(1:4))]
-    letters <- tva_largeecc[, paste0("L", c(1:4))]
+    #positions <- tva_largeecc[, paste0("posLet", c(1:4))]
+    #letters <- tva_largeecc[, paste0("L", c(1:4))]
     
-    t1 <- t(letters)[t(positions == "top left")]
-    t2 <- t(letters)[t(positions == "bot left")]
-    t3 <- t(letters)[t(positions == "top right")]
-    t4 <- t(letters)[t(positions == "bot right")]
+    #t1 <- t(letters)[t(positions == "top left")]
+    #t2 <- t(letters)[t(positions == "bot left")]
+    #t3 <- t(letters)[t(positions == "top right")]
+    #t4 <- t(letters)[t(positions == "bot right")]
     
-    targets <- paste0(t1, t2, t3, t4)
+    #targets <- paste0(t1, t2, t3, t4)
     
-    distractors <- rep("000000", length(tva_largeecc$Block)) # No distractors in whole report condition
+    #distractors <- rep("000000", length(tva_largeecc$Block)) # No distractors in whole report condition
     
     
     
     # small ecc set
-    whole_data_ecc9 <- cbind(
-      condition = tva_largeecc$Timing
-      , letter_duration = tva_largeecc$Letter_duration
-      , targets
-      , distractors
-      , response = tva_largeecc$response
-    )
+    #whole_data_ecc9 <- cbind(
+    #  condition = tva_largeecc$Timing
+     # , letter_duration = tva_largeecc$Letter_duration
+    #  , targets
+     # , distractors
+    #  , response = tva_largeecc$response
+    #)
     
     ## Write whole report data to file
-    write.table(whole_data_ecc9, file=output.name9, quote=FALSE, col.names=FALSE, row.names=FALSE, sep="\t", append=TRUE)
+    #write.table(whole_data_ecc9, file=output.name9, quote=FALSE, col.names=FALSE, row.names=FALSE, sep="\t", append=TRUE)
     
 }
  
