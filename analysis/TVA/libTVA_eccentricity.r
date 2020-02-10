@@ -21,11 +21,12 @@ libTVA <- function(x, filename, filepath) {
   ###### unsure about how to work this- keep going
   positions <- tva_data[, paste0("posLet", c(1:4))]
   letters <- tva_data[, paste0("L", c(1:4))]
-  # add an eccentricities column to letters
+  # add an eccentricities column to letters and positions
   letters$ECC <- tva_data$Eccentricity
+  positions$ECC <- tva_data$Eccentricity
   # code letter by by eccentricity
   for (l in 1:length(letters$ECC)){
-    if (isTRUE(letters$ECC[l] == '1')){
+    if (isTRUE(letters$ECC[l] == '2')){
       letters$L6[l] = letters$L1[l]
       letters$L7[l] = letters$L2[l]
       letters$L8[l] = letters$L3[l]
@@ -40,11 +41,32 @@ libTVA <- function(x, filename, filepath) {
       }
       
   }
+  
+  
+  ##### this doesn't work - figure out why
+  # do the same for positions
+  for (l in 1:length(positions$ECC)){
+    if (isTRUE(positions$ECC[l] == '2')){
+      positions$posLet6[l] = positions$posLet1[l] 
+      positions$posLet7[l] = positions$posLet2[l] 
+      positions$posLet8[l] = positions$posLet3[l] 
+      positions$posLet9[l] = positions$posLet4[l] 
+      positions[l, c(1:4)] = 0
+    }
+    else {
+      positions$posLet6 = 0
+      positions$posLet7 = 0
+      positions$posLet8 = 0
+      positions$posLet9 = 0
+    }
+    
+  }
    
   letters <- letters[, c(1:4,6:9)] 
+  positions <- positions[, c(1:4,6:9)]
   
   # create target and letter columns dependent on eccentricity
-  ### reached here - keep going
+  # add target columns 5:8
   t1 <- t(letters)[t(positions == "top left")]
   t2 <- t(letters)[t(positions == "bot left")]
   t3 <- t(letters)[t(positions == "top right")]
@@ -59,10 +81,9 @@ libTVA <- function(x, filename, filepath) {
   whole_data <- cbind(
       condition = tva_data$Timing
       , letter_duration = tva_data$Letter_duration
-      , targets
+      , letters
       , distractors
       , response = tva_data$response
-      , ecc = tva_data$eEccentricity #adding eccentricity file
     )
     
     ## Write whole report data to file
