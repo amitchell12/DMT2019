@@ -96,9 +96,10 @@ corr_allDat <- na.omit(allDat)
 ##### TVA lateral reaching
 ### correlate K and lateral reaching
 ggscatter(corr_allDat, x = 'PMI_lat', y = 'K', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, cor.method = 'spearman') + 
+          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +
   facet_grid(cols = vars(SIDE), rows = vars(GRP)) + 
-  ylab('vSTM') + xlab('Lateral reaching PMI (deg)')
+  ylab('vSTM') + xlab('Lateral reaching PMI (deg)') +
+  theme(text = element_text(size = 10))
 
 ggsave('LAT-k_side.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
@@ -106,18 +107,20 @@ ggsave('LAT-k_side.png', plot = last_plot(), device = NULL, dpi = 300,
 # collapsed across side
 KLAT <- aggregate(PMI_lat ~ K * PPT * GRP, mean, data = corr_allDat)
 ggscatter(KLAT, x = 'PMI_lat', y = 'K', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, cor.method = 'spearman') + 
+          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +
   facet_wrap(~GRP) + 
-  ylab('vSTM') + xlab('Lateral reaching PMI (deg)')
+  ylab('vSTM') + xlab('Lateral reaching PMI (deg)') +
+  theme(text = element_text(size = 10))
 
 ggsave('LAT-k_grp.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 ### correlate C and lateral reaching
 ggscatter(corr_allDat, x = 'PMI_lat', y = 'C', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, cor.method = 'spearman') + 
+          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') + 
   facet_grid(cols = vars(SIDE), rows = vars(GRP)) + 
-  ylab('Processing speed (ms)') + xlab('Lateral reaching PMI (deg)')
+  ylab('Processing speed (items/s)') + xlab('Lateral reaching PMI (deg)') +
+  theme(text = element_text(size = 10))
 
 ggsave('LAT-C_side.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
@@ -125,18 +128,20 @@ ggsave('LAT-C_side.png', plot = last_plot(), device = NULL, dpi = 300,
 # collapsed across side
 CLAT <- aggregate(PMI_lat ~ C * PPT * GRP, mean, data = corr_allDat)
 ggscatter(CLAT, x = 'PMI_lat', y = 'C', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, cor.method = 'spearman') + 
+          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') + 
   facet_wrap(~GRP) + 
-  ylab('Processing speed (ms)') + xlab('Lateral reaching PMI (deg)')
+  ylab('Processing speed (items/s)') + xlab('Lateral reaching PMI (deg)') +
+  theme(text = element_text(size = 10))
 
 ggsave('LAT-C_grp.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 ### correlate K and radial reaching
 ggscatter(corr_allDat, x = 'PMI_rad', y = 'K', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, cor.method = 'spearman') + 
+          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') + 
   facet_grid(cols = vars(SIDE), rows = vars(GRP)) + 
-  ylab('vSTM') + xlab('Radial reaching PMI (deg)')
+  ylab('vSTM') + xlab('Radial reaching PMI (deg)') +
+  theme(text = element_text(size = 10))
 
 ggsave('RAD-k_side.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
@@ -144,18 +149,20 @@ ggsave('RAD-k_side.png', plot = last_plot(), device = NULL, dpi = 300,
 # collapsed across side
 KRAD <- aggregate(PMI_rad ~ K * PPT * GRP, mean, data = corr_allDat)
 ggscatter(KRAD, x = 'PMI_rad', y = 'K', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, cor.method = 'spearman') + 
+          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') + 
   facet_wrap(~GRP) + 
-  ylab('vSTM') + xlab('Lateral reaching PMI (deg)')
+  ylab('vSTM') + xlab('Radial reaching PMI (deg)') +
+  theme(text = element_text(size = 10))
 
 ggsave('RAD-k_grp.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 ### correlate C and radial reaching
 ggscatter(corr_allDat, x = 'PMI_rad', y = 'C', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, cor.method = 'spearman') + 
+          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') + 
   facet_grid(cols = vars(SIDE), rows = vars(GRP)) + 
-  ylab('Processing speed (ms)') + xlab('Radial reaching PMI (deg)')
+  ylab('Processing speed (items/s)') + xlab('Radial reaching PMI (deg)') +
+  theme(text = element_text(size = 10))
 
 ggsave('RAD-C_side.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
@@ -163,9 +170,10 @@ ggsave('RAD-C_side.png', plot = last_plot(), device = NULL, dpi = 300,
 # collapsed across side
 CRAD <- aggregate(PMI_rad ~ C * PPT * GRP, mean, data = corr_allDat)
 ggscatter(CRAD, x = 'PMI_rad', y = 'C', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, cor.method = 'spearman') + 
+          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +  
   facet_wrap(~GRP) + 
-  ylab('Processing speed (ms)') + xlab('Lateral reaching PMI (deg)')
+  ylab('Processing speed (items/s)') + xlab('Radial reaching PMI (deg)') +
+  theme(text = element_text(size = 10))
 
 ggsave('RAD-C_grp.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
