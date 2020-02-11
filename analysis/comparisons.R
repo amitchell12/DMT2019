@@ -5,33 +5,33 @@ library(reshape2)
 library(ggpubr)
 
 ##### correlations #####
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/task-correlations' #mac
-#anaPath <- 'S:/groups/DMT/analysis/task-correlations' #pc
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/task-correlations' #mac
+anaPath <- 'S:/groups/DMT/analysis/task-correlations' #pc
 # loading lateral reaching data
-latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-#latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+#latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(latPath)
 latData <- read.csv('lateral-reaching_PMI.csv')
 latData_dir <- read.csv('lateral-reaching_dPMI.csv')
 # loading radial reaching data
-radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-#radPath <- 'S:/groups/DMT/analysis/radial_reaching'
+#radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+radPath <- 'S:/groups/DMT/analysis/radial_reaching'
 setwd(radPath)
 radData <- read.csv('radial-reaching_PMI.csv')
 radData_dir <- read.csv('radial-reaching_dPMI.csv')
 # TVA path
-TVApath <- radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA'
-#TVApath <- 'S:/groups/DMT/analysis/TVA/'
+#TVApath <- radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA'
+TVApath <- 'S:/groups/DMT/analysis/TVA/'
 setwd(TVApath)
 TVAData <- read.csv('TVA_values.csv')
 
 # making sure all matrices are the same
 names(latData)[1] <- 'PPT'
 names(latData)[2] <- 'GRP'
-names(latData)[3] <- 'SIDE'
-names(latData)[4] <- 'Peripheral'
-names(latData)[5] <- 'Free'
-latData <- latData[c(1,2,3,5,4,6)] #reorgansing to fit radData
+names(latData)[4] <- 'SIDE'
+names(latData)[5] <- 'Peripheral'
+names(latData)[6] <- 'Free'
+latData <- latData[c(1,2,5,4,6,7)] #reorgansing to fit radData
 levels(radData$GRP) <- c('Patient', 'Control')
 
 # adding extra info necessary to merge
