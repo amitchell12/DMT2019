@@ -4,13 +4,13 @@
 
 ##### file info #####
 #on mac
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/formatted_TVA'
-fitPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/fits/'
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/formatted_TVA'
+#fitPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/fits/'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/'
 # on pc
-#fitPath <- ("S:/groups/DMT/analysis/TVA/fits/") # Enter path to data
-#dataPath <- 'S:/groups/DMT/data/formatted_TVA/'
-#anaPath <- "S:/groups/DMT/analysis/TVA/"
+fitPath <- ("S:/groups/DMT/analysis/TVA/fits/") # Enter path to data
+dataPath <- 'S:/groups/DMT/data/formatted_TVA/'
+anaPath <- "S:/groups/DMT/analysis/TVA/"
 
 # Enter directory to save converted files to
 setwd(fitPath)
@@ -58,17 +58,25 @@ for (file in tva_filelist){
 }
 
 tva_values$GRP <- factor(substr(tva_values$SUB, 1, 1))
+tva_values$SITE <- factor(substr(tva_values$SUB, 1, 1))
 #Norwich control data = 3, convert to 1 for same group
 for (i in 1:length(tva_values$GRP)){
   if (isTRUE(tva_values$GRP[i] == '3')){
     tva_values$GRP[i] = 1
   }
 }
+for (i in 1:length(tva_values$SITE)){
+  if (isTRUE(tva_values$SITE[i] == '2')){
+    tva_values$SITE[i] = 1
+  }
+}
 tva_values$GRP <- factor(tva_values$GRP)
+tva_values$SITE <- factor(tva_values$SITE)
 levels(tva_values$GRP) <- c('Control', 'Patient')
+levels(tva_values$SITE) <- c('UOE', 'UEA')
 tva_values$SUB <- factor(tva_values$SUB)
 # placing group higher up
-tva_values <- tva_values[, c(1,2,14,3:13)]
+tva_values <- tva_values[, c(1,2,14:15,3:13)] ##### check this order with new 'site' column
 
 #adding processing speed
 #adding mu to ExpDurc6 and c7
@@ -79,9 +87,9 @@ setwd(anaPath)
 write.csv(tva_values, 'tva_values.csv', row.names = FALSE)
 
 #melting so have information by condition
-tva_dat <- ans <- melt(
+tva_dat <- melt(
   tva_values, 
-  id.vars = c('ECC','SUB','GRP','K','C','t0','mu'), 
+  id.vars = c('ECC','SUB','GRP','SITE', 'K','C','t0','mu'), 
   measure.vars = c('ExpDurC1','ExpDurC2','ExpDurC3', 'ExpDurC4', 'ExpDurC5', 'ExpDurC6', 'ExpDurC7'))
 #sort new melted data frame
 tva_dat <- tva_dat[order(tva_dat$SUB) ,]
@@ -98,6 +106,7 @@ ttmp <- data.frame(MS=numeric(),
                    COND=factor(),
                  stringsAsFactors=FALSE) 
 
+setwd(fitPath)
 for (file in tva_filelist){
   if (isTRUE(str_sub(basename(file), -10, -10)=='r')){
     MS <- t(read.csv(file)[, c(81:87)])
@@ -118,6 +127,8 @@ for (file in tva_filelist){
 tva_dat <- merge(tva_dat, ttmp, by = c('SUB','COND'), all.y = TRUE)
 # renaming
 colnames(tva_dat)[colnames(tva_dat)=='V1'] <- 'MS'
+# order by group
+tva_dat <- tva_dat[order(tva_dat$GRP) ,]
 
 
 #save tva-values
@@ -126,112 +137,101 @@ write.csv(tva_dat, 'tva_fits.csv', row.names = FALSE)
 
 # plotting predicted duration for each participant
 # seperate plots for every 4 participants
-# 101-104
+###### redo these so you have document for all participants
+# 101-104=6
 ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
                       strip.position = 'top', page = 1) +
   labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
        element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 10))
+  theme(legend.position = 'none', text = element_text(size = 8))
 
 ggsave('fits1.pdf', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-# 105-108
+# 107-112
 ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
                       strip.position = 'top', page = 2) +
   labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
        element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 10))
+  theme(legend.position = 'none', text = element_text(size = 8))
 
 ggsave('fits2.pdf', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-# 109-112
+# 113-118
 ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
                       strip.position = 'top', page = 3) +
   labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
        element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 10))
+  theme(legend.position = 'none', text = element_text(size = 8))
 
 ggsave('fits3.pdf', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-# 113-116
+# 119-124
 ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
                       strip.position = 'top', page = 4) +
   labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
        element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 10))
+  theme(legend.position = 'none', text = element_text(size = 8))
 
 ggsave('fits4.pdf', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-# 117-120
+# 201-207
 ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
                       strip.position = 'top', page = 5) +
   labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
        element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 10))
+  theme(legend.position = 'none', text = element_text(size = 8))
 
 ggsave('fits5.pdf', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-# 121-124
+# 208-302
 ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
                       strip.position = 'top', page = 6) +
   labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
        element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 10))
+  theme(legend.position = 'none', text = element_text(size = 8))
 
 ggsave('fits6.pdf', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-# 201-204
+# 304-309
 ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
                       strip.position = 'top', page = 7) +
   labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
        element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 10))
+  theme(legend.position = 'none', text = element_text(size = 8))
 
 ggsave('fits7.pdf', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-# 206-209
+# 312-316
 ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
+  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
                       strip.position = 'top', page = 8) +
   labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
        element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 10))
+  theme(legend.position = 'none', text = element_text(size = 8))
 
 ggsave('fits8.pdf', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-# 210,213
-ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 2) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 2, ncol = 2, scales = 'free_x',
-                      strip.position = 'top', page = 9) +
-  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
-       element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 10))
-
-ggsave('fits9.pdf', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 ## average predicted duration for group
@@ -240,8 +240,8 @@ ggsave('fits9.pdf', plot = last_plot(), device = NULL, dpi = 300,
 ##### plotting outcome vars #####
 # processing speed
 ggplot(tva_values, aes(x = GRP, y = C)) + 
-  geom_jitter(aes(colour = GRP), position = position_jitter(0.1)) + 
-  scale_color_manual(values = c('black', 'grey50')) +
+  geom_jitter(aes(colour = SITE), position = position_jitter(0.1)) + 
+  scale_color_manual(values = c('grey50', 'red')) +
   labs(title = 'Processing speed (C)', x = 'Group', y = 'C (item/s)', 
                               element_text(size = 12)) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 12))

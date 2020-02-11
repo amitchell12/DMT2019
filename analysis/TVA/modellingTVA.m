@@ -26,7 +26,7 @@ for i = 1:length(files)
     tvareport(tvadata) %leave open to view
     
     %% Fitting model
-    [theta, tvamodel, tvadata, df] = tvafit(tvadata, [], 'TRAD');
+    [theta, tvamodel, tvadata, df] = tvafit(tvadata, [], 'FREE');
     %see the fitted values
     tvareport(tvadata, tvamodel, theta);
     
