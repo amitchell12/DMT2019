@@ -41,17 +41,17 @@ for (i in 1:length(txt_filelist)) {
 ##### extracting key data #####
 # create data-frame
 tva_values <- read.csv(
-  text = 'SUB,ECC,K,C,t0,MU,t1,t2,t3,t4,t5,t6,t7'
+  text = 'SUB,ECC,K,C,t0,MU,t1,t2,t3,t4,t5,t6,t7,SPD'
   )
 tva_filelist <- dir(fitPath, recursive = TRUE, full.names = FALSE, pattern = '.csv')
 ##### BOTH ECCs #####
 # key values from .csv files - ALL COND FIRST
 for (file in tva_filelist){
   if (isTRUE(str_sub(basename(file), -10, -10)=='r')){
-    tmp <- read.csv(file)[, c(2,15,10,13,28:34)]
+    tmp <- read.csv(file)[, c(2,15,10,13,28:34,19)]
     tmp$ECC <- 'all'
     tmp$SUB <- substr(basename(file), 8, 10)
-    tmp <- tmp[, c(12,13,1:11)]
+    tmp <- tmp[, c(14,13,1:12)]
     tva_values <- rbind(tva_values, tmp)
   }
   
@@ -75,6 +75,9 @@ tva_values$SITE <- factor(tva_values$SITE)
 levels(tva_values$GRP) <- c('Control', 'Patient')
 levels(tva_values$SITE) <- c('UOE', 'UEA')
 tva_values$SUB <- factor(tva_values$SUB)
+
+##### think about removing data with SPD > 0
+# have a chat with rob about this - save current data-set
 # placing group higher up
 tva_values <- tva_values[, c(1,2,14:15,3:13)] ##### check this order with new 'site' column
 
