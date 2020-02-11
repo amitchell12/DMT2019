@@ -4,18 +4,18 @@
 ###########################################################################################################
 
 #creating folder to sae data in
-#dataPath <- ("S:/groups/DMT/data/") # Enter path to data
-#wPath <- "M:/GitHub/DMT2019/analysis/TVA/"
+dataPath <- ("S:/groups/DMT/data/") # Enter path to data
+wPath <- "M:/GitHub/DMT2019/analysis/TVA/"
 # Enter directory to save converted files to
-#setwd(dataPath)
-#dir.create("formatted_TVA")
-#outputPath <- ("S:/groups/DMT/data/formatted_TVA/")
-#on mac
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
-wPath <- '/Users/alexandramitchell/Documents/git/DMT2019/analysis/TVA/'
 setwd(dataPath)
-dir.create('formatted_TVA')
-outputPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/formatted_TVA/'
+dir.create("formatted_TVA")
+outputPath <- ("S:/groups/DMT/data/formatted_TVA/")
+#on mac
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#wPath <- '/Users/alexandramitchell/Documents/git/DMT2019/analysis/TVA/'
+#setwd(dataPath)
+#dir.create('formatted_TVA')
+#outputPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/formatted_TVA/'
 #back to script WD
 setwd(wPath)
 
@@ -25,7 +25,7 @@ if(readline("Have you removed all previously converted files? [y/n] ") == "n") {
   stop("Please delete or move the existing files.")
 }
 
-source("libTVA_eccentricity.r")
+source("libTVA.r")
 # listing all .csv files in data path
 tva.files <- list.files(dataPath, ".csv", recursive = TRUE)
 # finding those that just have 'TVA' in the title
