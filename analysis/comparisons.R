@@ -31,8 +31,7 @@ names(latData)[2] <- 'GRP'
 names(latData)[4] <- 'SIDE'
 names(latData)[5] <- 'Peripheral'
 names(latData)[6] <- 'Free'
-latData <- latData[c(1,2,5,4,6,7)] #reorgansing to fit radData
-levels(radData$GRP) <- c('Patient', 'Control')
+latData <- latData[c(1,2,4,6,5,7)] #reorgansing to fit radData
 
 # adding extra info necessary to merge
 latData$TASK <- 'Lateral'
@@ -56,7 +55,7 @@ ggscatter(corrDat_side, x = 'Lateral', y = 'Radial', add = 'reg.line', conf.int 
 ggsave('reaching_correlations_spearman.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-##### PMI data ######
+##### dPMI data ######
 corrDat_dir <- dcast(dat_side, PPT+GRP+SIDE ~ TASK, value.var = 'dPMI')
 
 ggscatter(corrDat_dir, x = 'Lateral', y = 'Radial', add = 'reg.line', conf.int = TRUE,
@@ -73,16 +72,18 @@ ggsave('dir_reaching_correlations_spearman.png', plot = last_plot(), device = NU
 names(latData)[4] <- 'Free_lat'
 names(latData)[5] <- 'Perip_lat'
 names(latData)[6] <- 'PMI_lat'
+names(latData)[8] <- 'dPMI_lat'
 names(radData)[4] <- 'Free_rad'
 names(radData)[5] <- 'Perip_rad'
 names(radData)[6] <- 'PMI_rad'
+names(radData)[8] <- 'dPMI_rad'
 allDat <- merge(latData, radData, by = c('PPT', 'GRP', 'SIDE'), all = TRUE)
-allDat <- allDat[c(1:5, 8:9, 6, 10) ]
+allDat <- allDat[c(1:5, 9:10, 6, 8, 11, 13) ]
 
 ###### TVA data ######
 # ranaming to match reaching data-frame
 names(TVAData)[2] <- 'PPT'
-TVAData <- TVAData[c(2:7)]
+TVAData <- TVAData[c(2:3,4:8)]
 # merge with allDat
 allDat <- merge(allDat, TVAData, by = c('PPT', 'GRP'), all = TRUE)
 
