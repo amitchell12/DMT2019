@@ -23,7 +23,7 @@ radData_dir <- read.csv('radial-reaching_dPMI.csv')
 #TVApath <- radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA'
 TVApath <- 'S:/groups/DMT/analysis/TVA/'
 setwd(TVApath)
-TVAData <- read.csv('TVA_values.csv')
+TVAData <- read.csv('tva_values.csv')
 
 # making sure all matrices are the same
 names(latData)[1] <- 'PPT'

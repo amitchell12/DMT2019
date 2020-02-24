@@ -79,7 +79,7 @@ tva_values$SUB <- factor(tva_values$SUB)
 ##### think about removing data with SPD > 0
 # have a chat with rob about this - save current data-set
 # placing group higher up
-tva_values <- tva_values[, c(1,2,14:15,3:13)] ##### check this order with new 'site' column
+tva_values <- tva_values[, c(1,2,14:16,3:13)] ##### check this order with new 'site' column
 
 #adding processing speed
 #adding mu to ExpDurc6 and c7
