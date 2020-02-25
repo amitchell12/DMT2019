@@ -58,6 +58,7 @@ for (file in filenames){
 
 # removing df (subject number = 300)
 res <- res[res$subject_nr != 300, ]
+res <- res[res$subject_nr != 500, ]
 res <- res[res$land_x > -700, ]
 
 # adding key details to data-frame

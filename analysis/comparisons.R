@@ -82,8 +82,8 @@ allDat <- allDat[c(1:5, 9:10, 6, 8, 11, 13) ]
 
 ###### TVA data ######
 # ranaming to match reaching data-frame
-names(TVAData)[2] <- 'PPT'
-TVAData <- TVAData[c(2:3,4:8)]
+names(TVAData)[1] <- 'PPT'
+TVAData <- TVAData[c(1,3,4:8)]
 # merge with allDat
 allDat <- merge(allDat, TVAData, by = c('PPT', 'GRP'), all = TRUE)
 
