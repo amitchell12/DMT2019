@@ -8,7 +8,7 @@
 
 %% Extracting data
 dataDir = 'S:\groups\DMT\data\fixedt0';
-anaDir = 'S:\groups\DMT\data\fixedt0';
+anaDir = 'S:\groups\DMT\analysis\TVA';
 cd(dataDir)
 files = dir(fullfile(dataDir, 'subject*.dat'));
 
@@ -23,12 +23,12 @@ for i = 1:length(files)
     % need to include the 'STD' [5 6] for masked conditions
     tvadata = tvaloader(files(i).name, 'STD', [6 7]);
     % tva report on data
-    tvareport(tvadata) %leave open to view
+    	
     
     %% Fitting model
-    [theta, tvamodel, tvadata, df, ~, theta_fix] = tvafit(tvadata, [], 'FREE');
+    [theta, tvamodel, tvadata, df] = tvafit(tvadata, [], 'FREE');
     %see the fitted values
-    tvareport(tvadata, tvamodel, theta, theta_fix);
+    tvareport(tvadata, tvamodel, theta);
     
     %% Plotting
     [tt, oo, pp, cc] = tvaplot(tvadata, tvamodel, theta);
@@ -53,7 +53,7 @@ for i = 1:length(files)
     
     %% Saving individual data
     cd([anaDir filesep 'fits'])
-    save fit theta tvamodel tvadata theta_fix
+    save fit theta tvamodel tvadata 
     datafilename = sprintf('%s_%s_fits.txt', participantID, filename);
     tvaexport(datafilename, 'DIR', 'fit.mat');
 end
