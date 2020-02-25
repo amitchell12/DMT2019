@@ -58,6 +58,7 @@ for (file in filenames){
 
 # removing df (subject number = 300)
 res <- res[res$subject_nr != 300, ]
+res <- res[res$land_x > -700, ]
 
 # adding key details to data-frame
 res$task <- factor(res$task) # task = factor
@@ -110,22 +111,14 @@ ggplot(res) + geom_point(aes(x = targ_x, y = targ_y), shape = 4, size = 3) +
   facet_wrap(. ~subject_nr*task) -> allPP_plot
 
 ######### data aggregation + plotting ############
-res_medians <- aggregate(AEdeg ~ ecc * side * task * subject_nr * site * group, median, data = res)
+res_medians <- aggregate(AEdeg ~ ecc * side * task * subject_nr * group, median, data = res)
 colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed' #change name to be more logical
-res_means <- aggregate(AEmed ~ task * side * subject_nr * site * group, mean, data = res_medians)
+res_means <- aggregate(AEmed ~ task * side * subject_nr * group, mean, data = res_medians)
 colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
 # save data
-write.csv(res_medians, 'lateral-reaching_medians.csv', row.names = FALSE)
+write.csv(res_medians, 'open-loop_medians.csv', row.names = FALSE)
 # to calculate PMI need to cast by task....
-PMIdata <- dcast(res_means, subject_nr+group+site+side ~ task) #different data-frame
-PMIdata$PMI <- PMIdata$periph - PMIdata$free
-
-# changing levels of PMI for plotting
-PMIdata$side <- factor(PMIdata$side, levels = c('left', 'right'))
-levels(PMIdata$side) <- c('Left', 'Right')
-levels(PMIdata$group) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
-levels(PMIdata$site) <- c('UOE', 'UEA')
-write.csv(PMIdata, 'lateral-reaching_PMI.csv', row.names = FALSE)
+PMIdata <- dcast(res_means, subject_nr+group+side ~ task) #different data-frame
 
 
 # changing levels of PMI for plotting
@@ -137,37 +130,17 @@ levels(res_means$site) <- c('UOE', 'UEA')
 write.csv(res_means, 'lateral-reaching_means.csv', row.names = FALSE)
 
 # mean plot 
-ggplot(res_means, aes(x = side, y = AEmean, colour = site)) +
+ggplot(res_means, aes(x = task, y = AEmean)) +
   geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(task), rows = vars(group)) + ylim(-.5,8) +
+  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) + ylim(-.5,8) +
   labs(x = 'Side', y = 'Mean AE (deg)', element_text(size = 12)) +
-  scale_colour_manual(values = c('grey50', 'black')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 8)) -> meansPlot
 
 ggsave('allmeans_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-# isolating peripheral data (for other plotting)
-res_periph <- res_means[res_means$task == 'Peripheral' ,]
-
-# PMI plot 
-ggplot(PMIdata, aes(x = side, y = PMI, colour = site), position = position_dodge(.2)) + 
-  geom_point(shape = 1, size = 4) +
-  geom_line(aes(group = subject_nr), alpha = .5, size = .8) +
-  scale_colour_manual(values = c('grey50', 'black')) +
-  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
-  ylim(-.5,10) + labs(title = 'Lateral Reaching', x = 'Side', y = 'PMI (deg)', 
-                     element_text(size = 14)) +
-  facet_wrap(~group) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
-                     strip.text.x = element_text(size = 12)) -> PMIplot
-
-ggsave('lateralPMI.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 7, height = 4, path = anaPath)
-
+######## not really needed rn
 # summary
 meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('group', 'side'),
                        na.rm = TRUE)
