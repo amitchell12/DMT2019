@@ -329,7 +329,7 @@ ggsave('lateralPMI-filtered.png', plot = last_plot(), device = NULL, dpi = 300,
 
 meanFPMI <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('group', 'side'),
                       na.rm = TRUE)
-meanFPMI_all <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('group', 'side'),
+meanFPMI_all <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('group'),
                           na.rm = TRUE)
 
 
