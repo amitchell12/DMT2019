@@ -58,6 +58,7 @@ for (file in filenames){
 
 # removing df (subject number = 300)
 res <- res[res$subject_nr != 300, ]
+res <- res[res$subject_nr != 500, ]
 
 # adding key details to data-frame
 res$task <- factor(res$task) # task = factor
@@ -259,7 +260,7 @@ meandPMI <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('group', 'site'
 meandPMI_all <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('group', 'site', 'side'),
                          na.rm = TRUE)
 
-##### outlier calculation, for controls only
+##### outlier calculation, for controls only ######
 controlData <- PMIdata[PMIdata$subject_nr < 200, ]
 
 # median values for each side
@@ -276,9 +277,10 @@ controlData <- merge(controlData, tmp)
 # adjusted z-score from these values
 controlData$az <- (controlData$PMI - controlData$med)/(controlData$MAD * 1.4826)
 controlData$z <- scale(controlData$PMI)
+controlData$subject_nr <- factor(controlData$subject_nr)
 
 plot_name = 'adjustedZ.png'
-AZplot <- ggplot(all_PMI, aes(x = side, y = az, colour = sub)) +
+AZplot <- ggplot(controlData, aes(x = side, y = az, colour = subject_nr)) +
   geom_point(size = 3, position = position_dodge(.1)) + ylim(-3,6) + 
   stat_summary(aes(y = az, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', group = 1) + 
@@ -287,6 +289,48 @@ AZplot <- ggplot(all_PMI, aes(x = side, y = az, colour = sub)) +
 
 ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 5, height = 6.5, path = anaPath)
+
+####### outlier removal #######
+# find controls with az > 2.5 and flag-up in PMI data-set
+for (l in 1:length(controlData$subject_nr)){
+  if (isTRUE(controlData$az[l] > '2.5')){
+    controlData$outlier[l] = 1
+  }
+  else 
+    controlData$outlier[l] = 0
+}
+#reorder control data
+controlData <- controlData[order(controlData$subject_nr), ]
+
+# adding to PMI data set, then removing
+PMIfilter <- merge(PMIdata, controlData, all = TRUE)
+PMIfilter <- PMIfilter[, c(1:7,13)]
+## removing outliers
+for (l in 49:length(PMIfilter$outlier)){
+  PMIfilter$outlier[l] = 0
+}
+PMIfilter <- PMIfilter[PMIfilter$outlier < 1, ]
+
+### PLOT FILTERED PMI DATA
+ggplot(PMIfilter, aes(x = side, y = PMI, colour = site), position = position_dodge(.2)) + 
+  geom_point(shape = 1, size = 4) +
+  geom_line(aes(group = subject_nr), alpha = .5, size = .8) +
+  scale_colour_manual(values = c('grey50', 'black')) +
+  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
+  ylim(-.5,10) + labs(title = 'Lateral Reaching', x = 'Side', y = 'PMI (deg)', 
+                      element_text(size = 14)) +
+  facet_wrap(~group) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
+                     strip.text.x = element_text(size = 12)) -> PMIf_plot
+
+ggsave('lateralPMI-filtered.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, width = 7, height = 4, path = anaPath)
+
+meanFPMI <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('group', 'side'),
+                      na.rm = TRUE)
+meanFPMI_all <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('group', 'side'),
+                          na.rm = TRUE)
 
 
 ### analysis of response times
@@ -378,27 +422,3 @@ ggscatter(corrData, x = "pAE", y = "offsetRT", add = 'reg.line', conf.int = TRUE
 
 
 ########### next steps: comparing patients to controls
-
-
-
-
-### isolating P12
-for (i in 1:length(res_means$task)){ 
-  if (isTRUE(res_means$subject_nr[i] == '212')){ 
-    res_means$group <- as.numeric(res_means$group)
-    res_means$group[i] = 3}
-  }
-res_means$group <- factor(res_means$group)
-
-## plotting
-ggplot(res_means, aes(x = side, y = AEmean, colour = group)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(task), rows = vars(group)) + ylim(-.5,8) +
-  labs(x = 'Side', y = 'Mean AE (deg)', element_text(size = 12)) +
-  scale_colour_manual(values = c('black', 'grey50', 'red')) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8)) -> meansPlot
-
-
-## PMI
