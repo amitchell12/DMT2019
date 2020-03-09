@@ -159,7 +159,7 @@ ggplot(PMIdata, aes(x = side, y = PMI, colour = site), position = position_dodge
   scale_colour_manual(values = c('grey50', 'black')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
-  ylim(-.5,10) + labs(title = 'Lateral Reaching', x = 'Side', y = 'PMI (deg)', 
+  ylim(-.5,10) + labs(title = '', x = 'Side', y = 'Reaching error (deg)', 
                      element_text(size = 14)) +
   facet_wrap(~group) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
