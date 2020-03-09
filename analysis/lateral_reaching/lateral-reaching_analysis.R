@@ -318,7 +318,7 @@ ggplot(PMIfilter, aes(x = side, y = PMI, colour = site), position = position_dod
   scale_colour_manual(values = c('grey50', 'black')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
-  ylim(-.5,10) + labs(title = 'Lateral Reaching', x = 'Side', y = 'PMI (deg)', 
+  ylim(-.5,10) + labs(title = 'Lateral Reaching', x = 'Side', y = 'Reaching error (deg)', 
                       element_text(size = 14)) +
   facet_wrap(~group) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
@@ -331,6 +331,23 @@ meanFPMI <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('group', 'side
                       na.rm = TRUE)
 meanFPMI_all <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('group'),
                           na.rm = TRUE)
+
+#average across side
+PMIfilter_av <- aggregate(PMI ~ subject_nr * site * group, mean, data = PMIfilter)
+jitter <- position_jitter(width = 0.1, height = 0.1)
+
+ggplot(PMIfilter_av, aes(x = group, y = PMI)) + 
+  geom_point(position = jitter, shape = 21, size = 2,
+             colour = 'grey30',  fill = 'grey60') +
+  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  ylim(-.5,7) + labs(title = '', x = '', y = 'Reaching error (deg)', 
+                      element_text(size = 8)) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 8)) -> PMIf_plot
+
+ggsave('lateralPMI-filtered-av.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, width = 3, height = 3, path = anaPath)
 
 
 ### analysis of response times

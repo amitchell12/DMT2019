@@ -127,14 +127,15 @@ ggsave('LAT-C_side.png', plot = last_plot(), device = NULL, dpi = 300,
 
 # collapsed across side
 CLAT <- aggregate(PMI_lat ~ C * PPT * GRP, mean, data = corr_allDat)
-ggscatter(CLAT, x = 'PMI_lat', y = 'C', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') + 
+ggscatter(CLAT, x = 'PMI_lat', y = 'C', color = 'grey50', 
+          add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
+          cor.coef = FALSE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') + 
   facet_wrap(~GRP) + 
-  ylab('Processing speed (items/s)') + xlab('Lateral reaching PMI (deg)') +
-  theme(text = element_text(size = 10))
+  ylab('Processing speed (items/s)') + xlab('Lateral reaching error (deg)') +
+  theme(text = element_text(size = 6)) + theme_bw() -> cLAT_plot
 
 ggsave('LAT-C_grp.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+       width = 3.5, height = 3, path = anaPath)
 
 ### correlate K and radial reaching
 ggscatter(corr_allDat, x = 'PMI_rad', y = 'K', add = 'reg.line', conf.int = TRUE,
