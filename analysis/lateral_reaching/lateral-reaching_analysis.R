@@ -10,11 +10,11 @@ library(ggpubr)
 
 #set working directory to where data is
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on pc
-dataPath <- 'S:/groups/DMT/data'
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+#dataPath <- 'S:/groups/DMT/data'
+#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 ########### variable info ###########
@@ -75,6 +75,9 @@ for (i in 1:length(res$group)){
   if (isTRUE(res$group[i] == "4")){
     res$group[i] = 2
   }
+  if (isTRUE(res$group[i] == "5")){
+    res$group[i] = 2
+  }
 }
 for (i in 1:length(res$site)){
   if (isTRUE(res$site[i] == "2")){
@@ -125,7 +128,7 @@ PMIdata$PMI <- PMIdata$periph - PMIdata$free
 PMIdata$side <- factor(PMIdata$side, levels = c('left', 'right'))
 levels(PMIdata$side) <- c('Left', 'Right')
 levels(PMIdata$group) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
-levels(PMIdata$site) <- c('UOE', 'UEA')
+levels(PMIdata$site) <- c('UOE', 'UEA', 'PCA')
 write.csv(PMIdata, 'lateral-reaching_PMI.csv', row.names = FALSE)
 
 
@@ -134,7 +137,7 @@ res_means$side <- factor(res_means$side, levels = c('left', 'right'))
 levels(res_means$side) <- c('Left', 'Right')
 levels(res_means$group) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
 levels(res_means$task) <- c('Peripheral', 'Free')
-levels(res_means$site) <- c('UOE', 'UEA')
+levels(res_means$site) <- c('UOE', 'UEA', 'PCA')
 write.csv(res_means, 'lateral-reaching_means.csv', row.names = FALSE)
 
 # mean plot 
@@ -336,9 +339,9 @@ meanFPMI_all <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('group'),
 PMIfilter_av <- aggregate(PMI ~ subject_nr * site * group, mean, data = PMIfilter)
 jitter <- position_jitter(width = 0.1, height = 0.1)
 
-ggplot(PMIfilter_av, aes(x = group, y = PMI)) + 
-  geom_point(position = jitter, shape = 21, size = 2,
-             colour = 'grey30',  fill = 'grey60') +
+ggplot(PMIfilter_av, aes(x = group, y = PMI, colour = site)) + 
+  geom_point(position = jitter, shape = 21, size = 3) +
+  scale_colour_manual(values = c('grey40', 'grey40', 'red')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   ylim(-.5,7) + labs(title = '', x = '', y = 'Reaching error (deg)', 
