@@ -4,18 +4,18 @@
 ###########################################################################################################
 
 #creating folder to sae data in
-dataPath <- ("S:/groups/DMT/data/") # Enter path to data
-wPath <- "M:/GitHub/DMT2019/analysis/TVA/"
+#dataPath <- ("S:/groups/DMT/data/") # Enter path to data
 # Enter directory to save converted files to
-setwd(dataPath)
-dir.create("formatted_TVA")
-outputPath <- ("S:/groups/DMT/data/formatted_TVA/")
-#on mac
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
-#wPath <- '/Users/alexandramitchell/Documents/git/DMT2019/analysis/TVA/'
+#wPath <- "M:/GitHub/DMT2019/analysis/TVA/"
 #setwd(dataPath)
-#dir.create('formatted_TVA')
-#outputPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/formatted_TVA/'
+#dir.create("formatted_TVA")
+#outputPath <- ("S:/groups/DMT/data/formatted_TVA/")
+#on mac
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
+wPath <- '/Users/alexandramitchell/Documents/git/DMT2019/analysis/TVA/'
+setwd(dataPath)
+dir.create('formatted_TVA')
+outputPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/formatted_TVA/'
 #back to script WD
 setwd(wPath)
 
@@ -30,7 +30,7 @@ source("libTVA.r")
 tva.files <- list.files(dataPath, ".csv", recursive = TRUE)
 # finding those that just have 'TVA' in the title
 
-
+setwd(dataPath)
 for(i in tva.files) {
   if (isTRUE(substr(basename(i), 16, 16)=="w")){
     i.tva <- read.csv(paste0(dataPath, tva.files[which(tva.files == i)]))
