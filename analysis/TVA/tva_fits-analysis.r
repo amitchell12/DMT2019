@@ -4,13 +4,11 @@
 
 ##### file info #####
 #on mac
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/formatted_TVA'
-#fitPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/fits/'
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/'
+fitPath <- '/Users/Alex/Documents/DMT/analysis/TVA/fits/'
+anaPath <- '/Users/Alex/Documents/DMT/analysis/TVA/'
 # on pc
-fitPath <- ("S:/groups/DMT/analysis/TVA/fits/") # Enter path to data
-dataPath <- 'S:/groups/DMT/data/formatted_TVA/'
-anaPath <- "S:/groups/DMT/analysis/TVA/"
+#fitPath <- ("S:/groups/DMT/analysis/TVA/fits/") # Enter path to data
+#anaPath <- "S:/groups/DMT/analysis/TVA/"
 
 # Enter directory to save converted files to
 setwd(fitPath)
@@ -76,7 +74,8 @@ levels(tva_values$GRP) <- c('Control', 'Patient')
 levels(tva_values$SITE) <- c('UOE', 'UEA')
 tva_values$SUB <- factor(tva_values$SUB)
 
-##### think about removing data with SPD > 0
+# remove data with SPD > 0
+tva_values <- tva_values[tva_values$SPD == 0 ,]
 # have a chat with rob about this - save current data-set
 # placing group higher up
 tva_values <- tva_values[, c(1,2,14:16,3:13)] ##### check this order with new 'site' column
@@ -140,19 +139,6 @@ write.csv(tva_dat, 'tva_fits.csv', row.names = FALSE)
 
 # plotting predicted duration for each participant
 # seperate plots for every 4 participants
-###### redo these so you have document for all participants
-# 101-104=6
-ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
-                      strip.position = 'top', page = 1) +
-  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
-       element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 8))
-
-ggsave('fits1.pdf', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
 # 107-112
 ggplot(tva_dat, aes(x = DUR, y = MS)) + 
   geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
@@ -163,30 +149,6 @@ ggplot(tva_dat, aes(x = DUR, y = MS)) +
   theme(legend.position = 'none', text = element_text(size = 8))
 
 ggsave('fits2.pdf', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-# 113-118
-ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
-                      strip.position = 'top', page = 3) +
-  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
-       element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 8))
-
-ggsave('fits3.pdf', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-# 119-124
-ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
-                      strip.position = 'top', page = 4) +
-  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
-       element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 8))
-
-ggsave('fits4.pdf', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 # 201-207
@@ -201,18 +163,6 @@ ggplot(tva_dat, aes(x = DUR, y = MS)) +
 ggsave('fits5.pdf', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-# 208-302
-ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
-                      strip.position = 'top', page = 6) +
-  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
-       element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 8))
-
-ggsave('fits6.pdf', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
 # 304-309
 ggplot(tva_dat, aes(x = DUR, y = MS)) + 
   geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
@@ -223,18 +173,6 @@ ggplot(tva_dat, aes(x = DUR, y = MS)) +
   theme(legend.position = 'none', text = element_text(size = 8))
 
 ggsave('fits7.pdf', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-# 312-316
-ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
-                      strip.position = 'top', page = 8) +
-  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
-       element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 8))
-
-ggsave('fits8.pdf', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 ## average predicted duration for group
@@ -279,72 +217,4 @@ ggplot(tva_values, aes(x = GRP, y = t0)) +
 
 ggsave('perceptual-thresh.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
-
-##### ECC-3 #####
-setwd(fitPath)
-tva_values_ecc3 <- read.csv(text = 'SUB,COND,K,C,T0,MU')
-# key values from .csv files - ECC-3
-for (file in tva_filelist){
-  if (isTRUE(str_sub(basename(file), -10, -10)=='3')){
-    tmp <- read.csv(file)[, c(2,15,10,13)]
-    tmp$COND <- '3'
-    tmp$SUB <- substr(basename(file), 8, 10)
-    tmp <- tmp[, c(6,5,1:4)]
-    
-    tva_values_ecc3 <- rbind(tva_values_ecc3, tmp)
-  }
-  
-}
-
-# remove spurious result (C = 1000, no fit)
-tva_values_ecc3 <- tva_values_ecc3[tva_values_ecc3$C < 1000 ,]
-
-##### ECC-9 #####
-tva_values_ecc9 <- read.csv(text = 'SUB,COND,K,C,T0,MU')
-# key values from .csv files - ECC-3
-for (file in tva_filelist){
-  if (isTRUE(str_sub(basename(file), -10, -10)=='9')){
-    tmp <- read.csv(file)[, c(2,15,10,13)]
-    tmp$COND <- '9'
-    tmp$SUB <- substr(basename(file), 8, 10)
-    tmp <- tmp[, c(6,5,1:4)]
-    
-    tva_values_ecc9 <- rbind(tva_values_ecc9, tmp)
-  }
-  
-}
-
-#r-bind both
-tva_values_all <- rbind(tva_values_ecc3, tva_values_ecc9)
-
-tva_values_all$GRP <- factor(substr(tva_values_all$SUB, 1, 1))
-for (i in 1:length(tva_values_all$GRP)){
-  if (isTRUE(tva_values_all$GRP[i] == '3')){
-    tva_values_all$GRP[i] = 1
-  }
-}
-tva_values_all$GRP <- factor(tva_values_all$GRP)
-tva_values_all
-levels(tva_values_all$GRP) <- c('Control', 'Patient')
-tva_values_all$SUB <- factor(tva_values_all$SUB)
-names(tva_values_all)[5] <- 't0'
-
-#save tva-values
-setwd(anaPath)
-write.csv(tva_values_all, 'tva_data_ECC.csv', row.names = FALSE)
-
-##### PLOTTING ######
-# processing speed
-ggplot(tva_values_all, aes(x = COND, y = C, colour = GRP)) + 
-  geom_point(aes(colour = GRP), shape = 1, size = 2) + 
-  scale_color_manual(values = c('black', 'grey50')) +
-  geom_line(aes(group = SUB), size = 0.5, alpha = 0.5) +
-  facet_wrap(~GRP) +
-  labs(title = 'Processing speed (C)', x = 'Eccentricity (deg)', y = 'C (item/s)', 
-       element_text(size = 12)) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 12))
-
-ggsave('ECCprocessing-speed.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
 
