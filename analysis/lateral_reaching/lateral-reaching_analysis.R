@@ -118,6 +118,17 @@ res_medians <- aggregate(AEdeg ~ ecc * side * task * subject_nr * site * group, 
 colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed' #change name to be more logical
 res_means <- aggregate(AEmed ~ task * side * subject_nr * site * group, mean, data = res_medians)
 colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
+# add demographic information to this data
+serwd(dataPath)
+patient_demos <- read.csv('patient_demographics.csv') #loading patient demographics
+control_demos <- read.csv('control_demographics.csv') #loading control demos
+#extracting ACE data into seperate data-frame
+ACEscores <- patient_demos[ ,c(1, 8:13)]
+#isolating patient demographic information to bind with control
+patient_demos <- patient_demos[, c(1:6)]
+demo <- rbind(control_demos, patient_demos)
+#remove patient 409 - no lateral reaching data here
+
 # save data
 write.csv(res_medians, 'lateral-reaching_medians.csv', row.names = FALSE)
 # to calculate PMI need to cast by task....
