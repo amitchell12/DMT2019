@@ -10,8 +10,11 @@ library(ggpubr)
 
 #set working directory to where data is
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+# on desktop mac
+anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
+dataPath <- '/Users/Alex/Documents/DMT/data'
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
 #anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
@@ -75,9 +78,6 @@ for (i in 1:length(res$group)){
   if (isTRUE(res$group[i] == "4")){
     res$group[i] = 2
   }
-  if (isTRUE(res$group[i] == "5")){
-    res$group[i] = 2
-  }
 }
 for (i in 1:length(res$site)){
   if (isTRUE(res$site[i] == "2")){
@@ -111,7 +111,7 @@ write.csv(res, "lateral-reaching_all.csv", row.names = FALSE)
 
 ggplot(res) + geom_point(aes(x = targ_x, y = targ_y), shape = 4, size = 3) +
   geom_point(aes(x = land_x, y = land_y, colour = ecc), shape = 1, size = 2) +
-  facet_wrap(. ~subject_nr*task) -> allPP_plot
+  facet_wrap(. ~subject_nr*task) 
 
 ######### data aggregation + plotting ############
 res_medians <- aggregate(AEdeg ~ ecc * side * task * subject_nr * site * group, median, data = res)
