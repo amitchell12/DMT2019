@@ -159,7 +159,7 @@ write.csv(res_means, 'lateral-reaching_means.csv', row.names = FALSE)
 ggplot(res_means, aes(x = side, y = AEmean, colour = site)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(task), rows = vars(group)) + ylim(-.5,8) +
+  facet_grid(cols = vars(task), rows = vars(diagnosis)) + ylim(-.5,8) +
   labs(x = 'Side', y = 'Mean AE (deg)', element_text(size = 12)) +
   scale_colour_manual(values = c('grey50', 'black')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
@@ -180,7 +180,7 @@ ggplot(PMIdata, aes(x = side, y = PMI, colour = site), position = position_dodge
                geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
   ylim(-.5,10) + labs(title = '', x = 'Side', y = 'Reaching error (deg)', 
                      element_text(size = 14)) +
-  facet_wrap(~group) +
+  facet_wrap(~diagnosis) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
                      strip.text.x = element_text(size = 12)) -> PMIplot
 
@@ -188,12 +188,10 @@ ggsave('lateralPMI.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, width = 7, height = 4, path = anaPath)
 
 # summary
-meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('group', 'side'),
+meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('diagnosis', 'side'),
                        na.rm = TRUE)
-meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('group'),
+meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('diagnosis'),
                          na.rm = TRUE)
-mean_periph_all <- summarySE(res_periph, measurevar = 'AEmean', groupvar = c('group'),
-                             na.rm = TRUE)
 
 # plot by eccentricity
 # controls
@@ -231,6 +229,7 @@ ggsave('patient_ecc.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, path = anaPath)
 
 ###### directional error calc ######
+### no diagnosis information here - probs need to add
 dir_medians <- aggregate(xerr_deg ~ ecc * side * task * subject_nr * site * group, 
                          median, data = res)
 colnames(dir_medians)[colnames(dir_medians)=='xerr_deg'] <- 'xerr_med' #change name to be more logical
