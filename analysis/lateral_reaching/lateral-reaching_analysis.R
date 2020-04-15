@@ -321,7 +321,7 @@ controlData <- controlData[order(controlData$subject_nr), ]
 
 # adding to PMI data set, then removing
 PMIfilter <- merge(PMIdata, controlData, all = TRUE)
-PMIfilter <- PMIfilter[, c(1:7,13)]
+PMIfilter <- PMIfilter[, c(1:8,14)]
 ## removing outliers
 for (l in 49:length(PMIfilter$outlier)){
   PMIfilter$outlier[l] = 0
@@ -337,25 +337,25 @@ ggplot(PMIfilter, aes(x = side, y = PMI, colour = site), position = position_dod
                geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
   ylim(-.5,10) + labs(title = 'Lateral Reaching', x = 'Side', y = 'Reaching error (deg)', 
                       element_text(size = 14)) +
-  facet_wrap(~group) +
+  facet_wrap(~diagnosis) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
                      strip.text.x = element_text(size = 12)) -> PMIf_plot
 
 ggsave('lateralPMI-filtered.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 7, height = 4, path = anaPath)
 
-meanFPMI <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('group', 'side'),
+meanFPMI <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('diagnosis', 'side'),
                       na.rm = TRUE)
-meanFPMI_all <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('group'),
+meanFPMI_all <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('diagnosis'),
                           na.rm = TRUE)
 
 #average across side
-PMIfilter_av <- aggregate(PMI ~ subject_nr * site * group, mean, data = PMIfilter)
+PMIfilter_av <- aggregate(PMI ~ subject_nr * site * diagnosis, mean, data = PMIfilter)
 jitter <- position_jitter(width = 0.1, height = 0.1)
 
-ggplot(PMIfilter_av, aes(x = group, y = PMI, colour = site)) + 
+ggplot(PMIfilter_av, aes(x = diagnosis, y = PMI, colour = site)) + 
   geom_point(position = jitter, shape = 21, size = 3) +
-  scale_colour_manual(values = c('grey40', 'grey40', 'red')) +
+  scale_colour_manual(values = c('grey40', 'black')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   ylim(-.5,7) + labs(title = '', x = '', y = 'Reaching error (deg)', 
@@ -383,13 +383,17 @@ levels(res_offset_means$group) <- c('Control', 'Patient')
 levels(res_reach_means$group) <- c('Control', 'Patient')
 levels(res_offset_means$site) <- c('UOE', 'UEA')
 levels(res_reach_means$site) <- c('UOE', 'UEA')
+#adding diagnosis to this info
+res_offset_means <- merge(demo, res_offset_means)
+res_reach_means <- merge(demo, res_reach_means)
+
 
 # plotting means
 # offset
 ggplot(res_offset_means, aes(x = side, y = time_touch_offset, colour = site)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(task), rows = vars(group)) + ylim(0, 1000) +
+  facet_grid(cols = vars(task), rows = vars(diagnosis)) + ylim(0, 1000) +
   labs(title = 'Touch Offset', x = 'Side', 
        y = 'Touch offset RT (ms)', element_text(size = 12)) +
   scale_colour_manual(values = c('grey50', 'black')) +
@@ -403,56 +407,56 @@ ggsave('touchoffset_meansPlot.png', plot = last_plot(), device = NULL, dpi = 300
 ggplot(res_reach_means, aes(x = side, y = reach_duration, colour = site)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(task), rows = vars(group)) + ylim(0, 1000) +
+  facet_grid(cols = vars(task), rows = vars(diagnosis)) + ylim(0, 1000) +
   labs(title = 'Reach Duration', x = 'Side', 
        y = 'Reach duration (ms)', element_text(size = 12)) +
   scale_colour_manual(values = c('grey50', 'black')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 10)) -> reachPlot
 
-ggsave('reachDur_meansPlot.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('reachDur.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 5, height = 6.5, path = anaPath)
 
 #means of both sides
-res_reach_meansall <- aggregate(reach_duration~task * subject_nr * site * group, mean, 
+res_reach_meansall <- aggregate(reach_duration~task * subject_nr * site * diagnosis, mean, 
                                 data= res_reach_means) 
 res_reach_meansall$task <- with(res_reach_meansall, factor(task, levels = rev(levels(task))))
 
 ggplot(res_reach_meansall, aes(x = task, y = reach_duration, colour = site)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_wrap(~group) + ylim(0, 1000) +
+  facet_wrap(~diagnosis) + ylim(0, 1000) +
   labs(title = 'Lateral reaching', x = 'Task', 
        y = 'Reach duration (ms)', element_text(size = 12)) +
   scale_colour_manual(values = c('grey50', 'black')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 10)) -> reachPlot
 
-ggsave('reachDur_meansPlot.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('reachDur_means.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 
 # correlating peripheral reach duration with PMI
 # cast 
-rt_offset <- dcast(res_offset_means, subject_nr+group+site+side ~ task)
-rt_reach <- dcast(res_reach_means, subject_nr+group+site+side ~ task) #different data-frame
+rt_offset <- dcast(res_offset_means, subject_nr+diagnosis+site+side ~ task)
+rt_reach <- dcast(res_reach_means, subject_nr+diagnosis+site+side ~ task) #different data-frame
 #correlations
 corrData <- data.frame(PMIdata$PMI)
 colnames(corrData)[colnames(corrData) == 'PMIdata.PMI'] <- 'PMI' #renaming
 corrData$pAE <- PMIdata$periph
 corrData$reachRT <- rt_reach$periph
 corrData$offsetRT <- rt_offset$periph
-corrData$group <- PMIdata$group
+corrData$diagnosis <- PMIdata$diagnosis
 corrData$side <- PMIdata$side
 
 # reach dur plot
 ggscatter(corrData, x = "pAE", y = "reachRT", add = 'reg.line', conf.int = TRUE,
           cor.coef = TRUE, cor.method = 'pearson') + 
-  facet_grid(cols = vars(side), rows = vars(group))
+  facet_grid(cols = vars(side), rows = vars(diagnosis))
 # touch offset plot
 ggscatter(corrData, x = "pAE", y = "offsetRT", add = 'reg.line', conf.int = TRUE,
           cor.coef = TRUE, cor.method = 'pearson') + 
-  facet_grid(cols = vars(side), rows = vars(group))
+  facet_grid(cols = vars(side), rows = vars(diagnosis))
 
 
 ########### next steps: comparing patients to controls
