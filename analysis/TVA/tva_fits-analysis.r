@@ -3,9 +3,6 @@
 ## AG.Mitchell 06.12.2019 ##
 
 ##### file info #####
-#on mac
-fitPath <- '/Users/Alex/Documents/DMT/analysis/TVA/fits/'
-anaPath <- '/Users/Alex/Documents/DMT/analysis/TVA/'
 # on pc
 #fitPath <- ("S:/groups/DMT/analysis/TVA/fits/") # Enter path to data
 #anaPath <- "S:/groups/DMT/analysis/TVA/"
@@ -63,22 +60,35 @@ for (i in 1:length(tva_values$GRP)){
     tva_values$GRP[i] = 1
   }
 }
+for (i in 1:length(tva_values$GRP)){
+  if (isTRUE(tva_values$GRP[i] == '4')){
+    tva_values$GRP[i] = 2
+  }
+}
 for (i in 1:length(tva_values$SITE)){
   if (isTRUE(tva_values$SITE[i] == '2')){
     tva_values$SITE[i] = 1
   }
+  if (isTRUE(tva_values$SITE[i] == '3')){
+    tva_values$SITE[i] = 2
+  }
+  if (isTRUE(tva_values$SITE[i] == '4')){
+    tva_values$SITE[i] = 2
+  }
 }
+
+
 tva_values$GRP <- factor(tva_values$GRP)
 tva_values$SITE <- factor(tva_values$SITE)
 levels(tva_values$GRP) <- c('Control', 'Patient')
 levels(tva_values$SITE) <- c('UOE', 'UEA')
 tva_values$SUB <- factor(tva_values$SUB)
 
+
 # remove data with SPD > 0
 tva_values <- tva_values[tva_values$SPD == 0 ,]
 # have a chat with rob about this - save current data-set
-# placing group higher up
-tva_values <- tva_values[, c(1,2,14:16,3:13)] ##### check this order with new 'site' column
+
 
 #adding processing speed
 #adding mu to ExpDurc6 and c7

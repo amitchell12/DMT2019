@@ -7,8 +7,12 @@
 % speed (k)
 
 %% Extracting data
-dataDir = '/Users/Alex/Documents/DMT/data/formatted_TVA';
-anaDir = '/Users/Alex/Documents/DMT/analysis/TVA/fits';
+% on mac
+%dataDir = '/Users/Alex/Documents/DMT/data/formatted_TVA';
+%anaDir = '/Users/Alex/Documents/DMT/analysis/TVA/fits';
+% on desktop
+dataDir = 'S:\groups\DMT\data\formatted_TVA';
+anaDir = 'S:\groups\DMT\analysis\TVA';
 cd(dataDir)
 files = dir(fullfile(dataDir, 'subject*.dat'));
 
