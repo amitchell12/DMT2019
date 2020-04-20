@@ -70,7 +70,15 @@ for (i in 1:length(tva_values$SITE)){
   if (isTRUE(tva_values$SITE[i] == '2')){
     tva_values$SITE[i] = 1
   }
+  if (isTRUE(tva_values$SITE[i] == '3')){
+    tva_values$SITE[i] = 2
+  }
+  if (isTRUE(tva_values$SITE[i] == '4')){
+    tva_values$SITE[i] = 2
+  }
 }
+
+
 tva_values$GRP <- factor(tva_values$GRP)
 tva_values$SITE <- factor(tva_values$SITE)
 levels(tva_values$GRP) <- c('Control', 'Patient')
