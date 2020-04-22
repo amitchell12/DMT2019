@@ -4,12 +4,20 @@
 ###########################################################################################################
 
 #creating folder to sae data in
-dataPath <- ("S:/groups/DMT/data/") # Enter path to data
+##on mac
+dataPath <- ("/Users/Alex/Documents/DMT/data/") # Enter path to data
 # Enter directory to save converted files to
-wPath <- ("M:/GitHub/DMT2019/analysis/TVA/")
+wPath <- ("/Users/Alex/Documents/git/DMT2019/analysis/TVA/")
+outputPath <- ("/Users/Alex/Documents/DMT/data/")
+
+##on pc
+#dataPath <- ("S:/groups/DMT/data/")
+#wPath <- ("M:/GitHub/DMT2019/analysis/TVA/")
+#outputPath <- ("S:/groups/DMT/data/formatted_TVA/")
+
 setwd(dataPath)
 dir.create("formatted_TVA")
-outputPath <- ("S:/groups/DMT/data/formatted_TVA/")
+
 
 #back to script WD
 setwd(wPath)
@@ -20,7 +28,7 @@ if(readline("Have you removed all previously converted files? [y/n] ") == "n") {
   stop("Please delete or move the existing files.")
 }
 
-source("libTVA.r")
+source("libTVA_eccentricity.r")
 # listing all .csv files in data path
 tva.files <- list.files(dataPath, ".csv", recursive = TRUE)
 # finding those that just have 'TVA' in the title
@@ -49,6 +57,6 @@ tva_accuracies <- tva_accuracies[-c(1), ]
 boxplot(tva_accuracies$accuracy)
 summary(tva_accuracies$accuracy)
 # writing accuracy file
-anaPath = 'S:/groups/DMT/analysis/TVA'
+anaPath = '/Users/Alex/Documents/DMT/analysis/TVA/'
 setwd(anaPath)
 write.csv(tva_accuracies, 'TVAaccuracy.csv', row.names = FALSE)
