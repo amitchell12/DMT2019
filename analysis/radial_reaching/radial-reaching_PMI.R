@@ -163,6 +163,9 @@ controlData <- controlData[order(controlData$PPT), ]
 # adding to PMI data set, then removing
 PMIfilter <- merge(PMIdata, controlData, all = TRUE)
 PMIfilter <- PMIfilter[, c(1:7,14)]
+# save with outlier information
+write.csv(PMIfilter, 'radial-outliers.csv', row.names = FALSE)
+
 ## removing outliers
 for (l in 49:length(PMIfilter$outlier)){
   PMIfilter$outlier[l] = 0
@@ -191,12 +194,11 @@ meanFPMI_all <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('GRP'),
                           na.rm = TRUE)
 
 #average across side
-PMIfilter_av <- aggregate(PMI ~ subject_nr * site * diagnosis, mean, data = PMIfilter)
+PMIfilter_av <- aggregate(PMI ~ PPT * SITE * GRP, mean, data = PMIfilter)
 jitter <- position_jitter(width = 0.1, height = 0.1)
 
-ggplot(PMIfilter_av, aes(x = diagnosis, y = PMI, colour = site)) + 
+ggplot(PMIfilter_av, aes(x = GRP, y = PMI)) + 
   geom_point(position = jitter, shape = 21, size = 3) +
-  scale_colour_manual(values = c('grey40', 'black')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   ylim(-.5,7) + labs(title = '', x = '', y = 'Reaching error (deg)', 
@@ -204,7 +206,7 @@ ggplot(PMIfilter_av, aes(x = diagnosis, y = PMI, colour = site)) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 8)) -> PMIf_plot
 
-ggsave('lateralPMI-filtered-av.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('radialPMI-filtered-av.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 3, height = 3, path = anaPath)
 
 
