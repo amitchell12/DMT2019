@@ -107,7 +107,7 @@ res$AEdeg = sqrt(res$xerr_deg^2 + res$yerr_deg^2)
 res <- res[which(res$eye_move == 0 & res$void == 0), c(1,11:15,2:5,18:23,6:8,16:17)]
 
 setwd(anaPath)
-write.csv(res, "lateral-reaching_all.csv", row.names = FALSE)
+write.csv(res, "lateral-reaching_compiled.csv", row.names = FALSE)
 
 ggplot(res) + geom_point(aes(x = targ_x, y = targ_y), shape = 4, size = 3) +
   geom_point(aes(x = land_x, y = land_y, colour = ecc), shape = 1, size = 2) +
