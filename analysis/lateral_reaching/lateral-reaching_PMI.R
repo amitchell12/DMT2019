@@ -13,11 +13,11 @@ library(ggpubr)
 #dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
 # on desktop mac
-anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
-dataPath <- '/Users/Alex/Documents/DMT/data'
+#anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
+#dataPath <- '/Users/Alex/Documents/DMT/data'
 #on pc
-#dataPath <- 'S:/groups/DMT/data'
-#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+dataPath <- 'S:/groups/DMT/data'
+anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 ########### variable info ###########
@@ -167,9 +167,6 @@ ggplot(res_means, aes(x = side, y = AEmean, colour = site)) +
 
 ggsave('allmeans_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
-
-# isolating peripheral data (for other plotting)
-res_periph <- res_means[res_means$task == 'Peripheral' ,]
 
 # PMI plot 
 ggplot(PMIdata, aes(x = side, y = PMI, colour = site), position = position_dodge(.2)) + 
