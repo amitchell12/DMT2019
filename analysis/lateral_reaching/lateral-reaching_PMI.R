@@ -134,6 +134,7 @@ demo <- demo[demo$subject_nr != 409, ]
 res_means <- merge(demo, res_means)
 
 # save data
+setwd(anaPath)
 write.csv(res_medians, 'lateral-reaching_medians.csv', row.names = FALSE)
 # to calculate PMI need to cast by task....
 PMIdata <- dcast(res_means, subject_nr+group+site+side+diagnosis ~ task) #different data-frame
@@ -319,6 +320,9 @@ controlData <- controlData[order(controlData$subject_nr), ]
 # adding to PMI data set, then removing
 PMIfilter <- merge(PMIdata, controlData, all = TRUE)
 PMIfilter <- PMIfilter[, c(1:8,14)]
+# save with outlier information
+write.csv(PMIfilter, 'lateral-outliers.csv', row.names = FALSE)
+
 ## removing outliers
 for (l in 49:length(PMIfilter$outlier)){
   PMIfilter$outlier[l] = 0
