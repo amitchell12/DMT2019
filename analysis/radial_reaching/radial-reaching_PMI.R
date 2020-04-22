@@ -13,23 +13,30 @@ anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
 setwd(anaPath)
 
 res <- read.csv('radial-reaching_compiled.csv')
+# adding site as a factor 
+res$PPT <- substr(res$PPT, 4, 6)
+res$SITE <- factor(substr(res$PPT, 1, 1)) # 1/2 edinburgh, 3/4 norwich
+for (i in 1:length(res$SITE)){
+  if (isTRUE(res$SITE[i] == "2")){
+    res$SITE[i] = 1
+  }
+}
+# changing levelsfor plotting
+res$VIEW <- factor(res_means$VIEW) #changing so only 2 levels recorded
+res$SIDE <- factor(res_means$SIDE, levels = c('LEFT', 'RIGHT'))
+levels(ress$SIDE) <- c('Left', 'Right')
+res$GRP <- factor(res$GRP)
+levels(res$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
+levels(res$VIEW) <- c('Free', 'Peripheral')
 
 # summary data
-res_medians <- aggregate(AEdeg ~ POSITION*VIEW*SIDE*PPT*GRP, mean, data = res)
+res_medians <- aggregate(AEdeg ~ PPT*POSITION*VIEW*SIDE*GRP*SITE, mean, data = res)
 colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed'
-res_means <- aggregate(AEmed ~ VIEW*SIDE*PPT*GRP, mean, data = res_medians)
+res_means <- aggregate(AEmed ~ PPT*VIEW*SIDE*GRP*SITE, mean, data = res_medians)
 colnames(res_means)[colnames(res_means)=='AEmed'] <- 'AEmean'
 
-# changing levels of PMI for plotting
-res_means$VIEW <- factor(res_means$VIEW) #changing so only 2 levels recorded
-res_means$SIDE <- factor(res_means$SIDE, levels = c('LEFT', 'RIGHT'))
-levels(res_means$SIDE) <- c('Left', 'Right')
-levels(res_means$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
-levels(res_means$VIEW) <- c('Free', 'Peripheral')
-res_means$PPT <- substr(res_means$PPT, 4, 6)
-
 # casting by task
-PMIdata <- dcast(res_means, PPT+GRP+SIDE ~ VIEW)
+PMIdata <- dcast(res_means, PPT+GRP+SIDE+SITE ~ VIEW)
 PMIdata$PMI <- PMIdata$Peripheral - PMIdata$Free
 write.csv(PMIdata, 'radial-reaching_PMI.csv', row.names = FALSE)
 
@@ -48,15 +55,12 @@ ggplot(res_means, aes(x = SIDE, y = AEmean, colour = GRP)) +
 ggsave('allmeans_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-#isolating peripheral data
-res_periph <- res_means[res_means$VIEW == 'Peripheral' ,]
-
 # PMI plot
-ggplot(res_periph, aes(x = SIDE, y = AEmean, colour = GRP), position = position_dodge(.2)) + 
+ggplot(PMIdata, aes(x = SIDE, y = PMI, colour = GRP), position = position_dodge(.2)) + 
   geom_point(shape = 1, size = 4) +
   geom_line(aes(group = PPT), alpha = .5, size = .8) +
   scale_colour_manual(values = c('grey40', 'grey40')) +
-  stat_summary(aes(y = AEmean, group = 1), fun.y = mean, colour = "black", 
+  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
   ylim(-.5,8) + labs(title = 'Radial reaching', x = 'Side', y = 'PMI (deg)', 
                      element_text(size = 14)) +
@@ -64,7 +68,7 @@ ggplot(res_periph, aes(x = SIDE, y = AEmean, colour = GRP), position = position_
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
                      strip.text.x = element_text(size = 12)) -> PMIplot
 
-ggsave('periphmeans_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('PMIplot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 7, height = 4, path = anaPath)
 
 ## summary data
@@ -74,21 +78,13 @@ meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('GRP'),
                          na.rm = TRUE)
 
 ##### directional error calc #####
-dir_medians <- aggregate(LANDx_deg ~ POSITION*VIEW*SIDE*PPT*GRP, mean, data = res)
+dir_medians <- aggregate(LANDx_deg ~ PPT*POSITION*VIEW*SIDE*GRP*SITE, mean, data = res)
 colnames(dir_medians)[colnames(dir_medians)=='LANDx_deg'] <- 'dirmed'
-dir_means <- aggregate(dirmed ~ VIEW*SIDE*PPT*GRP, mean, data = dir_medians)
+dir_means <- aggregate(dirmed ~ PPT*VIEW*SIDE*GRP*SITE, mean, data = dir_medians)
 colnames(dir_means)[colnames(dir_means)=='dirmed'] <- 'dirmean'
 
-# changing levels of PMI for plotting
-dir_means$VIEW <- factor(dir_means$VIEW) #changing so only 2 levels recorded
-dir_means$SIDE <- factor(dir_means$SIDE, levels = c('LEFT', 'RIGHT'))
-levels(dir_means$SIDE) <- c('Left', 'Right')
-levels(dir_means$GRP) <- c('Control', 'AD') #changing group name from 1 = control, 2 = AD
-levels(dir_means$VIEW) <- c('Free', 'Peripheral')
-dir_means$PPT <- substr(dir_means$PPT, 4, 6)
-
 # casting by task
-dPMIdata <- dcast(dir_means, PPT+GRP+SIDE ~ VIEW)
+dPMIdata <- dcast(dir_means, PPT+GRP+SIDE+SITE ~ VIEW)
 dPMIdata$PMI <- dPMIdata$Peripheral - PMIdata$Free
 write.csv(dPMIdata, 'radial-reaching_dPMI.csv', row.names = FALSE)
 
@@ -122,3 +118,94 @@ ggplot(dPMIdata, aes(x = SIDE, y = PMI, colour = GRP), position = position_dodge
 ggsave('dPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
+##### outlier calculation, for controls only ######
+controlData <- PMIdata[PMIdata$PPT < 200, ]
+
+# median values for each side
+tmp <- aggregate(controlData$PMI,  by=list(SIDE = controlData$SIDE), FUN=median)
+names(tmp)[2] <- 'med'
+controlData <- merge(tmp, controlData)
+
+# calculating MAD for each (absolute value)
+controlData$AD <- abs(controlData$PMI - controlData$med)
+tmp <- aggregate(controlData$AD,  by=list(side = controlData$SIDE), FUN=median)
+names(tmp)[2] <- 'MAD'
+controlData <- merge(controlData, tmp)
+
+# adjusted z-score from these values
+controlData$az <- (controlData$PMI - controlData$med)/(controlData$MAD * 1.4826)
+controlData$z <- scale(controlData$PMI)
+controlData$PPT <- factor(controlData$PPT)
+
+plot_name = 'adjustedZ.png'
+AZplot <- ggplot(controlData, aes(x = SIDE, y = az, colour = PPT)) +
+  geom_point(size = 3, position = position_dodge(.1)) + ylim(-3,6) + 
+  stat_summary(aes(y = az, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', group = 1) + 
+  labs(x = '', y = 'Adjusted z-score', element_text(size = 13)) +
+  theme_bw() + theme(legend.position = "right", legend.title = element_blank())
+
+ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, width = 5, height = 6.5, path = anaPath)
+
+####### outlier removal #######
+# find controls with az > 2.5 and flag-up in PMI data-set
+for (l in 1:length(controlData$PPT)){
+  if (isTRUE(controlData$az[l] > '2.5')){
+    controlData$outlier[l] = 1
+  }
+  else 
+    controlData$outlier[l] = 0
+}
+#reorder control data
+controlData <- controlData[order(controlData$PPT), ]
+
+# adding to PMI data set, then removing
+PMIfilter <- merge(PMIdata, controlData, all = TRUE)
+PMIfilter <- PMIfilter[, c(1:7,14)]
+## removing outliers
+for (l in 49:length(PMIfilter$outlier)){
+  PMIfilter$outlier[l] = 0
+}
+PMIfilter <- PMIfilter[PMIfilter$outlier < 1, ]
+
+### PLOT FILTERED PMI DATA
+ggplot(PMIfilter, aes(x = SIDE, y = PMI, colour = GRP), position = position_dodge(.2)) + 
+  geom_point(shape = 1, size = 4) +
+  geom_line(aes(group = PPT), alpha = .5, size = .8) +
+  scale_colour_manual(values = c('grey50', 'black')) +
+  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
+  ylim(-.5,10) + labs(title = 'Radial Reaching', x = 'Side', y = 'Reaching error (deg)', 
+                      element_text(size = 14)) +
+  facet_wrap(~GRP) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
+                     strip.text.x = element_text(size = 12)) -> PMIf_plot
+
+ggsave('radialPMI-filtered.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, width = 7, height = 4, path = anaPath)
+
+meanFPMI <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('GRP', 'SIDE'),
+                      na.rm = TRUE)
+meanFPMI_all <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('GRP'),
+                          na.rm = TRUE)
+
+#average across side
+PMIfilter_av <- aggregate(PMI ~ subject_nr * site * diagnosis, mean, data = PMIfilter)
+jitter <- position_jitter(width = 0.1, height = 0.1)
+
+ggplot(PMIfilter_av, aes(x = diagnosis, y = PMI, colour = site)) + 
+  geom_point(position = jitter, shape = 21, size = 3) +
+  scale_colour_manual(values = c('grey40', 'black')) +
+  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  ylim(-.5,7) + labs(title = '', x = '', y = 'Reaching error (deg)', 
+                     element_text(size = 8)) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 8)) -> PMIf_plot
+
+ggsave('lateralPMI-filtered-av.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, width = 3, height = 3, path = anaPath)
+
+
+########### next steps: comparing patients to controls
