@@ -59,7 +59,7 @@ for (file in filenames){
   }
 }
 
-# removing df (subject number = 300)
+# removing df (subject number = 300, DF and ==500 PCA, Alicia)
 res <- res[res$subject_nr != 300, ]
 res <- res[res$subject_nr != 500, ]
 
@@ -106,20 +106,7 @@ res$AEdeg = sqrt(res$xerr_deg^2 + res$yerr_deg^2)
 # removing and reorganising
 res <- res[which(res$eye_move == 0 & res$void == 0), c(1,11:15,2:5,18:23,6:8,16:17)]
 
-setwd(anaPath)
-write.csv(res, "lateral-reaching_compiled.csv", row.names = FALSE)
-
-ggplot(res) + geom_point(aes(x = targ_x, y = targ_y), shape = 4, size = 3) +
-  geom_point(aes(x = land_x, y = land_y, colour = ecc), shape = 1, size = 2) +
-  facet_wrap(. ~subject_nr*task) 
-
-######### data aggregation + plotting ############
-res_medians <- aggregate(AEdeg ~ ecc * side * task * subject_nr * site * group, median, data = res)
-colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed' #change name to be more logical
-res_means <- aggregate(AEmed ~ task * side * subject_nr * site * group, mean, data = res_medians)
-colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
 # add demographic information to this data
-setwd(dataPath)
 patient_demos <- read.csv('patient_demographics.csv') #loading patient demographics
 control_demos <- read.csv('control_demographics.csv') #loading control demos
 #extracting ACE data into seperate data-frame
@@ -131,14 +118,47 @@ demo <- rbind(control_demos, patient_demos)
 demo <- demo[demo$subject_nr != 409, ]
 
 #merging demo with res medians
-res_means <- merge(demo, res_means)
+res <- merge(demo, res)
+
+## renaming variables to match radial reaching
+names(res)[1] <- 'PPT'
+names(res)[6] <- 'DIAGNOSIS'
+names(res)[7] <- 'VIEW'
+names(res)[8] <- 'SIDE'
+names(res)[9] <- 'POSITION'
+names(res)[12] <- 'TARGx'
+names(res)[13] <- 'TARGy'
+names(res)[14] <- 'LANDx'
+names(res)[15] <- 'LANDy'
+names(res)[23] <- 'RT'
+names(res)[24] <- 'MT'
+names(res)[25] <- 'GRP'
+names(res)[26] <- 'SITE'
+
+setwd(anaPath)
+write.csv(res, "lateral-reaching_compiled.csv", row.names = FALSE)
+
+ggplot(res) + geom_point(aes(x = TARGx, y = TARGy), shape = 4, size = 3) +
+  geom_point(aes(x = LANDx, y = LANDy, colour = POSITION), shape = 1, size = 2) +
+  facet_wrap(. ~PPT*VIEW) 
+ggsave('lateral-reach_err.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, width = 15, height = 10, units = 'in', path = anaPath)
+
+
+######### data aggregation + plotting ############
+res_medians <- aggregate(AEdeg ~ POSITION * SIDE * VIEW * PPT * SITE * GRP * DIAGNOSIS, median, data = res)
+colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed' #change name to be more logical
+res_means <- aggregate(AEmed ~ VIEW * SIDE * PPT * SITE * GRP * DIAGNOSIS, mean, data = res_medians)
+colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
+
 
 # save data
-setwd(anaPath)
 write.csv(res_medians, 'lateral-reaching_medians.csv', row.names = FALSE)
 # to calculate PMI need to cast by task....
-PMIdata <- dcast(res_means, subject_nr+group+site+side+diagnosis ~ task) #different data-frame
-PMIdata$PMI <- PMIdata$periph - PMIdata$free
+PMIdata <- dcast(res_means, PPT+GRP+SITE+SIDE+DIAGNOSIS ~ VIEW) #different data-frame
+PMIdata$PMI <- PMIdata$PERIPHERAL - PMIdata$FREE
+
+###### NEED TO CHANGE VARIABLE NAMES FROM HERE ONWARDS - keep going
 
 # changing levels of PMI for plotting
 PMIdata$side <- factor(PMIdata$side, levels = c('left', 'right'))
