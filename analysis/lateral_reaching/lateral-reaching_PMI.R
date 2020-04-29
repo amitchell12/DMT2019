@@ -261,16 +261,16 @@ PMIav <- aggregate(PMI ~ PPT * SITE * GRP * DIAGNOSIS, mean, data = PMIdata)
 PMIav <- PMIav[order(PMIav$PPT), ]
 
 ##### outlier calculation, for controls only ######
-controlData <- PMIdata[PMIdata$PPT < 200, ]
+controlData <- PMIav[PMIav$PPT < 200, ]
 
 # median values for each side
-tmp <- aggregate(controlData$PMI,  by=list(SIDE = controlData$SIDE), FUN=median)
+tmp <- aggregate(PMI ~ GRP, median, data = controlData)
 names(tmp)[2] <- 'med'
 controlData <- merge(tmp, controlData)
 
 # calculating MAD for each (absolute value)
 controlData$AD <- abs(controlData$PMI - controlData$med)
-tmp <- aggregate(controlData$AD,  by=list(SIDE = controlData$SIDE), FUN=median)
+tmp <- aggregate(AD ~ GRP, median, data=controlData)
 names(tmp)[2] <- 'MAD'
 controlData <- merge(controlData, tmp)
 
