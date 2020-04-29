@@ -280,8 +280,8 @@ controlData$z <- scale(controlData$PMI)
 controlData$PPT <- factor(controlData$PPT)
 
 plot_name = 'adjustedZ.png'
-AZplot <- ggplot(controlData, aes(x = SIDE, y = az, colour = PPT)) +
-  geom_point(size = 3, position = position_dodge(.1)) + ylim(-3,6) + 
+AZplot <- ggplot(controlData, aes(x = GRP, y = az, colour = PPT)) +
+  geom_point(size = 3, position = position_dodge(.1)) + ylim(-2,4) + 
   stat_summary(aes(y = az, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', group = 1) + 
   labs(x = '', y = 'Adjusted z-score', element_text(size = 13)) +
@@ -303,7 +303,8 @@ for (l in 1:length(controlData$PPT)){
 controlData <- controlData[order(controlData$PPT), ]
 
 # adding to PMI data set, then removing
-PMIfilter <- merge(PMIdata, controlData, all = TRUE)
+##### reached here- try and merge outlier to PMI data, need a fresher brain for this... 
+PMIfilter <- merge(controlData, PMIdata, by = 'PPT')
 PMIfilter <- PMIfilter[, c(1:8,14)]
 # save with outlier information
 write.csv(PMIfilter, 'lateral-outliers.csv', row.names = FALSE)
@@ -316,31 +317,31 @@ for (l in 49:length(PMIfilter$outlier)){
 PMIfilter <- PMIfilter[PMIfilter$outlier < 1, ]
 
 ### PLOT FILTERED PMI DATA
-ggplot(PMIfilter, aes(x = side, y = PMI, colour = site), position = position_dodge(.2)) + 
+ggplot(PMIfilter, aes(x = SIDE, y = PMI, colour = SITE), position = position_dodge(.2)) + 
   geom_point(shape = 1, size = 4) +
-  geom_line(aes(group = subject_nr), alpha = .5, size = .8) +
+  geom_line(aes(group = PPT), alpha = .5, size = .8) +
   scale_colour_manual(values = c('grey50', 'black')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
   ylim(-.5,10) + labs(title = 'Lateral Reaching', x = 'Side', y = 'Reaching error (deg)', 
                       element_text(size = 14)) +
-  facet_wrap(~diagnosis) +
+  facet_wrap(~DIAGNOSIS) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
                      strip.text.x = element_text(size = 12)) -> PMIf_plot
 
 ggsave('lateralPMI-filtered.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 7, height = 4, path = anaPath)
 
-meanFPMI <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('diagnosis', 'side'),
+meanFPMI <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
                       na.rm = TRUE)
-meanFPMI_all <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('diagnosis'),
+meanFPMI_all <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
                           na.rm = TRUE)
 
 #average across side
-PMIfilter_av <- aggregate(PMI ~ subject_nr * site * diagnosis, mean, data = PMIfilter)
+PMIfilter_av <- aggregate(PMI ~ PPT * SITE * DIAGNOSIS, mean, data = PMIfilter)
 jitter <- position_jitter(width = 0.1, height = 0.1)
 
-ggplot(PMIfilter_av, aes(x = diagnosis, y = PMI, colour = site)) + 
+ggplot(PMIfilter_av, aes(x = DIAGNOSIS, y = PMI, colour = SITE)) + 
   geom_point(position = jitter, shape = 21, size = 3) +
   scale_colour_manual(values = c('grey40', 'black')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
