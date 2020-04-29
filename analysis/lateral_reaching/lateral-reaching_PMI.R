@@ -237,7 +237,6 @@ ggplot(meds_MCI, aes(x = POSITION, y = AEmed, colour = SIDE)) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 10)) -> eccPlot
 
-
 ggsave('MCI_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
@@ -254,29 +253,27 @@ ggplot(meds_AD, aes(x = POSITION, y = AEmed, colour = SIDE)) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 10)) -> eccPlot
 
-
-ggsave('MCI_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('AD_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 ###### directional error calc ######
-### no diagnosis information here - probs need to add
-dir_medians <- aggregate(xerr_deg ~ ecc * side * task * subject_nr * site * group, 
+dir_medians <- aggregate(xerr_deg ~ POSITION * SIDE * VIEW * PPT * SITE * GRP * DIAGNOSIS, 
                          median, data = res)
 colnames(dir_medians)[colnames(dir_medians)=='xerr_deg'] <- 'xerr_med' #change name to be more logical
-dir_means <- aggregate(xerr_med ~ task * side * subject_nr * site * group, 
+dir_means <- aggregate(xerr_med ~ VIEW * SIDE * PPT * SITE * GRP * DIAGNOSIS, 
                        mean, data = dir_medians)
 colnames(dir_means)[colnames(dir_means) == 'xerr_med'] <- 'xerr_mean'
 
 # PMI for directional data (DMI - directional misreaching index)
-dPMIdata <- dcast(dir_means, subject_nr+group+site+side ~ task) #different data-frame
+dPMIdata <- dcast(dir_means, PPT+GRP+DIAGNOSIS+SITE+SIDE ~ VIEW) #different data-frame
 dPMIdata$PMI <- dPMIdata$periph - dPMIdata$free
 write.csv(dPMIdata, 'lateral-reaching_dPMI.csv', row.names = FALSE)
 
 # plotting this
-ggplot(dir_means, aes(x = task, y = xerr_mean, colour = site)) +
+ggplot(dir_means, aes(x = VIEW, y = xerr_mean, colour = SITE)) +
   geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(side), rows = vars(group)) + ylim(-8,8) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(SIDE), rows = vars(DIAGNOSIS)) + ylim(-8,8) +
   labs(x = 'Side', y = 'Directional error (deg)', element_text(size = 12)) +
   scale_colour_manual(values = c('grey50', 'black')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
@@ -286,15 +283,15 @@ ggsave('directional_means_plot.png', plot = last_plot(), device = NULL, dpi = 30
        scale = 1, path = anaPath)
 
 # dPMI plot 
-ggplot(dPMIdata, aes(x = side, y = PMI, colour = group), position = position_dodge(.2)) + 
+ggplot(dPMIdata, aes(x = SIDE, y = PMI, colour = SITE), position = position_dodge(.2)) + 
   geom_point(shape = 1, size = 1.5, stroke = .8) +
-  geom_line(aes(group = subject_nr), alpha = .5, size = .5) +
-  scale_colour_manual(values = c('grey40', 'grey40')) +
+  geom_line(aes(group = PPT), alpha = .5, size = .5) +
+  scale_colour_manual(values = c('grey40', 'black')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
   ylim(-8,8) + labs(title = 'Lateral Reaching', x = 'Side', y = 'dPMI (deg)', 
                      element_text(size = 12)) +
-  facet_wrap(~group) +
+  facet_wrap(~DIAGNOSIS) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 10)) -> dPMIplot
 
@@ -302,32 +299,32 @@ ggsave('dPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, path = anaPath)
 
 ## summary dPMI
-meandPMI <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('group', 'site', 'side'),
+mean_dPMI <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
                           na.rm = TRUE)
-meandPMI_all <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('group', 'site', 'side'),
+mean_dPMI_all <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
                          na.rm = TRUE)
 
 ##### outlier calculation, for controls only ######
-controlData <- PMIdata[PMIdata$subject_nr < 200, ]
+controlData <- PMIdata[PMIdata$PPT < 200, ]
 
 # median values for each side
-tmp <- aggregate(controlData$PMI,  by=list(side = controlData$side), FUN=median)
+tmp <- aggregate(controlData$PMI,  by=list(SIDE = controlData$SIDE), FUN=median)
 names(tmp)[2] <- 'med'
 controlData <- merge(tmp, controlData)
 
 # calculating MAD for each (absolute value)
 controlData$AD <- abs(controlData$PMI - controlData$med)
-tmp <- aggregate(controlData$AD,  by=list(side = controlData$side), FUN=median)
+tmp <- aggregate(controlData$AD,  by=list(SIDE = controlData$SIDE), FUN=median)
 names(tmp)[2] <- 'MAD'
 controlData <- merge(controlData, tmp)
 
 # adjusted z-score from these values
 controlData$az <- (controlData$PMI - controlData$med)/(controlData$MAD * 1.4826)
 controlData$z <- scale(controlData$PMI)
-controlData$subject_nr <- factor(controlData$subject_nr)
+controlData$PPT <- factor(controlData$PPT)
 
 plot_name = 'adjustedZ.png'
-AZplot <- ggplot(controlData, aes(x = side, y = az, colour = subject_nr)) +
+AZplot <- ggplot(controlData, aes(x = SIDE, y = az, colour = PPT)) +
   geom_point(size = 3, position = position_dodge(.1)) + ylim(-3,6) + 
   stat_summary(aes(y = az, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', group = 1) + 
@@ -338,8 +335,8 @@ ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, width = 5, height = 6.5, path = anaPath)
 
 ####### outlier removal #######
-# find controls with az > 2.5 and flag-up in PMI data-set
-for (l in 1:length(controlData$subject_nr)){
+# find controls with az > 2.5 and flag-up in PMI data-set - need to remove entire control, not just side
+for (l in 1:length(controlData$PPT)){
   if (isTRUE(controlData$az[l] > '2.5')){
     controlData$outlier[l] = 1
   }
@@ -347,7 +344,7 @@ for (l in 1:length(controlData$subject_nr)){
     controlData$outlier[l] = 0
 }
 #reorder control data
-controlData <- controlData[order(controlData$subject_nr), ]
+controlData <- controlData[order(controlData$PPT), ]
 
 # adding to PMI data set, then removing
 PMIfilter <- merge(PMIdata, controlData, all = TRUE)
@@ -359,6 +356,7 @@ write.csv(PMIfilter, 'lateral-outliers.csv', row.names = FALSE)
 for (l in 49:length(PMIfilter$outlier)){
   PMIfilter$outlier[l] = 0
 }
+## this removes the data points, but not the controls
 PMIfilter <- PMIfilter[PMIfilter$outlier < 1, ]
 
 ### PLOT FILTERED PMI DATA
