@@ -10,14 +10,14 @@ library(ggpubr)
 
 #set working directory to where data is
 #on mac
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
 # on desktop mac
 #anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
 #dataPath <- '/Users/Alex/Documents/DMT/data'
 #on pc
-dataPath <- 'S:/groups/DMT/data'
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+#dataPath <- 'S:/groups/DMT/data'
+#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 ########### variable info ###########
@@ -146,7 +146,7 @@ ggsave('lateral-reach_err.png', plot = last_plot(), device = NULL, dpi = 300,
 
 
 ######### data aggregation + plotting ############
-res_medians <- aggregate(AEdeg ~ POSITION * SIDE * VIEW * PPT * SITE * GRP * DIAGNOSIS, median, data = res)
+res_medians <- aggregate(AEdeg ~ PPT * SIDE * VIEW * POSITION * SITE * GRP * DIAGNOSIS, median, data = res)
 colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed' #change name to be more logical
 
 # changing levels to be more informative
@@ -156,8 +156,10 @@ levels(res_medians$GRP) <- c('Control', 'Patient') #changing group name from 1 =
 levels(res_medians$VIEW) <- c('Peripheral', 'Free')
 levels(res_medians$SITE) <- c('UOE', 'UEA')
 res_medians$DIAGNOSIS <- factor(res_medians$DIAGNOSIS)
+res_medians <- res_medians[order(res_medians$PPT), ] 
 
-res_means <- aggregate(AEmed ~ VIEW * SIDE * PPT * SITE * GRP * DIAGNOSIS, mean, data = res_medians)
+res_means <- aggregate(AEmed ~ PPT * SIDE * VIEW * SITE * GRP * DIAGNOSIS, mean, data = res_medians)
+res_means <- res_means[order(res_means$PPT), ] 
 colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
 # save data
 write.csv(res_medians, 'lateral-reaching_medians.csv', row.names = FALSE)
@@ -170,10 +172,10 @@ write.csv(PMIdata, 'lateral-reaching_PMI.csv', row.names = FALSE)
 
 
 # mean plot 
-ggplot(res_means, aes(x = side, y = AEmean, colour = site)) +
+ggplot(res_means, aes(x = SIDE, y = AEmean, colour = SITE)) +
   geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(task), rows = vars(diagnosis)) + ylim(-.5,8) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(VIEW), rows = vars(DIAGNOSIS)) + ylim(-.5,8) +
   labs(x = 'Side', y = 'Mean AE (deg)', element_text(size = 12)) +
   scale_colour_manual(values = c('grey50', 'black')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
@@ -183,15 +185,15 @@ ggsave('allmeans_plot.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, path = anaPath)
 
 # PMI plot 
-ggplot(PMIdata, aes(x = side, y = PMI, colour = site), position = position_dodge(.2)) + 
+ggplot(PMIdata, aes(x = SIDE, y = PMI, colour = SITE), position = position_dodge(.2)) + 
   geom_point(shape = 1, size = 4) +
-  geom_line(aes(group = subject_nr), alpha = .5, size = .8) +
+  geom_line(aes(group = PPT), alpha = .5, size = .8) +
   scale_colour_manual(values = c('grey50', 'black')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
   ylim(-.5,10) + labs(title = '', x = 'Side', y = 'Reaching error (deg)', 
                      element_text(size = 14)) +
-  facet_wrap(~diagnosis) +
+  facet_wrap(~DIAGNOSIS) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
                      strip.text.x = element_text(size = 12)) -> PMIplot
 
@@ -199,19 +201,19 @@ ggsave('lateralPMI.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, width = 7, height = 4, path = anaPath)
 
 # summary
-meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('diagnosis', 'side'),
+meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
                        na.rm = TRUE)
-meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('diagnosis'),
+meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
                          na.rm = TRUE)
 
 # plot by eccentricity
 # controls
-meds_control <- res_medians[res_medians$group == 1 ,]
+meds_control <- res_medians[res_medians$GRP == 'Control' ,]
   
-ggplot(meds_control, aes(x = ecc, y = AEmed, colour = side)) +
+ggplot(meds_control, aes(x = POSITION, y = AEmed, colour = SIDE)) +
   geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(side), rows = vars(task)) + ylim(-.5,10) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(SIDE), rows = vars(VIEW)) + ylim(-.5,10) +
   labs(title = 'Control', x = 'Eccentricity (deg)', 
        y = 'Mean AE (deg)', element_text(size = 12)) +
   scale_colour_manual(values = c('black', 'grey50')) +
@@ -222,21 +224,38 @@ ggplot(meds_control, aes(x = ecc, y = AEmed, colour = side)) +
 ggsave('control_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-# patients
-meds_patient <- res_medians[res_medians$group == 2 ,]
+# patients - MCI
+meds_MCI <- res_medians[res_medians$DIAGNOSIS == 'MCI' ,]
 
-ggplot(meds_patient, aes(x = ecc, y = AEmed, colour = side)) +
+ggplot(meds_MCI, aes(x = POSITION, y = AEmed, colour = SIDE)) +
   geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(side), rows = vars(task)) + ylim(-.5,12) +
-  labs(title = 'Patient', x = 'Eccentricity (deg)', 
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(SIDE), rows = vars(VIEW)) + ylim(-.5,12) +
+  labs(title = 'MCI', x = 'Eccentricity (deg)', 
        y = 'Mean AE (deg)', element_text(size = 12)) +
   scale_colour_manual(values = c('black', 'grey50')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 10)) -> eccPlot
 
 
-ggsave('patient_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('MCI_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# patients - AD
+meds_AD <- res_medians[res_medians$DIAGNOSIS == 'AD' ,]
+
+ggplot(meds_AD, aes(x = POSITION, y = AEmed, colour = SIDE)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(SIDE), rows = vars(VIEW)) + ylim(-.5,12) +
+  labs(title = 'Alzheimers', x = 'Eccentricity (deg)', 
+       y = 'Mean AE (deg)', element_text(size = 12)) +
+  scale_colour_manual(values = c('black', 'grey50')) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)) -> eccPlot
+
+
+ggsave('MCI_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 ###### directional error calc ######
