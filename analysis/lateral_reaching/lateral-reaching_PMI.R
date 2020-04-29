@@ -148,33 +148,26 @@ ggsave('lateral-reach_err.png', plot = last_plot(), device = NULL, dpi = 300,
 ######### data aggregation + plotting ############
 res_medians <- aggregate(AEdeg ~ POSITION * SIDE * VIEW * PPT * SITE * GRP * DIAGNOSIS, median, data = res)
 colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed' #change name to be more logical
+
+# changing levels to be more informative
+res_medians$SIDE <- factor(res_medians$SIDE, levels = c('left', 'right'))
+levels(res_medians$SIDE) <- c('Left', 'Right')
+levels(res_medians$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
+levels(res_medians$VIEW) <- c('Peripheral', 'Free')
+levels(res_medians$SITE) <- c('UOE', 'UEA')
+res_medians$DIAGNOSIS <- factor(res_medians$DIAGNOSIS)
+
 res_means <- aggregate(AEmed ~ VIEW * SIDE * PPT * SITE * GRP * DIAGNOSIS, mean, data = res_medians)
 colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
-
-
 # save data
 write.csv(res_medians, 'lateral-reaching_medians.csv', row.names = FALSE)
+write.csv(res_means, 'lateral-reaching_means.csv', row.names = FALSE)
+
 # to calculate PMI need to cast by task....
 PMIdata <- dcast(res_means, PPT+GRP+SITE+SIDE+DIAGNOSIS ~ VIEW) #different data-frame
-PMIdata$PMI <- PMIdata$PERIPHERAL - PMIdata$FREE
-
-###### NEED TO CHANGE VARIABLE NAMES FROM HERE ONWARDS - keep going
-
-# changing levels of PMI for plotting
-PMIdata$side <- factor(PMIdata$side, levels = c('left', 'right'))
-levels(PMIdata$side) <- c('Left', 'Right')
-levels(PMIdata$group) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
-levels(PMIdata$site) <- c('UOE', 'UEA', 'PCA')
+PMIdata$PMI <- PMIdata$Peripheral - PMIdata$Free
 write.csv(PMIdata, 'lateral-reaching_PMI.csv', row.names = FALSE)
 
-
-# changing levels of PMI for plotting
-res_means$side <- factor(res_means$side, levels = c('left', 'right'))
-levels(res_means$side) <- c('Left', 'Right')
-levels(res_means$group) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
-levels(res_means$task) <- c('Peripheral', 'Free')
-levels(res_means$site) <- c('UOE', 'UEA', 'PCA')
-write.csv(res_means, 'lateral-reaching_means.csv', row.names = FALSE)
 
 # mean plot 
 ggplot(res_means, aes(x = side, y = AEmean, colour = site)) +
