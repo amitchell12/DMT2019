@@ -4,9 +4,8 @@
 
 ##### file info #####
 # on pc
-fitPath <- ("S:/groups/DMT/analysis/TVA/fits/") # Enter path to data
-dataPath <- 'S:/groups/DMT/data/formatted_TVA/'
-anaPath <- "S:/groups/DMT/analysis/TVA/"
+#fitPath <- ("S:/groups/DMT/analysis/TVA/fits/") # Enter path to data
+#anaPath <- "S:/groups/DMT/analysis/TVA/"
 
 # Enter directory to save converted files to
 setwd(fitPath)
@@ -85,9 +84,11 @@ levels(tva_values$GRP) <- c('Control', 'Patient')
 levels(tva_values$SITE) <- c('UOE', 'UEA')
 tva_values$SUB <- factor(tva_values$SUB)
 
+
+# remove data with SPD > 0
 tva_values <- tva_values[tva_values$SPD == 0 ,]
-# placing group higher up
-tva_values <- tva_values[, c(1,2,14:16,3:13)] ##### check this order with new 'site' column
+# have a chat with rob about this - save current data-set
+
 
 #adding processing speed
 #adding mu to ExpDurc6 and c7
@@ -148,19 +149,6 @@ write.csv(tva_dat, 'tva_fits.csv', row.names = FALSE)
 
 # plotting predicted duration for each participant
 # seperate plots for every 4 participants
-###### redo these so you have document for all participants
-# 101-104=6
-ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
-                      strip.position = 'top', page = 1) +
-  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
-       element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 8))
-
-ggsave('fits1.pdf', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
 # 107-112
 ggplot(tva_dat, aes(x = DUR, y = MS)) + 
   geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
@@ -172,6 +160,33 @@ ggplot(tva_dat, aes(x = DUR, y = MS)) +
 
 ggsave('fits2.pdf', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
+
+# 201-207
+ggplot(tva_dat, aes(x = DUR, y = MS)) + 
+  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
+                      strip.position = 'top', page = 5) +
+  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
+       element_text(size = 6)) + theme_bw() + 
+  theme(legend.position = 'none', text = element_text(size = 8))
+
+ggsave('fits5.pdf', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# 304-309
+ggplot(tva_dat, aes(x = DUR, y = MS)) + 
+  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
+  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
+                      strip.position = 'top', page = 7) +
+  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
+       element_text(size = 6)) + theme_bw() + 
+  theme(legend.position = 'none', text = element_text(size = 8))
+
+ggsave('fits7.pdf', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+## average predicted duration for group
+
 
 ##### plotting outcome vars #####
 # processing speed
