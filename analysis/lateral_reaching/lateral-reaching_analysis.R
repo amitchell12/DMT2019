@@ -23,20 +23,23 @@ setwd(anaPath)
 # load data file
 res <- read.csv('lateral-reaching_compiled.csv')
 
-######### data aggregation + plotting ############
-res_medians <- aggregate(AEdeg ~ PPT * SIDE * VIEW * POSITION * SITE * GRP * DIAGNOSIS, median, data = res)
+######### step 1, calculating PMI ############
+res_medians <- aggregate(
+  AEdeg ~ PPT * SIDE * VIEW * POSITION * SITE * GRP * DIAGNOSIS * AGE * ED, 
+  median, data = res)
 colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed' #change name to be more logical
 
 # changing levels to be more informative
 res_medians$SIDE <- factor(res_medians$SIDE, levels = c('left', 'right'))
 levels(res_medians$SIDE) <- c('Left', 'Right')
 levels(res_medians$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
-levels(res_medians$VIEW) <- c('Peripheral', 'Free')
+levels(res_medians$VIEW) <- c('Free', 'Peripheral')
 levels(res_medians$SITE) <- c('UOE', 'UEA')
 res_medians$DIAGNOSIS <- factor(res_medians$DIAGNOSIS)
 res_medians <- res_medians[order(res_medians$PPT), ] 
 
-res_means <- aggregate(AEmed ~ PPT * SIDE * VIEW * SITE * GRP * DIAGNOSIS, mean, data = res_medians)
+res_means <- aggregate(AEmed ~ PPT * SIDE * VIEW * SITE * GRP * DIAGNOSIS * AGE * ED, 
+                       mean, data = res_medians)
 res_means <- res_means[order(res_means$PPT), ] 
 colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
 # save data
@@ -44,7 +47,7 @@ write.csv(res_medians, 'lateral-reaching_medians.csv', row.names = FALSE)
 write.csv(res_means, 'lateral-reaching_means.csv', row.names = FALSE)
 
 # to calculate PMI need to cast by task....
-PMIdata <- dcast(res_means, PPT+GRP+SITE+SIDE+DIAGNOSIS ~ VIEW) #different data-frame
+PMIdata <- dcast(res_means, PPT+GRP+SITE+SIDE+DIAGNOSIS+AGE+ED ~ VIEW) #different data-frame
 PMIdata$PMI <- PMIdata$Peripheral - PMIdata$Free
 write.csv(PMIdata, 'lateral-reaching_PMI.csv', row.names = FALSE)
 
@@ -135,10 +138,12 @@ ggsave('AD_ecc.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, path = anaPath)
 
 ##### PMI collapsed across side #####
-PMIav <- aggregate(PMI ~ PPT * SITE * GRP * DIAGNOSIS, mean, data = PMIdata)
+PMIav <- aggregate(PMI ~ PPT * SITE * GRP * DIAGNOSIS * AGE * ED, mean, data = PMIdata)
 PMIav <- PMIav[order(PMIav$PPT), ]
 
-##### outlier calculation, for controls only ######
+## ANOVA ## 
+
+##### step 2: outlier removal, filtered PMI ######
 controlData <- PMIav[PMIav$PPT < 200, ]
 
 # median values for each side
@@ -232,7 +237,26 @@ ggplot(PMIfilter_av, aes(x = DIAGNOSIS, y = PMI, colour = SITE)) +
 ggsave('lateralPMI-filtered-av.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 3, height = 3, path = anaPath)
 
-###### directional error calc ######
+## ANOVA ## 
+
+###### step 3 SINGLE CASE STATS ######
+# correlate PMI with possible co-variates, age + education
+agecov <- cor.test(PMIdata$AGE, PMIdata$PMI, method = 'pearson')
+ggscatter(PMIdata, x = "AGE", y = "PMI", 
+         add = "reg.line", conf.int = TRUE, 
+         cor.coef = TRUE, cor.method = "spearman",
+         xlab = "Age", ylab = "PMI (deg")
+
+# correlate PMI with years of education
+PMIdata$ED <- as.numeric(PMIdata$ED)
+edcov <- cor.test(PMIdata$ED, PMIdata$PMI, method = 'pearson')
+ggscatter(PMIdata, x = "ED", y = "PMI", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "spearman",
+          xlab = "Years of Education", ylab = "PMI (deg")
+
+
+###### step xx DIRECTIONAL ERROR ######
 dir_medians <- aggregate(xerr_deg ~ POSITION * SIDE * VIEW * PPT * SITE * GRP * DIAGNOSIS, 
                          median, data = res)
 colnames(dir_medians)[colnames(dir_medians)=='xerr_deg'] <- 'xerr_med' #change name to be more logical
@@ -279,5 +303,3 @@ mean_dPMI <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', '
                           na.rm = TRUE)
 mean_dPMI_all <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
                          na.rm = TRUE)
-
-########### next steps: comparing patients to controls
