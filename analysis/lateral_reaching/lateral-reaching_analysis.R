@@ -7,6 +7,7 @@ library(tidyverse)
 library(reshape2)
 library(Hmisc)
 library(ggpubr)
+library(singcar)
 
 #set working directory to where data is
 #on mac
@@ -23,7 +24,7 @@ setwd(anaPath)
 # load data file
 res <- read.csv('lateral-reaching_compiled.csv')
 
-######### step 1, calculating PMI ############
+######### step 1, calculating PMI, all data ############
 res_medians <- aggregate(
   AEdeg ~ PPT * SIDE * VIEW * POSITION * SITE * GRP * DIAGNOSIS * AGE * ED, 
   median, data = res)
@@ -31,9 +32,10 @@ colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed' #change name to
 
 # changing levels to be more informative
 res_medians$SIDE <- factor(res_medians$SIDE, levels = c('left', 'right'))
-levels(res_medians$SIDE) <- c('Left', 'Right')
+res_medians$GRP <- factor(res_medians$GRP)
 levels(res_medians$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
 levels(res_medians$VIEW) <- c('Free', 'Peripheral')
+res_medians$SITE <- factor(res_medians$SITE)
 levels(res_medians$SITE) <- c('UOE', 'UEA')
 res_medians$DIAGNOSIS <- factor(res_medians$DIAGNOSIS)
 res_medians <- res_medians[order(res_medians$PPT), ] 
@@ -99,7 +101,7 @@ ggplot(meds_control, aes(x = POSITION, y = AEmed, colour = SIDE)) +
        y = 'Mean AE (deg)', element_text(size = 12)) +
   scale_colour_manual(values = c('black', 'grey50')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                    strip.text.x = element_text(size = 10)) -> eccPlot
+                    strip.text.x = element_text(size = 10)) 
 
 
 ggsave('control_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
@@ -116,7 +118,7 @@ ggplot(meds_MCI, aes(x = POSITION, y = AEmed, colour = SIDE)) +
        y = 'Mean AE (deg)', element_text(size = 12)) +
   scale_colour_manual(values = c('black', 'grey50')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) -> eccPlot
+                     strip.text.x = element_text(size = 10))
 
 ggsave('MCI_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
@@ -132,18 +134,20 @@ ggplot(meds_AD, aes(x = POSITION, y = AEmed, colour = SIDE)) +
        y = 'Mean AE (deg)', element_text(size = 12)) +
   scale_colour_manual(values = c('black', 'grey50')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) -> eccPlot
+                     strip.text.x = element_text(size = 10)) 
 
 ggsave('AD_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-##### PMI collapsed across side #####
+# PMI collapsed across side
 PMIav <- aggregate(PMI ~ PPT * SITE * GRP * DIAGNOSIS * AGE * ED, mean, data = PMIdata)
 PMIav <- PMIav[order(PMIav$PPT), ]
 
-## ANOVA ## 
+######## step 2: single case stats, all controls #########
 
-##### step 2: outlier removal, filtered PMI ######
+######## step 3: ANOVA, all controls #########
+
+######## step 4: outlier removal, filtered PMI #########
 controlData <- PMIav[PMIav$PPT < 200, ]
 
 # median values for each side
