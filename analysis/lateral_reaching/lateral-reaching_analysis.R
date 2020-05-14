@@ -157,16 +157,23 @@ td_patient <- dcast(td_patient, PPT+DIAGNOSIS ~ SIDE)
 # NA values  = -1, so t-value is negative and can remove later
 td_patient[is.na(td_patient$right), "right"] <- -1 
 
-# time for test of deficit!
-td_left <- write.csv(text = 'PMI,TSTAT,PVALUE')
-td_right <- write.csv(text = 'PMI,TSTAT,PVALUE')
+# time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
+# using Crawford's (1998) test of deficit
+td_left <- read.csv(text = 'PMI,TSTAT,PVALUE,SIDE')
+td_right <- read.csv(text = 'PMI,TSTAT,PVALUE,SIDE')
 for (l in 1:length(td_patient$PPT)){
+  #left data first
   leftres <- TD(td_patient$left[l], td_control$PMI[1], td_control$sd[1], 24, 
             alternative = 'greater', na.rm = FALSE)
+  ltmp <- data.frame(td_patient$left[l], leftres$statistic, leftres$p.value, 'left') 
+  td_left <- rbind(td_left, ltmp)
   rightres <- TD(td_patient$right[l], td_control$PMI[2], td_control$sd[2], 24, 
                 alternative = 'greater', na.rm = FALSE)
+  rtmp <- data.frame(td_patient$right[l], rightres$statistic, rightres$p.value, 'right') 
+  td_right <- rbind(td_right, rtmp)
 }
 
+# merging and renaming data-frames
 
 
 ######## step 3: ANOVA, all controls #########
