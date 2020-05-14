@@ -118,7 +118,7 @@ ggplot(meds_MCI, aes(x = POSITION, y = AEmed, colour = SIDE)) +
        y = 'Mean AE (deg)', element_text(size = 12)) +
   scale_colour_manual(values = c('black', 'grey50')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10))
+                     strip.text.x = element_text(size = 10)) -> MCIecc
 
 ggsave('MCI_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
@@ -144,6 +144,21 @@ PMIav <- aggregate(PMI ~ PPT * SITE * GRP * DIAGNOSIS * AGE * ED, mean, data = P
 PMIav <- PMIav[order(PMIav$PPT), ]
 
 ######## step 2: single case stats, all controls #########
+# correlate PMI with possible co-variates, age + education
+agecov <- cor.test(PMIdata$AGE, PMIdata$PMI, method = 'pearson')
+ggscatter(PMIdata, x = "AGE", y = "PMI", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "spearman",
+          xlab = "Age", ylab = "PMI (deg")
+
+# correlate PMI with years of education
+PMIdata$ED <- as.numeric(PMIdata$ED)
+edcov <- cor.test(PMIdata$ED, PMIdata$PMI, method = 'pearson')
+ggscatter(PMIdata, x = "ED", y = "PMI", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "spearman",
+          xlab = "Years of Education", ylab = "PMI (deg")
+
 # create data-frames (controls and patients) with key information
 td_summary <- summarySE(data = PMIdata, measurevar = 'PMI', 
                         groupvars = c('DIAGNOSIS','SIDE'), na.rm = TRUE)
@@ -159,22 +174,44 @@ td_patient[is.na(td_patient$right), "right"] <- -1
 
 # time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
 # using Crawford's (1998) test of deficit
-td_left <- read.csv(text = 'PMI,TSTAT,PVALUE,SIDE')
-td_right <- read.csv(text = 'PMI,TSTAT,PVALUE,SIDE')
+td_right <- read.csv(text = 'PMI,TSTAT,PVALUE,SIDE,PPT,DIAGNOSIS')
+td_left <- read.csv(text = 'PMI,TSTAT,PVALUE,SIDE,PPT,DIAGNOSIS')
 for (l in 1:length(td_patient$PPT)){
   #left data first
   leftres <- TD(td_patient$left[l], td_control$PMI[1], td_control$sd[1], 24, 
             alternative = 'greater', na.rm = FALSE)
   ltmp <- data.frame(td_patient$left[l], leftres$statistic, leftres$p.value, 'left') 
+  ltmp$PPT <- td_patient$PPT[l]
+  ltmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
   td_left <- rbind(td_left, ltmp)
+  #then right data
   rightres <- TD(td_patient$right[l], td_control$PMI[2], td_control$sd[2], 24, 
                 alternative = 'greater', na.rm = FALSE)
   rtmp <- data.frame(td_patient$right[l], rightres$statistic, rightres$p.value, 'right') 
+  rtmp$PPT <- td_patient$PPT[l]
+  rtmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
   td_right <- rbind(td_right, rtmp)
 }
 
 # merging and renaming data-frames
+td_results <- read.csv(text = 'PMI,TSTAT,PVALUE,SIDE,PPT,DIAGNOSIS')
+# changing names of td data-frames to match td-res
+names(td_left) <- names(td_results)
+names(td_right) <- names(td_results)
+td_results <- rbind(td_results, td_left, td_right)
+# remove original NA values (PMI = -1), where patients had no data
+td_results <- td_results[td_results$PMI > 0 ,]
+td_results$PPT <- factor(td_results$PPT)
 
+# identifying patients with significant deficit
+td_results$DEFICIT <- td_results$PVALUE < 0.05
+# identifying patients with possible deficit
+td_results$BL <- td_results$PVALUE < 0.1
+
+## refine plot later :) - need to read Crawford reporting
+## plotting p-values
+ggplot(td_results, aes(x = SIDE, y = PVALUE, colour = PPT)) +
+  geom_point(position = position_dodge(.2))
 
 ######## step 3: ANOVA, all controls #########
 
@@ -257,22 +294,6 @@ ggsave('lateralPMI-filtered-av.png', plot = last_plot(), device = NULL, dpi = 30
        scale = 1, width = 3, height = 3, path = anaPath)
 
 ## ANOVA ## 
-
-###### step 3 SINGLE CASE STATS ######
-# correlate PMI with possible co-variates, age + education
-agecov <- cor.test(PMIdata$AGE, PMIdata$PMI, method = 'pearson')
-ggscatter(PMIdata, x = "AGE", y = "PMI", 
-         add = "reg.line", conf.int = TRUE, 
-         cor.coef = TRUE, cor.method = "spearman",
-         xlab = "Age", ylab = "PMI (deg")
-
-# correlate PMI with years of education
-PMIdata$ED <- as.numeric(PMIdata$ED)
-edcov <- cor.test(PMIdata$ED, PMIdata$PMI, method = 'pearson')
-ggscatter(PMIdata, x = "ED", y = "PMI", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "spearman",
-          xlab = "Years of Education", ylab = "PMI (deg")
 
 
 ###### step xx DIRECTIONAL ERROR ######
