@@ -149,15 +149,23 @@ td_summary <- summarySE(data = PMIdata, measurevar = 'PMI',
                         groupvars = c('DIAGNOSIS','SIDE'), na.rm = TRUE)
 # isolating control data for analysis
 td_control <- td_summary[td_summary$DIAGNOSIS == 'HC', ]
-# reversing sign on PMI score - deficit < 0 in Crawford's test of deficit
-td_control$PMI <- td_control$PMI*-1 
 
 #patient data for test of deficit
 td_patient <- PMIdata[, c(1,4,5,10)]
 td_patient <- td_patient[td_patient$DIAGNOSIS != 'HC' ,] #removing controls
-td_patient$PMI <- td_patient$PMI*-1 #reversing sign because deficit < 0
+td_patient <- dcast(td_patient, PPT+DIAGNOSIS ~ SIDE)
+# NA values  = -1, so t-value is negative and can remove later
+td_patient[is.na(td_patient$right), "right"] <- -1 
 
 # time for test of deficit!
+td_left <- write.csv(text = 'PMI,TSTAT,PVALUE')
+td_right <- write.csv(text = 'PMI,TSTAT,PVALUE')
+for (l in 1:length(td_patient$PPT)){
+  leftres <- TD(td_patient$left[l], td_control$PMI[1], td_control$sd[1], 24, 
+            alternative = 'greater', na.rm = FALSE)
+  rightres <- TD(td_patient$right[l], td_control$PMI[2], td_control$sd[2], 24, 
+                alternative = 'greater', na.rm = FALSE)
+}
 
 
 
