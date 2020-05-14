@@ -148,7 +148,7 @@ PMIav <- PMIav[order(PMIav$PPT), ]
 ######## step 3: ANOVA, all controls #########
 
 ######## step 4: outlier removal, filtered PMI #########
-controlData <- PMIav[PMIav$PPT < 200, ]
+controlData <- PMIdata[PMIdata$PPT < 200, ]
 
 # median values for each side
 tmp <- aggregate(PMI ~ GRP, median, data = controlData)
@@ -167,8 +167,8 @@ controlData$z <- scale(controlData$PMI)
 controlData$PPT <- factor(controlData$PPT)
 
 plot_name = 'adjustedZ.png'
-AZplot <- ggplot(controlData, aes(x = GRP, y = az, colour = PPT)) +
-  geom_point(size = 3, position = position_dodge(.1)) + ylim(-2,4) + 
+ggplot(controlData, aes(x = GRP, y = az, colour = PPT)) +
+  geom_point(size = 3, position = position_dodge(.1)) +  
   stat_summary(aes(y = az, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', group = 1) + 
   labs(x = '', y = 'Adjusted z-score', element_text(size = 13)) +
@@ -178,33 +178,15 @@ ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, width = 5, height = 6.5, path = anaPath)
 
 ####### outlier removal #######
-# find controls with az > 2.5 and flag-up in PMI data-set - need to remove entire control, not just side
-for (l in 1:length(controlData$PPT)){
-  if (isTRUE(controlData$az[l] > '2.5')){
-    controlData$outlier[l] = 1
-  }
-  else 
-    controlData$outlier[l] = 0
-}
-#reorder control data
-controlData <- controlData[order(controlData$PPT), ]
-
-# adding to PMI data set, then removing
-##### reached here- try and merge outlier to PMI data, need a fresher brain for this... 
-PMIfilter <- merge(controlData, PMIdata, by = 'PPT')
-PMIfilter <- PMIfilter[, c(1:8,14)]
-# save with outlier information
-write.csv(PMIfilter, 'lateral-outliers.csv', row.names = FALSE)
-
-## removing outliers
-for (l in 49:length(PMIfilter$outlier)){
-  PMIfilter$outlier[l] = 0
-}
-## this removes the data points, but not the controls
-PMIfilter <- PMIfilter[PMIfilter$outlier < 1, ]
+# find controls with az > 2.5 - need to remove entire control, not just side
+XCLUDE <- controlData[controlData$az > 2.5, ]
+write.csv(XCLUDE, 'lateraloutliers.csv', row.names = FALSE)
+# creating data-frame with control data removed
+PMIfilt <- PMIdata[!(PMIdata$PPT %in% XCLUDE$PPT), ]
+write.csv(PMIfilt, 'lateralPMI-filtered.csv', row.names = FALSE)
 
 ### PLOT FILTERED PMI DATA
-ggplot(PMIfilter, aes(x = SIDE, y = PMI, colour = SITE), position = position_dodge(.2)) + 
+ggplot(PMIfilt, aes(x = SIDE, y = PMI, colour = SITE), position = position_dodge(.2)) + 
   geom_point(shape = 1, size = 4) +
   geom_line(aes(group = PPT), alpha = .5, size = .8) +
   scale_colour_manual(values = c('grey50', 'black')) +
@@ -214,11 +196,12 @@ ggplot(PMIfilter, aes(x = SIDE, y = PMI, colour = SITE), position = position_dod
                       element_text(size = 14)) +
   facet_wrap(~DIAGNOSIS) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
-                     strip.text.x = element_text(size = 12)) -> PMIf_plot
+                     strip.text.x = element_text(size = 12)) 
 
 ggsave('lateralPMI-filtered.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 7, height = 4, path = anaPath)
 
+## averaging PMI data across sides
 meanFPMI <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
                       na.rm = TRUE)
 meanFPMI_all <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
