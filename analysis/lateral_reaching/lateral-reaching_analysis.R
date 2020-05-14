@@ -144,6 +144,22 @@ PMIav <- aggregate(PMI ~ PPT * SITE * GRP * DIAGNOSIS * AGE * ED, mean, data = P
 PMIav <- PMIav[order(PMIav$PPT), ]
 
 ######## step 2: single case stats, all controls #########
+# create data-frames (controls and patients) with key information
+td_summary <- summarySE(data = PMIdata, measurevar = 'PMI', 
+                        groupvars = c('DIAGNOSIS','SIDE'), na.rm = TRUE)
+# isolating control data for analysis
+td_control <- td_summary[td_summary$DIAGNOSIS == 'HC', ]
+# reversing sign on PMI score - deficit < 0 in Crawford's test of deficit
+td_control$PMI <- td_control$PMI*-1 
+
+#patient data for test of deficit
+td_patient <- PMIdata[, c(1,4,5,10)]
+td_patient <- td_patient[td_patient$DIAGNOSIS != 'HC' ,] #removing controls
+td_patient$PMI <- td_patient$PMI*-1 #reversing sign because deficit < 0
+
+# time for test of deficit!
+
+
 
 ######## step 3: ANOVA, all controls #########
 
@@ -185,6 +201,7 @@ write.csv(XCLUDE, 'lateraloutliers.csv', row.names = FALSE)
 PMIfilt <- PMIdata[!(PMIdata$PPT %in% XCLUDE$PPT), ]
 write.csv(PMIfilt, 'lateralPMI-filtered.csv', row.names = FALSE)
 
+##### need to change the ordering of plot data-frames, worry about this for publication
 ### PLOT FILTERED PMI DATA
 ggplot(PMIfilt, aes(x = SIDE, y = PMI, colour = SITE), position = position_dodge(.2)) + 
   geom_point(shape = 1, size = 4) +
