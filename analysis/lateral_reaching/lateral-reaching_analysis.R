@@ -14,11 +14,11 @@ library(singcar)
 #dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
 # on desktop mac
-#anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
-#dataPath <- '/Users/Alex/Documents/DMT/data'
+anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
+dataPath <- '/Users/Alex/Documents/DMT/data'
 #on pc
-dataPath <- 'S:/groups/DMT/data'
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+#dataPath <- 'S:/groups/DMT/data'
+#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(anaPath)
 
 # load data file
@@ -207,14 +207,54 @@ td_results$PPT <- factor(td_results$PPT)
 td_results$DEFICIT <- td_results$PVALUE < 0.025
 # identifying patients with possible deficit
 td_results$BL <- td_results$PVALUE < 0.05
+# convert logicals into numerics, useful for binomial later
+td_results$DEFICIT <- as.numeric(td_results$DEFICIT)
+td_results$BL <- as.numeric(td_results$BL)
 
-## refine plot later :) - need to read Crawford reporting
+# seperating data-frame into different groups
+MCI <- td_results[td_results$DIAGNOSIS == 'MCI' ,]
+AD <- td_results[td_results$DIAGNOSIS == 'AD' ,]
+left <- td_results[td_results$SIDE == 'left' ,]
+right <- td_results[td_results$SIDE == 'right' ,]
+
+## refine plot later - need to read Crawford reporting
 ## plotting p-values
-ggplot(td_results, aes(x = SIDE, y = PVALUE)) +
-  geom_point(position = position_dodge(.2))
+ggplot(td_results, aes(x = SIDE, y = PVALUE, group = PPT, colour = DIAGNOSIS)) +
+  geom_point(size = 2, position = position_dodge(.2)) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5, position = position_dodge(.2)) + 
+  scale_color_manual(values = c('black', 'grey50')) +
+  geom_hline(yintercept = 0.025, color = 'red') +
+  geom_hline(yintercept = 0.05, color = 'blue') +
+  labs(title = 'Single case stats', x = 'Side', y = 'Probability of deficit', 
+       element_text(size = 10)) +
+  theme_bw()
 
+ggsave('SCS_probability-scatter.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 6, height = 7, path = anaPath)
 
 ### binomial test ###
+# calculating the likelihood that inflated PMI occurs at above chance in each patient group
+# seperating out MCI and AD data frames into left and right
+MCIleft <- MCI[MCI$SIDE == 'left' ,]
+MCIright <- MCI[MCI$SIDE == 'right' ,]
+ADleft <- AD[AD$SIDE == 'left' ,]
+ADright <- AD[AD$SIDE == 'right' ,]
+
+pval <- .05
+
+## first do test of deficit
+# binomial MCI
+binMCI_left <- binom.test(sum(MCIleft$DEFICIT), length(MCIleft$PPT), pval, alternative = 'greater')
+binMCI_right <- binom.test(sum(MCIright$DEFICIT), length(MCIright$PPT), pval, alternative = 'greater')
+# binomial AD
+binAD_left <- binom.test(sum(ADleft$DEFICIT), length(ADleft$PPT), pval, alternative = 'greater')
+binAD_right <- binom.test(sum(ADright$DEFICIT), length(ADright$PPT), pval, alternative = 'greater')
+# binomial all
+bin_left <- binom.test(sum(left$DEFICIT), length(left$PPT), pval, alternative = 'greater')
+bin_right <- binom.test(sum(right$DEFICIT), length(right$PPT), pval, alternative = 'greater')
+
+## no cases that are borderline and not full deficit ( > 0.025, yet < 0.05), 
+# so no need to run borderline analysis here
 
 ######## step 3: ANOVA, all controls #########
 
