@@ -204,14 +204,17 @@ td_results <- td_results[td_results$PMI > 0 ,]
 td_results$PPT <- factor(td_results$PPT)
 
 # identifying patients with significant deficit
-td_results$DEFICIT <- td_results$PVALUE < 0.05
+td_results$DEFICIT <- td_results$PVALUE < 0.025
 # identifying patients with possible deficit
-td_results$BL <- td_results$PVALUE < 0.1
+td_results$BL <- td_results$PVALUE < 0.05
 
 ## refine plot later :) - need to read Crawford reporting
 ## plotting p-values
-ggplot(td_results, aes(x = SIDE, y = PVALUE, colour = PPT)) +
+ggplot(td_results, aes(x = SIDE, y = PVALUE)) +
   geom_point(position = position_dodge(.2))
+
+
+### binomial test ###
 
 ######## step 3: ANOVA, all controls #########
 
@@ -245,7 +248,7 @@ ggplot(controlData, aes(x = GRP, y = az, colour = PPT)) +
 ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 5, height = 6.5, path = anaPath)
 
-####### outlier removal #######
+### outlier removal ###
 # find controls with az > 2.5 - need to remove entire control, not just side
 XCLUDE <- controlData[controlData$az > 2.5, ]
 write.csv(XCLUDE, 'lateraloutliers.csv', row.names = FALSE)
