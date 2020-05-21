@@ -217,7 +217,6 @@ AD <- td_results[td_results$DIAGNOSIS == 'AD' ,]
 left <- td_results[td_results$SIDE == 'left' ,]
 right <- td_results[td_results$SIDE == 'right' ,]
 
-## refine plot later - need to read Crawford reporting
 ## plotting p-values
 ggplot(td_results, aes(x = SIDE, y = PVALUE, group = PPT, colour = DIAGNOSIS)) +
   geom_point(size = 2, position = position_dodge(.2)) +
@@ -336,6 +335,97 @@ ggplot(PMIfilt_av, aes(x = DIAGNOSIS, y = PMI, colour = SITE)) +
 ggsave('lateralPMI-filtered-av.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 3, height = 3, path = anaPath)
 
+######## step 5: single case stats, filtered data #########
+# create data-frames (controls and patients) with key information
+td_summary <- summarySE(data = PMIfilt, measurevar = 'PMI', 
+                        groupvars = c('DIAGNOSIS','SIDE'), na.rm = TRUE)
+# isolating control data for analysis
+tdfilt_control <- td_summary[td_summary$DIAGNOSIS == 'HC', ]
+
+#patient data for test of deficit = same as above
+# time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
+# using Crawford's (1998) test of deficit
+td_right <- read.csv(text = 'PMI,TSTAT,PVALUE,SIDE,PPT,DIAGNOSIS')
+td_left <- read.csv(text = 'PMI,TSTAT,PVALUE,SIDE,PPT,DIAGNOSIS')
+for (l in 1:length(td_patient$PPT)){
+  #left data first
+  leftres <- TD(td_patient$left[l], tdfilt_control$PMI[1], tdfilt_control$sd[1], 24, 
+                alternative = 'greater', na.rm = FALSE)
+  ltmp <- data.frame(td_patient$left[l], leftres$statistic, leftres$p.value, 'left') 
+  ltmp$PPT <- td_patient$PPT[l]
+  ltmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
+  td_left <- rbind(td_left, ltmp)
+  #then right data
+  rightres <- TD(td_patient$right[l], tdfilt_control$PMI[2], tdfilt_control$sd[2], 24, 
+                 alternative = 'greater', na.rm = FALSE)
+  rtmp <- data.frame(td_patient$right[l], rightres$statistic, rightres$p.value, 'right') 
+  rtmp$PPT <- td_patient$PPT[l]
+  rtmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
+  td_right <- rbind(td_right, rtmp)
+}
+
+# merging and renaming data-frames
+tdfilt_results <- read.csv(text = 'PMI,TSTAT,PVALUE,SIDE,PPT,DIAGNOSIS')
+# changing names of td data-frames to match td-res
+names(td_left) <- names(tdfilt_results)
+names(td_right) <- names(tdfilt_results)
+tdfilt_results <- rbind(tdfilt_results, td_left, td_right)
+# remove original NA values (PMI = -1), where patients had no data
+tdfilt_results <- tdfilt_results[tdfilt_results$PMI > 0 ,]
+tdfilt_results$PPT <- factor(tdfilt_results$PPT)
+
+# identifying patients with significant deficit
+tdfilt_results$DEFICIT <- tdfilt_results$PVALUE < 0.025
+# identifying patients with possible deficit
+tdfilt_results$BL <- tdfilt_results$PVALUE < 0.05
+# convert logicals into numerics, useful for binomial later
+tdfilt_results$DEFICIT <- as.numeric(tdfilt_results$DEFICIT)
+tdfilt_results$BL <- as.numeric(tdfilt_results$BL)
+
+# seperating data-frame into different groups
+MCI_filt <- tdfilt_results[tdfilt_results$DIAGNOSIS == 'MCI' ,]
+AD_filt <- tdfilt_results[tdfilt_results$DIAGNOSIS == 'AD' ,]
+left_filt <- tdfilt_results[tdfilt_results$SIDE == 'left' ,]
+right_filt <- tdfilt_results[tdfilt_results$SIDE == 'right' ,]
+
+## plotting p-values
+ggplot(tdfilt_results, aes(x = SIDE, y = PVALUE, group = PPT, colour = DIAGNOSIS)) +
+  geom_point(size = 2, position = position_dodge(.2)) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5, position = position_dodge(.2)) + 
+  scale_color_manual(values = c('black', 'grey50')) +
+  geom_hline(yintercept = 0.025, color = 'red') +
+  geom_hline(yintercept = 0.05, color = 'blue') +
+  labs(title = 'Single case stats, filtered', x = 'Side', y = 'Probability of deficit', 
+       element_text(size = 10)) +
+  theme_bw()
+
+ggsave('SCS_probability-scatter_filtered.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 6, height = 7, path = anaPath)
+
+# Binomial statistics
+# calculating the likelihood that inflated PMI occurs at above chance in each patient group
+# with filtered data. Deficit and borderline deficit
+MCIfilt_left <- MCI_filt[MCI_filt$SIDE == 'left' ,]
+MCIfilt_right <- MCI_filt[MCI_filt$SIDE == 'right' ,]
+ADfilt_left <- AD_filt[AD_filt$SIDE == 'left' ,]
+ADfilt_right <- AD_filt[AD_filt$SIDE == 'right' ,]
+
+pval <- .05
+
+## first do test of deficit
+# binomial MCI
+binMCIF_left <- binom.test(sum(MCIfilt_left$DEFICIT), length(MCIfilt_left$PPT), pval, 
+                           alternative = 'greater')
+binMCIF_right <- binom.test(sum(MCIfilt_right$DEFICIT), length(MCIfilt_right$PPT), pval, 
+                            alternative = 'greater')
+# binomial AD
+binADF_left <- binom.test(sum(ADfilt_left$DEFICIT), length(ADfilt_left$PPT), pval, 
+                          alternative = 'greater')
+binADF_right <- binom.test(sum(ADfilt_right$DEFICIT), length(ADfilt_right$PPT), pval, 
+                           alternative = 'greater')
+# binomial all
+binF_left <- binom.test(sum(left_filt$DEFICIT), length(left_filt$PPT), pval, alternative = 'greater')
+binF_right <- binom.test(sum(right_filt$DEFICIT), length(right_filt$PPT), pval, alternative = 'greater')
 ## ANOVA ## 
 
 
