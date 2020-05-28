@@ -294,7 +294,7 @@ PMI_ANOVA <- ezANOVA(
 
 print(PMI_ANOVA)
 
-######## step 4: outlier removal, filtered PMI #########
+######## step 3: outlier removal, filtered PMI #########
 controlData <- PMIdata[PMIdata$PPT < 200, ]
 
 # median values for each side
@@ -330,7 +330,12 @@ XCLUDE <- controlData[controlData$az > 2.5, ]
 write.csv(XCLUDE, 'lateraloutliers.csv', row.names = FALSE)
 # creating data-frame with control data removed
 PMIfilt <- PMIdata[!(PMIdata$PPT %in% XCLUDE$PPT), ]
+res_mediansF <- res_medians[!(res_medians$PPT %in% XCLUDE$PPT), ]
+res_meansF <- res_means[!(res_means$PPT %in% XCLUDE$PPT), ]
+# saving filered data
 write.csv(PMIfilt, 'lateralPMI-filtered.csv', row.names = FALSE)
+write.csv(res_mediansF, 'lateral-medians_filtered.csv', row.names = FALSE)
+write.csv(res_meansF, 'lateral-means_filtered.csv', row.names = FALSE)
 
 ##### need to change the ordering of plot data-frames, worry about this for publication
 ### PLOT FILTERED PMI DATA
@@ -372,7 +377,7 @@ ggplot(PMIfilt_av, aes(x = DIAGNOSIS, y = PMI, colour = SITE)) +
 ggsave('lateralPMI-filtered-av.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 3, height = 3, path = anaPath)
 
-######## step 5: single case stats, filtered data #########
+######## step 4: single case stats, filtered data #########
 # create data-frames (controls and patients) with key information
 td_summary <- summarySE(data = PMIfilt, measurevar = 'PMI', 
                         groupvars = c('DIAGNOSIS','SIDE'), na.rm = TRUE)
