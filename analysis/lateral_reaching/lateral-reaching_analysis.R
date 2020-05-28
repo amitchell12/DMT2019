@@ -252,6 +252,9 @@ binAD_right <- binom.test(sum(ADright$DEFICIT), length(ADright$PPT), pval, alter
 bin_left <- binom.test(sum(left$DEFICIT), length(left$PPT), pval, alternative = 'greater')
 bin_right <- binom.test(sum(right$DEFICIT), length(right$PPT), pval, alternative = 'greater')
 
+## take any p < .025 for either side, re-run binomial on this data
+MCI <- dcast(MCI, )
+
 ## no cases that are borderline and not full deficit ( > 0.025, yet < 0.05), 
 # so no need to run borderline analysis here
 

@@ -22,6 +22,55 @@ setwd(anaPath)
 
 res <- read.csv('lateral-reaching_compiled.csv')
 
+###### step xx DIRECTIONAL ERROR ######
+dir_medians <- aggregate(xerr_deg ~ POSITION * SIDE * VIEW * PPT * SITE * GRP * DIAGNOSIS, 
+                         median, data = res)
+colnames(dir_medians)[colnames(dir_medians)=='xerr_deg'] <- 'xerr_med' #change name to be more logical
+dir_means <- aggregate(xerr_med ~ VIEW * SIDE * PPT * SITE * GRP * DIAGNOSIS, 
+                       mean, data = dir_medians)
+colnames(dir_means)[colnames(dir_means) == 'xerr_med'] <- 'xerr_mean'
+
+# PMI for directional data (DMI - directional misreaching index)
+dPMIdata <- dcast(dir_means, PPT+GRP+DIAGNOSIS+SITE+SIDE ~ VIEW) #different data-frame
+dPMIdata$PMI <- dPMIdata$periph - dPMIdata$free
+write.csv(dPMIdata, 'lateral-reaching_dPMI.csv', row.names = FALSE)
+
+# plotting this
+ggplot(dir_means, aes(x = VIEW, y = xerr_mean, colour = SITE)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(SIDE), rows = vars(DIAGNOSIS)) + ylim(-8,8) +
+  labs(x = 'Side', y = 'Directional error (deg)', element_text(size = 12)) +
+  scale_colour_manual(values = c('grey50', 'black')) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 8)) -> meansPlot
+
+ggsave('directional_means_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# dPMI plot 
+ggplot(dPMIdata, aes(x = SIDE, y = PMI, colour = SITE), position = position_dodge(.2)) + 
+  geom_point(shape = 1, size = 1.5, stroke = .8) +
+  geom_line(aes(group = PPT), alpha = .5, size = .5) +
+  scale_colour_manual(values = c('grey40', 'black')) +
+  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
+  ylim(-8,8) + labs(title = 'Lateral Reaching', x = 'Side', y = 'dPMI (deg)', 
+                    element_text(size = 12)) +
+  facet_wrap(~DIAGNOSIS) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)) -> dPMIplot
+
+ggsave('dPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+## summary dPMI
+mean_dPMI <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
+                       na.rm = TRUE)
+mean_dPMI_all <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
+                           na.rm = TRUE)
+
+
 ### analysis of response times
 # do in the same manner as with absolute error
 # medians
