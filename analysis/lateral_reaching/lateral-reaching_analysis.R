@@ -8,6 +8,7 @@ library(reshape2)
 library(Hmisc)
 library(ggpubr)
 library(singcar)
+library(ez)
 
 #set working directory to where data is
 #on mac
@@ -275,7 +276,23 @@ binALL <- binom.test(sum(td_side$DEFICIT), length(td_side$DEFICIT), pval, altern
 ## no cases that are borderline and not full deficit ( > 0.025, yet < 0.05), 
 # so no need to run borderline analysis here
 
-######## step 3: ANOVA, all controls #########
+## ANOVA ## 
+# use PMI data-frame to run between-subject ANOVA
+# removing NA values for ANOVA - entire participant (not just side)
+PMIanova_all <- PMIdata[PMIdata$PPT != 212, ]
+PMIanova_all <- PMIanova_all[PMIanova_all$PPT != 407, ]
+
+# FULL ANOVA ON FILTERED DATA
+PMI_ANOVA <- ezANOVA(
+  data = PMIanova_all
+  , dv = .(PMI)
+  , wid = .(PPT)
+  , within = .(SIDE)
+  , between = .(DIAGNOSIS)
+  , type = 3
+)
+
+print(PMI_ANOVA)
 
 ######## step 4: outlier removal, filtered PMI #########
 controlData <- PMIdata[PMIdata$PPT < 200, ]
@@ -333,9 +350,9 @@ ggsave('lateralPMI-filtered.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, width = 7, height = 4, path = anaPath)
 
 ## averaging PMI data across sides
-meanFPMI <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
+meanFPMI <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
                       na.rm = TRUE)
-meanFPMI_all <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
+meanFPMI_all <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
                           na.rm = TRUE)
 
 #average across side
@@ -473,7 +490,20 @@ print(binALLfilt)
 
 ## ANOVA ## 
 # use PMIfilt data-frame to run between-subject ANOVA
+# removing NA values for ANOVA - entire participant (not just side)
+PMIanova <- PMIfilt[PMIfilt$PPT != 212, ]
+PMIanova <- PMIanova[PMIanova$PPT != 407, ]
 
+# FULL ANOVA ON FILTERED DATA
+FILT_ANOVA <- ezANOVA(
+  data = PMIanova
+  , dv = .(PMI)
+  , wid = .(PPT)
+  , within = .(SIDE)
+  , between = .(DIAGNOSIS)
+  , type = 3
+)
 
+print(FILT_ANOVA)
 
 
