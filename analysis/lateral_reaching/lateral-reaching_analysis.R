@@ -253,7 +253,24 @@ bin_left <- binom.test(sum(left$DEFICIT), length(left$PPT), pval, alternative = 
 bin_right <- binom.test(sum(right$DEFICIT), length(right$PPT), pval, alternative = 'greater')
 
 ## take any p < .025 for either side, re-run binomial on this data
-MCI <- dcast(MCI, )
+# extracting p-value for each side (left and right) using td_results
+td_side <- dcast(td_results, PPT+DIAGNOSIS ~ SIDE, value.var = 'PVALUE')
+td_side[is.na(td_side$right), "right"] <- 10
+# finding defcits and borderline cases
+td_side$DEFICIT <- (td_side$left < 0.025 | td_side$right < 0.025)
+td_side$BL <- (td_side$left < 0.05 | td_side$right < 0.05)
+# changing to numerical value
+td_side$DEFICIT <- as.numeric(td_side$DEFICIT)
+td_side$BL <- as.numeric(td_side$BL)
+
+# splitting into MCI and AD
+MCIP <- td_side[td_side$DIAGNOSIS == 'MCI', ]
+ADP <- td_side[td_side$DIAGNOSIS == 'AD', ]
+
+# binomial test of deficit
+binMCI <- binom.test(sum(MCIP$DEFICIT), length(MCIP$PPT), pval, alternative = 'greater')
+binAD <- binom.test(sum(ADP$DEFICIT), length(ADP$DEFICIT), pval, alternative = 'greater')
+binALL <- binom.test(sum(td_side$DEFICIT), length(td_side$DEFICIT), pval, alternative = 'greater')
 
 ## no cases that are borderline and not full deficit ( > 0.025, yet < 0.05), 
 # so no need to run borderline analysis here
@@ -429,53 +446,34 @@ binADF_right <- binom.test(sum(ADfilt_right$DEFICIT), length(ADfilt_right$PPT), 
 # binomial all
 binF_left <- binom.test(sum(left_filt$DEFICIT), length(left_filt$PPT), pval, alternative = 'greater')
 binF_right <- binom.test(sum(right_filt$DEFICIT), length(right_filt$PPT), pval, alternative = 'greater')
+
+
+## take any p < .025 for either side, re-run binomial on this data
+# extracting p-value for each side (left and right) using td_results
+td_sideF <- dcast(tdfilt_results, PPT+DIAGNOSIS ~ SIDE, value.var = 'PVALUE')
+td_sideF[is.na(td_sideF$right), "right"] <- 10
+# finding defcits and borderline cases
+td_sideF$DEFICIT <- (td_sideF$left < 0.025 | td_sideF$right < 0.025)
+td_sideF$BL <- (td_sideF$left < 0.05 | td_sideF$right < 0.05)
+# changing to numerical value
+td_sideF$DEFICIT <- as.numeric(td_sideF$DEFICIT)
+td_sideF$BL <- as.numeric(td_sideF$BL)
+
+# splitting into MCI and AD
+MCIPF <- td_sideF[td_sideF$DIAGNOSIS == 'MCI', ]
+ADPF <- td_sideF[td_sideF$DIAGNOSIS == 'AD', ]
+
+# binomial test of deficit
+binMCIfilt <- binom.test(sum(MCIPF$DEFICIT), length(MCIPF$PPT), pval, alternative = 'greater')
+print(binMCIfilt)
+binADfilt <- binom.test(sum(ADPF$DEFICIT), length(ADPF$DEFICIT), pval, alternative = 'greater')
+print(binADfilt)
+binALLfilt <- binom.test(sum(td_sideF$DEFICIT), length(td_sideF$DEFICIT), pval, alternative = 'greater')
+print(binALLfilt)
+
 ## ANOVA ## 
+# use PMIfilt data-frame to run between-subject ANOVA
 
 
-###### step xx DIRECTIONAL ERROR ######
-dir_medians <- aggregate(xerr_deg ~ POSITION * SIDE * VIEW * PPT * SITE * GRP * DIAGNOSIS, 
-                         median, data = res)
-colnames(dir_medians)[colnames(dir_medians)=='xerr_deg'] <- 'xerr_med' #change name to be more logical
-dir_means <- aggregate(xerr_med ~ VIEW * SIDE * PPT * SITE * GRP * DIAGNOSIS, 
-                       mean, data = dir_medians)
-colnames(dir_means)[colnames(dir_means) == 'xerr_med'] <- 'xerr_mean'
 
-# PMI for directional data (DMI - directional misreaching index)
-dPMIdata <- dcast(dir_means, PPT+GRP+DIAGNOSIS+SITE+SIDE ~ VIEW) #different data-frame
-dPMIdata$PMI <- dPMIdata$periph - dPMIdata$free
-write.csv(dPMIdata, 'lateral-reaching_dPMI.csv', row.names = FALSE)
 
-# plotting this
-ggplot(dir_means, aes(x = VIEW, y = xerr_mean, colour = SITE)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(SIDE), rows = vars(DIAGNOSIS)) + ylim(-8,8) +
-  labs(x = 'Side', y = 'Directional error (deg)', element_text(size = 12)) +
-  scale_colour_manual(values = c('grey50', 'black')) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8)) -> meansPlot
-
-ggsave('directional_means_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-# dPMI plot 
-ggplot(dPMIdata, aes(x = SIDE, y = PMI, colour = SITE), position = position_dodge(.2)) + 
-  geom_point(shape = 1, size = 1.5, stroke = .8) +
-  geom_line(aes(group = PPT), alpha = .5, size = .5) +
-  scale_colour_manual(values = c('grey40', 'black')) +
-  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
-  ylim(-8,8) + labs(title = 'Lateral Reaching', x = 'Side', y = 'dPMI (deg)', 
-                     element_text(size = 12)) +
-  facet_wrap(~DIAGNOSIS) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) -> dPMIplot
-
-ggsave('dPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-## summary dPMI
-mean_dPMI <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
-                          na.rm = TRUE)
-mean_dPMI_all <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
-                         na.rm = TRUE)
