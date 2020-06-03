@@ -27,9 +27,9 @@ res <- read.csv('lateral-reaching_compiled.csv')
 
 ######### step 1, calculating PMI, all data ############
 res_medians <- aggregate(
-  AEdeg ~ PPT * SIDE * VIEW * POSITION * SITE * GRP * DIAGNOSIS * AGE * ED, 
+  AE ~ PPT * SIDE * VIEW * POSITION * SITE * GRP * DIAGNOSIS * AGE * ED, 
   median, data = res)
-colnames(res_medians)[colnames(res_medians)=='AEdeg'] <- 'AEmed' #change name to be more logical
+colnames(res_medians)[colnames(res_medians)=='AE'] <- 'AEmed' #change name to be more logical
 
 # changing levels to be more informative
 res_medians$SIDE <- factor(res_medians$SIDE, levels = c('left', 'right'))
@@ -59,8 +59,8 @@ write.csv(PMIdata, 'lateral-reaching_PMI.csv', row.names = FALSE)
 ggplot(res_means, aes(x = SIDE, y = AEmean, colour = SITE)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(VIEW), rows = vars(DIAGNOSIS)) + ylim(-.5,8) +
-  labs(x = 'Side', y = 'Mean AE (deg)', element_text(size = 12)) +
+  facet_grid(cols = vars(VIEW), rows = vars(DIAGNOSIS)) + 
+  labs(x = 'Side', y = 'Mean AE (mm)', element_text(size = 12)) +
   scale_colour_manual(values = c('grey50', 'black')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 8)) -> meansPlot
@@ -75,7 +75,7 @@ ggplot(PMIdata, aes(x = SIDE, y = PMI, colour = SITE), position = position_dodge
   scale_colour_manual(values = c('grey50', 'black')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
-  ylim(-.5,10) + labs(title = '', x = 'Side', y = 'Reaching error (deg)', 
+  labs(title = '', x = 'Side', y = 'Reaching error (mm)', 
                      element_text(size = 14)) +
   facet_wrap(~DIAGNOSIS) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
@@ -92,14 +92,15 @@ meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
 
 # plot by eccentricity
 # controls
+res_medians$POSITION <- factor(res_medians$POSITION)
 meds_control <- res_medians[res_medians$GRP == 'Control' ,]
   
 ggplot(meds_control, aes(x = POSITION, y = AEmed, colour = SIDE)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(SIDE), rows = vars(VIEW)) + ylim(-.5,10) +
+  facet_grid(cols = vars(SIDE), rows = vars(VIEW)) + 
   labs(title = 'Control', x = 'Eccentricity (deg)', 
-       y = 'Mean AE (deg)', element_text(size = 12)) +
+       y = 'Mean AE (mm)', element_text(size = 12)) +
   scale_colour_manual(values = c('black', 'grey50')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                     strip.text.x = element_text(size = 10)) 
@@ -114,9 +115,9 @@ meds_MCI <- res_medians[res_medians$DIAGNOSIS == 'MCI' ,]
 ggplot(meds_MCI, aes(x = POSITION, y = AEmed, colour = SIDE)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(SIDE), rows = vars(VIEW)) + ylim(-.5,12) +
+  facet_grid(cols = vars(SIDE), rows = vars(VIEW)) +
   labs(title = 'MCI', x = 'Eccentricity (deg)', 
-       y = 'Mean AE (deg)', element_text(size = 12)) +
+       y = 'Mean AE (mm)', element_text(size = 12)) +
   scale_colour_manual(values = c('black', 'grey50')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 10)) -> MCIecc
@@ -130,9 +131,9 @@ meds_AD <- res_medians[res_medians$DIAGNOSIS == 'AD' ,]
 ggplot(meds_AD, aes(x = POSITION, y = AEmed, colour = SIDE)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(SIDE), rows = vars(VIEW)) + ylim(-.5,12) +
+  facet_grid(cols = vars(SIDE), rows = vars(VIEW)) + 
   labs(title = 'Alzheimers', x = 'Eccentricity (deg)', 
-       y = 'Mean AE (deg)', element_text(size = 12)) +
+       y = 'Mean AE (mm)', element_text(size = 12)) +
   scale_colour_manual(values = c('black', 'grey50')) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 10)) 
@@ -150,7 +151,7 @@ agecov <- cor.test(PMIdata$AGE, PMIdata$PMI, method = 'pearson')
 ggscatter(PMIdata, x = "AGE", y = "PMI", 
           add = "reg.line", conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "spearman",
-          xlab = "Age", ylab = "PMI (deg")
+          xlab = "Age", ylab = "PMI (mm)")
 
 # correlate PMI with years of education
 PMIdata$ED <- as.numeric(PMIdata$ED)
@@ -158,7 +159,7 @@ edcov <- cor.test(PMIdata$ED, PMIdata$PMI, method = 'pearson')
 ggscatter(PMIdata, x = "ED", y = "PMI", 
           add = "reg.line", conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "spearman",
-          xlab = "Years of Education", ylab = "PMI (deg")
+          xlab = "Years of Education", ylab = "PMI (mm)")
 
 # create data-frames (controls and patients) with key information
 td_summary <- summarySE(data = PMIdata, measurevar = 'PMI', 
@@ -345,7 +346,7 @@ ggplot(PMIfilt, aes(x = SIDE, y = PMI, colour = SITE), position = position_dodge
   scale_colour_manual(values = c('grey50', 'black')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
-  ylim(-.5,10) + labs(title = 'Lateral Reaching', x = 'Side', y = 'Reaching error (deg)', 
+  labs(title = 'Lateral Reaching', x = 'Side', y = 'Reaching error (mm)', 
                       element_text(size = 14)) +
   facet_wrap(~DIAGNOSIS) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
@@ -369,7 +370,7 @@ ggplot(PMIfilt_av, aes(x = DIAGNOSIS, y = PMI, colour = SITE)) +
   scale_colour_manual(values = c('grey40', 'black')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  ylim(-.5,7) + labs(title = '', x = '', y = 'Reaching error (deg)', 
+  labs(title = '', x = '', y = 'Reaching error (mm)', 
                      element_text(size = 8)) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 8))
