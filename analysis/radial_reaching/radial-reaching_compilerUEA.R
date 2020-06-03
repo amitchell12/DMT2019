@@ -145,5 +145,20 @@ ggsave('radial-reach_Err.png', plot = last_plot(), device = NULL,
 res$AE <- sqrt(res$LANDx^2 + res$LANDy^2) #mm
 res$GRP <- factor(substr(res$PPT, 1, 1))
 
+# adding demographic information
+# add demographic information to this data
+patient_demos <- read.csv('patient_demographics.csv') #loading patient demographics
+control_demos <- read.csv('control_demographics.csv') #loading control demos
+#extracting ACE data into seperate data-frame
+ACEscores <- patient_demos[ ,c(1, 8:13)]
+#isolating patient demographic information to bind with control
+patient_demos <- patient_demos[, c(1:6)]
+demo <- rbind(control_demos, patient_demos)
+# changing 'subject_nr' to PPT to match data-set
+names(demo)[1] <- 'PPT'
+
+#merging demo with res medians
+res <- merge(res, demo, by = 'PPT')
+
 #save compiled data-set
 write.csv(res, "radial-reaching_compiled.csv", row.names = FALSE)
