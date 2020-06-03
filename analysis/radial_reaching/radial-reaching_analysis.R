@@ -25,15 +25,21 @@ res$GRP <- factor(res$GRP)
 levels(res$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
 res$diagnosis <- factor(res$diagnosis)
 names(res)[25] <- 'DIAGNOSIS'
+names(res)[22] <- 'AGE'
+names(res)[24] <- 'ED'
 
 # summary data
-res_medians <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DIAGNOSIS*GRP*SITE, mean, data = res)
+res_medians <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DIAGNOSIS*GRP*SITE*AGE*ED, mean, data = res)
 colnames(res_medians)[colnames(res_medians)=='AE'] <- 'AEmed'
-res_means <- aggregate(AEmed ~ PPT*VIEW*SIDE*GRP*DIAGNOSIS*SITE, mean, data = res_medians)
+# removing free + peripheral trails at 100mm left for 101, error
+res_medians <- res_medians[order(res_medians$PPT) ,]
+res_medians <- res_medians[!(res_medians$PPT == '101' & res_medians$AEmed > 50) ,]
+
+res_means <- aggregate(AEmed ~ PPT*VIEW*SIDE*GRP*DIAGNOSIS*SITE*AGE*ED, mean, data = res_medians)
 colnames(res_means)[colnames(res_means)=='AEmed'] <- 'AEmean'
 
 # casting by task
-PMIdata <- dcast(res_means, PPT+GRP+DIAGNOSIS+SIDE+SITE ~ VIEW)
+PMIdata <- dcast(res_means, PPT+GRP+DIAGNOSIS+SIDE+SITE+AGE+ED ~ VIEW)
 PMIdata$PMI <- PMIdata$Peripheral - PMIdata$Free
 write.csv(PMIdata, 'radial-reaching_PMI.csv', row.names = FALSE)
 
@@ -71,17 +77,87 @@ meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS',
 meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
                          na.rm = TRUE)
 
-##### outlier calculation, for controls only ######
+# plot by eccentricity
+# controls
+res_medians$POSITION <- factor(res_medians$POSITION)
+meds_control <- res_medians[res_medians$GRP == 'Control' ,]
+
+ggplot(meds_control, aes(x = POSITION, y = AEmed, colour = SIDE)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
+  facet_wrap(~VIEW) + 
+  labs(title = 'Control', x = 'Eccentricity (mm)', 
+       y = 'Mean AE (mm)', element_text(size = 12)) +
+  scale_colour_manual(values = c('black', 'grey50')) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)) 
+
+
+ggsave('control_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# patients - MCI
+meds_MCI <- res_medians[res_medians$DIAGNOSIS == 'MCI' ,]
+
+ggplot(meds_MCI, aes(x = POSITION, y = AEmed, colour = SIDE)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
+  facet_wrap(~VIEW) +
+  labs(title = 'MCI', x = 'Eccentricity (mm)', 
+       y = 'Mean AE (mm)', element_text(size = 12)) +
+  scale_colour_manual(values = c('black', 'grey50')) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)) 
+
+ggsave('MCI_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# patients - AD
+meds_AD <- res_medians[res_medians$DIAGNOSIS == 'AD' ,]
+
+ggplot(meds_AD, aes(x = POSITION, y = AEmed, colour = SIDE)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
+  facet_wrap(~VIEW) + 
+  labs(title = 'Alzheimers', x = 'Eccentricity (deg)', 
+       y = 'Mean AE (mm)', element_text(size = 12)) +
+  scale_colour_manual(values = c('black', 'grey50')) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)) 
+
+ggsave('AD_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# PMI collapsed across side
+PMIav <- aggregate(PMI ~ PPT * SITE * GRP * DIAGNOSIS * AGE * ED, mean, data = PMIdata)
+PMIav <- PMIav[order(PMIav$PPT), ]
+
+# correlate PMI with possible co-variates, age + education
+agecov <- cor.test(PMIdata$AGE, PMIdata$PMI, method = 'pearson')
+ggscatter(PMIdata, x = "AGE", y = "PMI", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "spearman",
+          xlab = "Age", ylab = "PMI (mm)")
+
+# correlate PMI with years of education
+PMIdata$ED <- as.numeric(PMIdata$ED)
+edcov <- cor.test(PMIdata$ED, PMIdata$PMI, method = 'pearson')
+ggscatter(PMIdata, x = "ED", y = "PMI", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "spearman",
+          xlab = "Years of Education", ylab = "PMI (mm)")
+
+######## step 3: outlier removal, filtered PMI #########
 controlData <- PMIdata[PMIdata$PPT < 200, ]
 
 # median values for each side
-tmp <- aggregate(controlData$PMI,  by=list(SIDE = controlData$SIDE), FUN=median)
+tmp <- aggregate(PMI ~ GRP, median, data = controlData)
 names(tmp)[2] <- 'med'
 controlData <- merge(tmp, controlData)
 
 # calculating MAD for each (absolute value)
 controlData$AD <- abs(controlData$PMI - controlData$med)
-tmp <- aggregate(controlData$AD,  by=list(side = controlData$SIDE), FUN=median)
+tmp <- aggregate(AD ~ GRP, median, data=controlData)
 names(tmp)[2] <- 'MAD'
 controlData <- merge(controlData, tmp)
 
@@ -91,8 +167,8 @@ controlData$z <- scale(controlData$PMI)
 controlData$PPT <- factor(controlData$PPT)
 
 plot_name = 'adjustedZ.png'
-AZplot <- ggplot(controlData, aes(x = SIDE, y = az, colour = PPT)) +
-  geom_point(size = 3, position = position_dodge(.1)) + ylim(-3,6) + 
+ggplot(controlData, aes(x = GRP, y = az, colour = PPT)) +
+  geom_point(size = 3, position = position_dodge(.1)) +  
   stat_summary(aes(y = az, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', group = 1) + 
   labs(x = '', y = 'Adjusted z-score', element_text(size = 13)) +
@@ -101,66 +177,194 @@ AZplot <- ggplot(controlData, aes(x = SIDE, y = az, colour = PPT)) +
 ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 5, height = 6.5, path = anaPath)
 
-####### outlier removal #######
-# find controls with az > 2.5 and flag-up in PMI data-set
-for (l in 1:length(controlData$PPT)){
-  if (isTRUE(controlData$az[l] > '2.5')){
-    controlData$outlier[l] = 1
-  }
-  else 
-    controlData$outlier[l] = 0
-}
-#reorder control data
-controlData <- controlData[order(controlData$PPT), ]
-
-# adding to PMI data set, then removing
-PMIfilter <- merge(PMIdata, controlData, all = TRUE)
-PMIfilter <- PMIfilter[, c(1:7,14)]
-# save with outlier information
-write.csv(PMIfilter, 'radial-outliers.csv', row.names = FALSE)
-
-## removing outliers
-for (l in 49:length(PMIfilter$outlier)){
-  PMIfilter$outlier[l] = 0
-}
-PMIfilter <- PMIfilter[PMIfilter$outlier < 1, ]
+### outlier removal ###
+# find controls with az > 2.5 - need to remove entire control, not just side
+XCLUDE <- controlData[controlData$az > 2.5, ]
+write.csv(XCLUDE, 'radialoutliers.csv', row.names = FALSE)
+# creating data-frame with control data removed
+PMIfilt <- PMIdata[!(PMIdata$PPT %in% XCLUDE$PPT), ]
+res_mediansF <- res_medians[!(res_medians$PPT %in% XCLUDE$PPT), ]
+res_meansF <- res_means[!(res_means$PPT %in% XCLUDE$PPT), ]
+# saving filered data
+write.csv(PMIfilt, 'radialPMI-filtered.csv', row.names = FALSE)
+write.csv(res_mediansF, 'radial-medians_filtered.csv', row.names = FALSE)
+write.csv(res_meansF, 'radial-means_filtered.csv', row.names = FALSE)
 
 ### PLOT FILTERED PMI DATA
-ggplot(PMIfilter, aes(x = SIDE, y = PMI, colour = GRP), position = position_dodge(.2)) + 
+ggplot(PMIfilt, aes(x = SIDE, y = PMI), position = position_dodge(.2)) + 
   geom_point(shape = 1, size = 4) +
   geom_line(aes(group = PPT), alpha = .5, size = .8) +
-  scale_colour_manual(values = c('grey50', 'black')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
-  ylim(-.5,10) + labs(title = 'Radial Reaching', x = 'Side', y = 'Reaching error (deg)', 
-                      element_text(size = 14)) +
-  facet_wrap(~GRP) +
+  labs(title = 'Lateral Reaching', x = 'Side', y = 'Reaching error (mm)', 
+       element_text(size = 14)) +
+  facet_wrap(~DIAGNOSIS) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
-                     strip.text.x = element_text(size = 12)) -> PMIf_plot
+                     strip.text.x = element_text(size = 12)) 
 
 ggsave('radialPMI-filtered.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 7, height = 4, path = anaPath)
 
-meanFPMI <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('GRP', 'SIDE'),
+## averaging PMI data across sides
+meanFPMI <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
                       na.rm = TRUE)
-meanFPMI_all <- summarySE(PMIfilter, measurevar = 'PMI', groupvar = c('GRP'),
+meanFPMI_all <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
                           na.rm = TRUE)
 
 #average across side
-PMIfilter_av <- aggregate(PMI ~ PPT * SITE * GRP, mean, data = PMIfilter)
+PMIfilt_av <- aggregate(PMI ~ PPT * SITE * DIAGNOSIS, mean, data = PMIfilt)
 jitter <- position_jitter(width = 0.1, height = 0.1)
 
-ggplot(PMIfilter_av, aes(x = GRP, y = PMI)) + 
+ggplot(PMIfilt_av, aes(x = DIAGNOSIS, y = PMI, colour = SITE)) + 
   geom_point(position = jitter, shape = 21, size = 3) +
+  scale_colour_manual(values = c('grey40', 'black')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  ylim(-.5,7) + labs(title = '', x = '', y = 'Reaching error (deg)', 
-                     element_text(size = 8)) +
+  labs(title = '', x = '', y = 'Reaching error (mm)', 
+       element_text(size = 8)) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8)) -> PMIf_plot
+                     strip.text.x = element_text(size = 8))
 
 ggsave('radialPMI-filtered-av.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 3, height = 3, path = anaPath)
 
+######## step 4: single case stats on filtered data ########
+# create data-frames (controls and patients) with key information
+td_summary <- summarySE(data = PMIfilt, measurevar = 'PMI', 
+                        groupvars = c('DIAGNOSIS','SIDE'), na.rm = TRUE)
+# isolating control data for analysis
+tdfilt_control <- td_summary[td_summary$DIAGNOSIS == 'HC', ]
 
-########### next steps: comparing patients to controls
+#patient data for test of deficit
+td_patient <- PMIdata[, c(1,3,4,10)] #extract from PMI because patient data not filtered
+td_patient <- td_patient[td_patient$DIAGNOSIS != 'HC' ,] #removing controls
+td_patient <- dcast(td_patient, PPT+DIAGNOSIS ~ SIDE)
+# NA values  = -1, so t-value is negative and can remove later
+td_patient[is.na(td_patient$Right), "Right"] <- -1 
+
+#patient data for test of deficit = same as above
+# time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
+# using Crawford's (1998) test of deficit
+td_right <- read.csv(text = 'PMI,TSTAT,PVALUE,SIDE,PPT,DIAGNOSIS')
+td_left <- read.csv(text = 'PMI,TSTAT,PVALUE,SIDE,PPT,DIAGNOSIS')
+for (l in 1:length(td_patient$PPT)){
+  #left data first
+  leftres <- TD(td_patient$Left[l], tdfilt_control$PMI[1], tdfilt_control$sd[1], 24, 
+                alternative = 'greater', na.rm = FALSE)
+  ltmp <- data.frame(td_patient$Left[l], leftres$statistic, leftres$p.value, 'left') 
+  ltmp$PPT <- td_patient$PPT[l]
+  ltmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
+  td_left <- rbind(td_left, ltmp)
+  #then right data
+  rightres <- TD(td_patient$Right[l], tdfilt_control$PMI[2], tdfilt_control$sd[2], 24, 
+                 alternative = 'greater', na.rm = FALSE)
+  rtmp <- data.frame(td_patient$Right[l], rightres$statistic, rightres$p.value, 'right') 
+  rtmp$PPT <- td_patient$PPT[l]
+  rtmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
+  td_right <- rbind(td_right, rtmp)
+}
+
+# merging and renaming data-frames
+tdfilt_results <- read.csv(text = 'PMI,TSTAT,PVALUE,SIDE,PPT,DIAGNOSIS')
+# changing names of td data-frames to match td-res
+names(td_left) <- names(tdfilt_results)
+names(td_right) <- names(tdfilt_results)
+tdfilt_results <- rbind(tdfilt_results, td_left, td_right)
+# remove original NA values (PMI = -1), where patients had no data
+tdfilt_results <- tdfilt_results[tdfilt_results$PMI > 0 ,]
+tdfilt_results$PPT <- factor(tdfilt_results$PPT)
+
+# identifying patients with significant deficit
+tdfilt_results$DEFICIT <- tdfilt_results$PVALUE < 0.025
+# identifying patients with possible deficit
+tdfilt_results$BL <- tdfilt_results$PVALUE < 0.05
+# convert logicals into numerics, useful for binomial later
+tdfilt_results$DEFICIT <- as.numeric(tdfilt_results$DEFICIT)
+tdfilt_results$BL <- as.numeric(tdfilt_results$BL)
+
+# seperating data-frame into different groups
+MCI_filt <- tdfilt_results[tdfilt_results$DIAGNOSIS == 'MCI' ,]
+AD_filt <- tdfilt_results[tdfilt_results$DIAGNOSIS == 'AD' ,]
+left_filt <- tdfilt_results[tdfilt_results$SIDE == 'left' ,]
+right_filt <- tdfilt_results[tdfilt_results$SIDE == 'right' ,]
+
+## plotting p-values
+ggplot(tdfilt_results, aes(x = SIDE, y = PVALUE, group = PPT, colour = DIAGNOSIS)) +
+  geom_point(size = 2, position = position_dodge(.2)) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5, position = position_dodge(.2)) + 
+  scale_color_manual(values = c('black', 'grey50')) +
+  geom_hline(yintercept = 0.025, color = 'red') +
+  geom_hline(yintercept = 0.05, color = 'blue') +
+  labs(title = 'Single case stats, filtered', x = 'Side', y = 'Probability of deficit', 
+       element_text(size = 10)) +
+  theme_bw()
+
+ggsave('SCS_probability-scatter_filtered.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 6, height = 7, path = anaPath)
+
+# Binomial statistics
+# calculating the likelihood that inflated PMI occurs at above chance in each patient group
+# with filtered data. Deficit and borderline deficit
+MCIfilt_left <- MCI_filt[MCI_filt$SIDE == 'left' ,]
+MCIfilt_right <- MCI_filt[MCI_filt$SIDE == 'right' ,]
+ADfilt_left <- AD_filt[AD_filt$SIDE == 'left' ,]
+ADfilt_right <- AD_filt[AD_filt$SIDE == 'right' ,]
+
+pval <- .05
+
+## first do test of deficit
+# binomial MCI
+binMCIF_left <- binom.test(sum(MCIfilt_left$DEFICIT), length(MCIfilt_left$PPT), pval, 
+                           alternative = 'greater')
+binMCIF_right <- binom.test(sum(MCIfilt_right$DEFICIT), length(MCIfilt_right$PPT), pval, 
+                            alternative = 'greater')
+# binomial AD
+binADF_left <- binom.test(sum(ADfilt_left$DEFICIT), length(ADfilt_left$PPT), pval, 
+                          alternative = 'greater')
+binADF_right <- binom.test(sum(ADfilt_right$DEFICIT), length(ADfilt_right$PPT), pval, 
+                           alternative = 'greater')
+# binomial all
+binF_left <- binom.test(sum(left_filt$DEFICIT), length(left_filt$PPT), pval, alternative = 'greater')
+binF_right <- binom.test(sum(right_filt$DEFICIT), length(right_filt$PPT), pval, alternative = 'greater')
+
+
+## take any p < .025 for either side, re-run binomial on this data
+# extracting p-value for each side (left and right) using td_results
+td_sideF <- dcast(tdfilt_results, PPT+DIAGNOSIS ~ SIDE, value.var = 'PVALUE')
+td_sideF[is.na(td_sideF$right), "right"] <- 10
+# finding defcits and borderline cases
+td_sideF$DEFICIT <- (td_sideF$left < 0.025 | td_sideF$right < 0.025)
+td_sideF$BL <- (td_sideF$left < 0.05 | td_sideF$right < 0.05)
+# changing to numerical value
+td_sideF$DEFICIT <- as.numeric(td_sideF$DEFICIT)
+td_sideF$BL <- as.numeric(td_sideF$BL)
+
+# splitting into MCI and AD
+MCIPF <- td_sideF[td_sideF$DIAGNOSIS == 'MCI', ]
+ADPF <- td_sideF[td_sideF$DIAGNOSIS == 'AD', ]
+
+# binomial test of deficit
+binMCIfilt <- binom.test(sum(MCIPF$DEFICIT), length(MCIPF$PPT), pval, alternative = 'greater')
+print(binMCIfilt)
+binADfilt <- binom.test(sum(ADPF$DEFICIT), length(ADPF$DEFICIT), pval, alternative = 'greater')
+print(binADfilt)
+binALLfilt <- binom.test(sum(td_sideF$DEFICIT), length(td_sideF$DEFICIT), pval, alternative = 'greater')
+print(binALLfilt)
+
+## ANOVA ## 
+# use PMIfilt data-frame to run between-subject ANOVA
+# removing NA values for ANOVA - entire participant (not just side)
+PMIanova <- PMIfilt[PMIfilt$PPT != 212, ]
+PMIanova <- PMIanova[PMIanova$PPT != 407, ]
+
+# FULL ANOVA ON FILTERED DATA
+FILT_ANOVA <- ezANOVA(
+  data = PMIanova
+  , dv = .(PMI)
+  , wid = .(PPT)
+  , within = .(SIDE)
+  , between = .(DIAGNOSIS)
+  , type = 3
+)
+
+print(FILT_ANOVA)
