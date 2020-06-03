@@ -118,4 +118,5 @@ names(demo)[1] <- 'PPT'
 res <- merge(res, demo, by = 'PPT')
 
 #save compiled data-set
+setwd(anaPath)
 write.csv(res, "radial-reaching_compiled.csv", row.names = FALSE)

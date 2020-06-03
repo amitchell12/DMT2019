@@ -17,6 +17,46 @@ setwd(anaPath)
 
 res <- read.csv('radial_reaching_compiled.csv')
 
+##### directional error calc #####
+dir_medians <- aggregate(LANDx_deg ~ PPT*POSITION*VIEW*SIDE*GRP*SITE, mean, data = res)
+colnames(dir_medians)[colnames(dir_medians)=='LANDx_deg'] <- 'dirmed'
+dir_means <- aggregate(dirmed ~ PPT*VIEW*SIDE*GRP*SITE, mean, data = dir_medians)
+colnames(dir_means)[colnames(dir_means)=='dirmed'] <- 'dirmean'
+
+# casting by task
+dPMIdata <- dcast(dir_means, PPT+GRP+SIDE+SITE ~ VIEW)
+dPMIdata$PMI <- dPMIdata$Peripheral - PMIdata$Free
+write.csv(dPMIdata, 'radial-reaching_dPMI.csv', row.names = FALSE)
+
+## plotting
+# mean plot 
+ggplot(dir_means, aes(x = VIEW, y = dirmean, colour = GRP)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(SIDE), rows = vars(GRP)) + ylim(-8,8) +
+  labs(x = 'Side', y = 'Directional error (deg)', element_text(size = 12)) +
+  scale_colour_manual(values = c('black', 'grey50')) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 8)) -> meansPlot
+
+ggsave('directionalerror_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# PMI plot
+ggplot(dPMIdata, aes(x = SIDE, y = PMI, colour = GRP), position = position_dodge(.2)) + 
+  geom_point(shape = 1, size = 1.5, stroke = .8) +
+  geom_line(aes(group = PPT), alpha = .5, size = .5) +
+  scale_colour_manual(values = c('grey40', 'grey40')) +
+  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 2, group = 1) +
+  ylim(-8,8) + labs(title = 'Radial reaching', x = 'Side', y = 'dPMI (deg)', 
+                    element_text(size = 12)) +
+  facet_wrap(~GRP) +
+  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
+                     strip.text.x = element_text(size = 8)) -> PMIplot
+
+ggsave('dPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
 
 ##### summary response time #####
 #response time
