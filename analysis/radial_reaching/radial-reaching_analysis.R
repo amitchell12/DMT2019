@@ -355,7 +355,6 @@ print(binALLfilt)
 # use PMIfilt data-frame to run between-subject ANOVA
 # removing NA values for ANOVA - entire participant (not just side)
 PMIanova <- PMIfilt[PMIfilt$PPT != 212, ]
-PMIanova <- PMIanova[PMIanova$PPT != 407, ]
 
 # FULL ANOVA ON FILTERED DATA
 FILT_ANOVA <- ezANOVA(
