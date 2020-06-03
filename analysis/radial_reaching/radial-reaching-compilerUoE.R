@@ -7,27 +7,16 @@ library(Rmisc)
 #on mac
 #anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
 #dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#on mac desktop
+anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
+dataPath <- '/Users/Alex/Documents/DMT/data'
 #on pc
-dataPath <- 'S:/groups/DMT/data'
-anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
+#dataPath <- 'S:/groups/DMT/data'
+#anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
 setwd(dataPath)
 
 files <- list.files(path=dataPath, pattern = "*.TRJ", full.names = TRUE, recursive = TRUE)
 idfiles <- list.files(path=dataPath, pattern = "*.dmt", full.names = TRUE, recursive = TRUE)
-
-# screen information
-x = 310
-y = 175
-pixels_perdeg = 43.76
-deg_perpix = 1/pixels_perdeg
-x_res = 1920
-y_res = 1080
-sd = 40
-
-pixPer_mm_x = x_res/x;
-pixPer_mm_y = y_res/y;
-pixPer_mm = (pixPer_mm_x+pixPer_mm_y)/2;
-mm_perPix = 1/pixPer_mm;
 
 ##### variables #####
 visAngle <- function(size, distance){
@@ -68,9 +57,6 @@ res <- merge(data.frame(optodat, row.names = NULL),
 res <- res[order(res$COUNT, decreasing = FALSE), ] #ordering by count (so all in order)
 # removing DF
 res <- res[!res$PPT == 'DMT300', ]
-# saving combined file
-setwd(anaPath)
-write.csv(res, "radial-reaching_allData.csv", row.names = FALSE)
 
 ##### calibration data #####
 # calibration data-frame
@@ -110,7 +96,7 @@ ggsave('radial-reach_Err.png', plot = last_plot(), device = NULL,
 # tranforming to degrees
 res$LANDx_deg <- visAngle(size= res$LANDx, distance = 500) #using visual angle function above
 res$LANDy_deg <- visAngle(size= res$LANDy, distance = 500)
-# absolute error
+# absolute error - in mm
 res$AE <- sqrt(res$LANDx^2 + res$LANDy^2) #mm
 res$AEdeg <- sqrt(res$LANDx_deg^2 + res$LANDy_deg^2) #deg
 res$GRP <- factor(substr(res$PPT, 4, 4))
