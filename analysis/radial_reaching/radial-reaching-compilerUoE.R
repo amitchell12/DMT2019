@@ -101,6 +101,7 @@ res$AE <- sqrt(res$LANDx^2 + res$LANDy^2) #mm
 res$AEdeg <- sqrt(res$LANDx_deg^2 + res$LANDy_deg^2) #deg
 res$GRP <- factor(substr(res$PPT, 4, 4))
 res$PPT <- substr(res$PPT, 4, 6)
+res$SITE <- 'UOE'
 
 # adding demographic information
 patient_demos <- read.csv('patient_demographics.csv') #loading patient demographics

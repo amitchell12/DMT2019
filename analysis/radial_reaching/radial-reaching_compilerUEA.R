@@ -144,6 +144,7 @@ ggsave('radial-reach_Err.png', plot = last_plot(), device = NULL,
 # absolute error
 res$AE <- sqrt(res$LANDx^2 + res$LANDy^2) #mm
 res$GRP <- factor(substr(res$PPT, 1, 1))
+res$SITE <- 'UEA'
 
 # adding demographic information
 # add demographic information to this data

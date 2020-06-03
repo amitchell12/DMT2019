@@ -13,11 +13,11 @@ library(ggpubr)
 #dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
 # on desktop mac
-#anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
-#dataPath <- '/Users/Alex/Documents/DMT/data'
+anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
+dataPath <- '/Users/Alex/Documents/DMT/data'
 #on pc
-dataPath <- 'S:/groups/DMT/data'
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+#dataPath <- 'S:/groups/DMT/data'
+#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 ########### variable info ###########
@@ -100,7 +100,7 @@ res$xerr_deg = visAngle(size= res$xerr_mm, distance= 400) # in deg
 res$yerr_deg = visAngle(size= res$yerr_mm, distance= 400)
 
 #absolute error in mm
-res$AEmm = sqrt(res$xerr_mm^2 + res$yerr_mm^2)
+res$AE = sqrt(res$xerr_mm^2 + res$yerr_mm^2)
 res$AEdeg = sqrt(res$xerr_deg^2 + res$yerr_deg^2)
 
 # removing and reorganising
@@ -114,11 +114,9 @@ ACEscores <- patient_demos[ ,c(1, 8:13)]
 #isolating patient demographic information to bind with control
 patient_demos <- patient_demos[, c(1:6)]
 demo <- rbind(control_demos, patient_demos)
-#remove patient 409 - no lateral reaching data here
-demo <- demo[demo$subject_nr != 409, ]
 
 #merging demo with res medians
-res <- merge(demo, res)
+res <- merge(demo, res, by = 'subject_nr')
 
 ## renaming variables to match radial reaching
 names(res)[1] <- 'PPT'
@@ -140,6 +138,7 @@ names(res)[26] <- 'SITE'
 setwd(anaPath)
 write.csv(res, "lateral-reaching_compiled.csv", row.names = FALSE)
 
+res$POSITION <- factor(res$POSITION)
 ggplot(res) + geom_point(aes(x = TARGx, y = TARGy), shape = 4, size = 3) +
   geom_point(aes(x = LANDx, y = LANDy, colour = POSITION), shape = 1, size = 2) +
   facet_wrap(. ~PPT*VIEW) 
