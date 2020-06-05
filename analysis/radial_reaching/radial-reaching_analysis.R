@@ -39,8 +39,8 @@ res <- res[, c(1,25,26,9,10,19:24,2:8,11:18)]
 
 # summary data
 # extracting data from furthest two target locs
-res_periph <- subset(res, res$POSITION == -400 | res$POSITION == -300 | 
-                         res$POSITION == 300 | res$POSITION == 400)
+res_periph <- subset(res, res$POSITION == -200 | res$POSITION == -300 | 
+                         res$POSITION == 300 | res$POSITION == 200)
 res_medians <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE*ED, 
                          mean, data = res_periph)
 colnames(res_medians)[colnames(res_medians)=='AE'] <- 'AEmed'
@@ -229,7 +229,7 @@ ggsave('radialPMI-filtered.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, width = 7, height = 4, path = anaPath)
 
 ## averaging PMI data across sides
-meanFPMI <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
+meanFPMI <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'DOM'),
                       na.rm = TRUE)
 meanFPMI_all <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
                           na.rm = TRUE)
@@ -294,7 +294,7 @@ names(td_ndom) <- names(tdfilt_results)
 names(td_dom) <- names(tdfilt_results)
 tdfilt_results <- rbind(tdfilt_results, td_ndom, td_dom)
 # remove original NA values (PMI = -1), where patients had no data
-tdfilt_results <- tdfilt_results[tdfilt_results$PMI > 0 ,]
+tdfilt_results <- tdfilt_results[tdfilt_results$PMI > -0.9 ,]
 tdfilt_results$PPT <- factor(tdfilt_results$PPT)
 
 # identifying patients with significant deficit
@@ -346,6 +346,14 @@ print(binMCIfilt)
 binADfilt <- binom.test(sum(ADPF$DEFICIT), length(ADPF$PPT), pval, alternative = 'greater')
 print(binADfilt)
 binALLfilt <- binom.test(sum(td_sideF$DEFICIT), length(td_sideF$PPT), pval, alternative = 'greater')
+print(binALLfilt)
+
+# binomial test of borderline deficit
+binMCIfilt <- binom.test(sum(MCIPF$BL), length(MCIPF$PPT), pval_Bl, alternative = 'greater')
+print(binMCIfilt)
+binADfilt <- binom.test(sum(ADPF$BL), length(ADPF$PPT), pval_Bl, alternative = 'greater')
+print(binADfilt)
+binALLfilt <- binom.test(sum(td_sideF$BL), length(td_sideF$PPT), pval_Bl, alternative = 'greater')
 print(binALLfilt)
 
 ## ANOVA ## 
