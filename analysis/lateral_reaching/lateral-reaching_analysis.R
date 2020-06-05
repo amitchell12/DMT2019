@@ -34,6 +34,12 @@ res$DOM <- factor(res$DOM, labels= c('ND','D'))
 # change order so dominance up-front
 res <- res[, c(1:8,27,9:26)]
 
+# finding total number of valid trials for each patient
+res$VALID <- 1
+valid <- aggregate(VALID ~ GRP * PPT * DOM * VIEW, sum, data = res)
+valid$TOT <- 27
+valid$MISS <- valid$TOT - valid$VALID
+valid_tot <- aggregate(MISS ~ GRP * VIEW * DOM, sum, data = valid)
 
 ######### step 1, calculating PMI, all data ############
 res_medians <- aggregate(
@@ -483,5 +489,24 @@ FILT_ANOVA <- ezANOVA(
 )
 
 print(FILT_ANOVA)
+
+### ANOVA BY ECCENTRICITY ###
+ECCanova <- res_mediansF[res_mediansF$PPT != 212 ,]
+ECCanova <- ECCanova[ECCanova$PPT != 407 ,]
+ECCanova <- ECCanova[, c(1:9,11)]
+ECCanova$POSITION <- factor(ECCanova$POSITION)
+
+ECC_ANOVA <- ezANOVA(
+  data = ECCanova
+  , dv = .(AEmed)
+  , wid = .(PPT)
+  , within = .(DOM, VIEW, POSITION)
+  , between = .(DIAGNOSIS)
+  , type = 3
+)
+
+print(ECC_ANOVA)
+
+
 
 

@@ -90,8 +90,9 @@ res$site <- factor(res$site)
 # eye move and void trials
 # counting eye-move per participant
 nEye_move <- aggregate(eye_move ~ subject_nr * group, sum, data = res)
-totEye_move <- summarySE(nEye_move, measurevar = 'eye_move', groupvars = 'group')
-nVoid <- aggregate(res$void, by=list(subject_nr = res$subject_nr), FUN=sum)
+tot_eyeMove <- aggregate(eye_move ~ group, sum, data = nEye_move)
+nVoid <- aggregate(void_trial ~ subject_nr * group, sum, data = res)
+tot_void <- aggregate(void_trial ~ group, sum, data = nVoid)
 
 # calculating x and y error for each targ location
 res$xerr_mm = (res$land_x - res$targ_x)*mm_perPix # in mm

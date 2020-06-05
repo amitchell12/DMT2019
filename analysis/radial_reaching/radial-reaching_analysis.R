@@ -207,6 +207,7 @@ write.csv(XCLUDE, 'radialoutliers.csv', row.names = FALSE)
 # creating data-frame with control data removed
 PMIfilt <- PMIdata[!(PMIdata$PPT %in% XCLUDE$PPT), ]
 res_mediansF <- res_medians[!(res_medians$PPT %in% XCLUDE$PPT), ]
+res_medians_allF <- res_medians_all[!(res_medians_all$PPT %in% XCLUDE$PPT), ]
 res_meansF <- res_means[!(res_means$PPT %in% XCLUDE$PPT), ]
 # saving filered data
 write.csv(PMIfilt, 'radialPMI-filtered.csv', row.names = FALSE)
@@ -323,7 +324,7 @@ ggsave('SCS_probability-scatter_filtered.png', plot = last_plot(), device = NULL
 # calculating the likelihood that inflated PMI occurs at above chance in each patient group
 # with filtered data. Deficit and borderline deficit
 pval <- .05
-pval_Bl <- .01
+pval_Bl <- .1
 
 ## take any p < .025 for either side, re-run binomial on this data
 # extracting p-value for each side (left and right) using td_results
@@ -372,3 +373,22 @@ FILT_ANOVA <- ezANOVA(
 )
 
 print(FILT_ANOVA)
+
+### ANOVA BY ECCENTRICITY ###
+res_medians_allF$ECC <- abs(res_medians_allF$POSITION)
+ECCanova <- res_medians_allF[res_medians_allF$ECC != 400 ,]
+
+ECCanova <- ECCanova[ECCanova$PPT != 212 ,]
+ECCanova <- ECCanova[ECCanova$PPT != 101 ,]
+ECCanova$ECC <- factor(ECCanova$ECC)
+
+ECC_ANOVA <- ezANOVA(
+  data = ECCanova
+  , dv = .(AE)
+  , wid = .(PPT)
+  , within = .(DOM, VIEW, ECC)
+  , between = .(DIAGNOSIS)
+  , type = 3
+)
+
+print(ECC_ANOVA)
