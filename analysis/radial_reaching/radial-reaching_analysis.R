@@ -18,7 +18,7 @@ setwd(anaPath)
 res <- read.csv('radial-reaching_compiled.csv')
 
 # changing levelsfor plotting
-res$VIEW <- factor(res_means$VIEW) #changing so only 2 levels recorded
+res$VIEW <- factor(res$VIEW) #changing so only 2 levels recorded
 levels(res$VIEW) <- c('Free','Peripheral')
 levels(res$SIDE) <- c('Left', 'Right')
 res$GRP <- factor(res$GRP)
@@ -26,26 +26,42 @@ levels(res$GRP) <- c('Control', 'Patient') #changing group name from 1 = control
 res$diagnosis <- factor(res$diagnosis)
 names(res)[25] <- 'DIAGNOSIS'
 names(res)[22] <- 'AGE'
+names(res)[23] <- 'HAND'
 names(res)[24] <- 'ED'
 
+## getting dominant + non-dominant sides, for analysis
+res$HAND <- factor(res$HAND, labels = c('Left','Right'))
+# if hand = side, dominant; else non dominant
+res$DOM <- as.numeric(res$SIDE == res$HAND) #1 = dominant, 0 = non-dominant
+res$DOM <- factor(res$DOM, labels= c('ND','D'))
+# change order so important var up-front
+res <- res[, c(1,25,26,9,10,19:24,2:8,11:18)]
+
 # summary data
-res_medians <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DIAGNOSIS*GRP*SITE*AGE*ED, mean, data = res)
+# extracting data from furthest two target locs
+res_periph <- subset(res, res$POSITION == -400 | res$POSITION == -300 | 
+                         res$POSITION == 300 | res$POSITION == 400)
+res_medians <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE*ED, 
+                         mean, data = res_periph)
 colnames(res_medians)[colnames(res_medians)=='AE'] <- 'AEmed'
 # removing free + peripheral trails at 100mm left for 101, error
 res_medians <- res_medians[order(res_medians$PPT) ,]
 res_medians <- res_medians[!(res_medians$PPT == '101' & res_medians$AEmed > 50) ,]
 
-res_means <- aggregate(AEmed ~ PPT*VIEW*SIDE*GRP*DIAGNOSIS*SITE*AGE*ED, mean, data = res_medians)
+res_means <- aggregate(AEmed ~ PPT*VIEW*SIDE*DOM*GRP*DIAGNOSIS*SITE*AGE*ED, 
+                       mean, data = res_medians)
 colnames(res_means)[colnames(res_means)=='AEmed'] <- 'AEmean'
+write.csv(res_medians, 'radial-reaching_medians.csv', row.names = FALSE)
+write.csv(res_means, 'radial-reaching_means.csv', row.names = FALSE)
 
 # casting by task
-PMIdata <- dcast(res_means, PPT+GRP+DIAGNOSIS+SIDE+SITE+AGE+ED ~ VIEW)
+PMIdata <- dcast(res_means, PPT+GRP+DIAGNOSIS+DOM+SIDE+SITE+AGE+ED ~ VIEW)
 PMIdata$PMI <- PMIdata$Peripheral - PMIdata$Free
 write.csv(PMIdata, 'radial-reaching_PMI.csv', row.names = FALSE)
 
 ##### plots #####
 # mean plot 
-ggplot(res_means, aes(x = SIDE, y = AEmean)) +
+ggplot(res_means, aes(x = DOM, y = AEmean)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
   facet_grid(cols = vars(VIEW), rows = vars(DIAGNOSIS)) + 
@@ -53,11 +69,11 @@ ggplot(res_means, aes(x = SIDE, y = AEmean)) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 8)) 
 
-ggsave('allmeans_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('radial_meanerr.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 # PMI plot
-ggplot(PMIdata, aes(x = SIDE, y = PMI, group = DIAGNOSIS), position = position_dodge(.2)) + 
+ggplot(PMIdata, aes(x = DOM, y = PMI, group = DIAGNOSIS), position = position_dodge(.2)) + 
   geom_point(shape = 1, size = 4) +
   geom_line(aes(group = PPT), alpha = .5, size = .8) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
@@ -72,17 +88,24 @@ ggsave('radialPMI.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, width = 7, height = 4, path = anaPath)
 
 ## summary data
-meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
+meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'DOM'),
                           na.rm = TRUE)
 meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
                          na.rm = TRUE)
 
-# plot by eccentricity
-# controls
-res_medians$POSITION <- factor(res_medians$POSITION)
-meds_control <- res_medians[res_medians$GRP == 'Control' ,]
+#### plot by eccentricity
+# creating another data-frame with all position data, for plotting eccentricity info
+res_medians_all <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE*ED, 
+                             mean, data = res)
+# removing free + peripheral trails at 100mm left for 101, error
+res_medians_all <- res_medians_all[order(res_medians_all$PPT) ,]
+res_medians_all <- res_medians_all[!(res_medians_all$PPT == '101' & res_medians_all$AE > 50) ,]
 
-ggplot(meds_control, aes(x = POSITION, y = AEmed, colour = SIDE)) +
+# controls
+res_medians_all$POSITION <- factor(res_medians_all$POSITION)
+meds_control <- res_medians_all[res_medians_all$GRP == 'Control' ,]
+
+ggplot(meds_control, aes(x = POSITION, y = AE, colour = DOM)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
   facet_wrap(~VIEW) + 
@@ -97,9 +120,9 @@ ggsave('control_ecc.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, path = anaPath)
 
 # patients - MCI
-meds_MCI <- res_medians[res_medians$DIAGNOSIS == 'MCI' ,]
+meds_MCI <- res_medians_all[res_medians_all$DIAGNOSIS == 'MCI' ,]
 
-ggplot(meds_MCI, aes(x = POSITION, y = AEmed, colour = SIDE)) +
+ggplot(meds_MCI, aes(x = POSITION, y = AE, colour = SIDE)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
   facet_wrap(~VIEW) +
@@ -113,9 +136,9 @@ ggsave('MCI_ecc.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, path = anaPath)
 
 # patients - AD
-meds_AD <- res_medians[res_medians$DIAGNOSIS == 'AD' ,]
+meds_AD <- res_medians_all[res_medians_all$DIAGNOSIS == 'AD' ,]
 
-ggplot(meds_AD, aes(x = POSITION, y = AEmed, colour = SIDE)) +
+ggplot(meds_AD, aes(x = POSITION, y = AE, colour = SIDE)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
   facet_wrap(~VIEW) + 
@@ -129,7 +152,7 @@ ggsave('AD_ecc.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, path = anaPath)
 
 # PMI collapsed across side
-PMIav <- aggregate(PMI ~ PPT * SITE * GRP * DIAGNOSIS * AGE * ED, mean, data = PMIdata)
+PMIav <- aggregate(PMI ~ PPT * SITE * DOM * GRP * DIAGNOSIS * AGE * ED, mean, data = PMIdata)
 PMIav <- PMIav[order(PMIav$PPT), ]
 
 # correlate PMI with possible co-variates, age + education
@@ -231,37 +254,37 @@ ggsave('radialPMI-filtered-av.png', plot = last_plot(), device = NULL, dpi = 300
 ######## step 4: single case stats on filtered data ########
 # create data-frames (controls and patients) with key information
 td_summary <- summarySE(data = PMIfilt, measurevar = 'PMI', 
-                        groupvars = c('DIAGNOSIS','SIDE'), na.rm = TRUE)
+                        groupvars = c('DIAGNOSIS','DOM'), na.rm = TRUE)
 # isolating control data for analysis
 tdfilt_control <- td_summary[td_summary$DIAGNOSIS == 'HC', ]
 
 #patient data for test of deficit
-td_patient <- PMIdata[, c(1,3,4,10)] #extract from PMI because patient data not filtered
+td_patient <- PMIdata[, c(1,3,4,11)] #extract from PMI because patient data not filtered
 td_patient <- td_patient[td_patient$DIAGNOSIS != 'HC' ,] #removing controls
-td_patient <- dcast(td_patient, PPT+DIAGNOSIS ~ SIDE)
+td_patient <- dcast(td_patient, PPT+DIAGNOSIS ~ DOM)
 # NA values  = -1, so t-value is negative and can remove later
-td_patient[is.na(td_patient$Right), "Right"] <- -1 
+td_patient[is.na(td_patient$D), "D"] <- -1 
 
 #patient data for test of deficit = same as above
 # time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
 # using Crawford's (1998) test of deficit
-td_right <- read.csv(text = 'PMI,TSTAT,PVALUE,SIDE,PPT,DIAGNOSIS')
-td_left <- read.csv(text = 'PMI,TSTAT,PVALUE,SIDE,PPT,DIAGNOSIS')
+td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,DOM,PPT,DIAGNOSIS')
+td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,DOM,PPT,DIAGNOSIS')
 for (l in 1:length(td_patient$PPT)){
   #left data first
-  leftres <- TD(td_patient$Left[l], tdfilt_control$PMI[1], tdfilt_control$sd[1], 24, 
+  leftres <- TD(td_patient$ND[l], tdfilt_control$PMI[1], tdfilt_control$sd[1], 24, 
                 alternative = 'greater', na.rm = FALSE)
-  ltmp <- data.frame(td_patient$Left[l], leftres$statistic, leftres$p.value, 'left') 
+  ltmp <- data.frame(td_patient$ND[l], leftres$statistic, leftres$p.value, 'ND') 
   ltmp$PPT <- td_patient$PPT[l]
   ltmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
-  td_left <- rbind(td_left, ltmp)
+  td_ndom <- rbind(td_ndom, ltmp)
   #then right data
-  rightres <- TD(td_patient$Right[l], tdfilt_control$PMI[2], tdfilt_control$sd[2], 24, 
+  rightres <- TD(td_patient$D[l], tdfilt_control$PMI[2], tdfilt_control$sd[2], 24, 
                  alternative = 'greater', na.rm = FALSE)
-  rtmp <- data.frame(td_patient$Right[l], rightres$statistic, rightres$p.value, 'right') 
+  rtmp <- data.frame(td_patient$D[l], rightres$statistic, rightres$p.value, 'D') 
   rtmp$PPT <- td_patient$PPT[l]
   rtmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
-  td_right <- rbind(td_right, rtmp)
+  td_dom <- rbind(td_dom, rtmp)
 }
 
 # merging and renaming data-frames
