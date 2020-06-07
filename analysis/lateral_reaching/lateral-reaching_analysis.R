@@ -160,139 +160,7 @@ ggsave('AD_ecc.png', plot = last_plot(), device = NULL, dpi = 300,
 PMIav <- aggregate(PMI ~ PPT * SITE * GRP * DIAGNOSIS * AGE * ED, mean, data = PMIdata)
 PMIav <- PMIav[order(PMIav$PPT), ]
 
-######## step 2: single case stats, all controls #########
-# correlate PMI with possible co-variates, age + education
-agecov <- cor.test(PMIdata$AGE, PMIdata$PMI, method = 'pearson')
-ggscatter(PMIdata, x = "AGE", y = "PMI", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "spearman",
-          xlab = "Age", ylab = "PMI (mm)")
-
-# correlate PMI with years of education
-PMIdata$ED <- as.numeric(PMIdata$ED)
-edcov <- cor.test(PMIdata$ED, PMIdata$PMI, method = 'pearson')
-ggscatter(PMIdata, x = "ED", y = "PMI", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "spearman",
-          xlab = "Years of Education", ylab = "PMI (mm)")
-
-# create data-frames (controls and patients) with key information
-td_summary <- summarySE(data = PMIdata, measurevar = 'PMI', 
-                        groupvars = c('DIAGNOSIS','DOM'), na.rm = TRUE)
-# isolating control data for analysis
-td_control <- td_summary[td_summary$DIAGNOSIS == 'HC', ]
-
-#patient data for test of deficit
-td_patient <- PMIdata[, c(1,4,6,11)]
-td_patient <- td_patient[td_patient$DIAGNOSIS != 'HC' ,] #removing controls
-td_patient <- dcast(td_patient, PPT+DIAGNOSIS ~ DOM)
-# NA values  = -1, so t-value is negative and can remove later
-td_patient[is.na(td_patient$D), "D"] <- -1 
-
-# time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
-# using Crawford's (1998) test of deficit
-td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,DOM,PPT,DIAGNOSIS')
-td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,DOM,PPT,DIAGNOSIS')
-for (l in 1:length(td_patient$PPT)){
-  #left data first
-  NDres <- TD(td_patient$ND[l], td_control$PMI[1], td_control$sd[1], 24, 
-            alternative = 'greater', na.rm = FALSE)
-  ltmp <- data.frame(td_patient$ND[l], NDres$statistic, NDres$p.value, 'ND') 
-  ltmp$PPT <- td_patient$PPT[l]
-  ltmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
-  td_ndom <- rbind(td_ndom, ltmp)
-  #then right data
-  Dres <- TD(td_patient$D[l], td_control$PMI[2], td_control$sd[2], 24, 
-                alternative = 'greater', na.rm = FALSE)
-  rtmp <- data.frame(td_patient$D[l], Dres$statistic, Dres$p.value, 'D') 
-  rtmp$PPT <- td_patient$PPT[l]
-  rtmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
-  td_dom <- rbind(td_dom, rtmp)
-}
-
-# merging and renaming data-frames
-td_results <- read.csv(text = 'PMI,TSTAT,PVALUE,DOM,PPT,DIAGNOSIS')
-# changing names of td data-frames to match td-res
-names(td_ndom) <- names(td_results)
-names(td_dom) <- names(td_results)
-td_results <- rbind(td_results, td_ndom, td_dom)
-# remove original NA values (PMI = -1), where patients had no data
-td_results <- td_results[td_results$PMI > 0 ,]
-td_results$PPT <- factor(td_results$PPT)
-
-# identifying patients with significant deficit
-td_results$DEFICIT <- td_results$PVALUE < 0.025
-# identifying patients with possible deficit
-td_results$BL <- td_results$PVALUE < 0.05
-# convert logicals into numerics, useful for binomial later
-td_results$DEFICIT <- as.numeric(td_results$DEFICIT)
-td_results$BL <- as.numeric(td_results$BL)
-
-# seperating data-frame into different groups
-MCI <- td_results[td_results$DIAGNOSIS == 'MCI' ,]
-AD <- td_results[td_results$DIAGNOSIS == 'AD' ,]
-ndom <- td_results[td_results$DOM == 'ND' ,]
-dom <- td_results[td_results$DOM == 'D' ,]
-
-## plotting p-values
-ggplot(td_results, aes(x = DOM, y = PVALUE, group = PPT, colour = DIAGNOSIS)) +
-  geom_point(size = 2, position = position_dodge(.2)) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5, position = position_dodge(.2)) + 
-  scale_color_manual(values = c('black', 'grey50')) +
-  geom_hline(yintercept = 0.025, color = 'red') +
-  geom_hline(yintercept = 0.05, color = 'blue') +
-  labs(title = 'Single case stats', x = 'Side', y = 'Probability of deficit', 
-       element_text(size = 10)) +
-  theme_bw()
-
-ggsave('SCS_probability-scatter.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 6, height = 7, path = anaPath)
-
-### binomial test ###
-# calculating the likelihood that inflated PMI occurs at above chance in each patient group
-## take any p < .025 for either side,
-pval <- .05
-# extracting p-value for each side (non-dominant and dominant) using td_results
-td_side <- dcast(td_results, PPT+DIAGNOSIS ~ DOM, value.var = 'PVALUE')
-td_side[is.na(td_side$D), "D"] <- 10
-# finding defcits and borderline cases
-td_side$DEFICIT <- (td_side$ND < 0.025 | td_side$D < 0.025)
-td_side$BL <- (td_side$ND < 0.05 | td_side$D < 0.05)
-# changing to numerical value
-td_side$DEFICIT <- as.numeric(td_side$DEFICIT)
-td_side$BL <- as.numeric(td_side$BL)
-
-# splitting into MCI and AD
-MCIP <- td_side[td_side$DIAGNOSIS == 'MCI', ]
-ADP <- td_side[td_side$DIAGNOSIS == 'AD', ]
-
-# binomial test of deficit
-binMCI <- binom.test(sum(MCIP$DEFICIT), length(MCIP$PPT), pval, alternative = 'greater')
-binAD <- binom.test(sum(ADP$DEFICIT), length(ADP$DEFICIT), pval, alternative = 'greater')
-binALL <- binom.test(sum(td_side$DEFICIT), length(td_side$DEFICIT), pval, alternative = 'greater')
-
-## no cases that are borderline and not full deficit ( > 0.025, yet < 0.05), 
-# so no need to run borderline analysis here
-
-## ANOVA ## 
-# use PMI data-frame to run between-subject ANOVA
-# removing NA values for ANOVA - entire participant (not just side)
-PMIanova_all <- PMIdata[PMIdata$PPT != 212, ]
-PMIanova_all <- PMIanova_all[PMIanova_all$PPT != 407, ]
-
-# FULL ANOVA ON FILTERED DATA
-PMI_ANOVA <- ezANOVA(
-  data = PMIanova_all
-  , dv = .(PMI)
-  , wid = .(PPT)
-  , within = .(DOM)
-  , between = .(DIAGNOSIS)
-  , type = 3
-)
-
-print(PMI_ANOVA)
-
-######## step 3: outlier removal, filtered PMI #########
+######## step 2: outlier removal, filtered PMI #########
 controlData <- PMIdata[PMIdata$PPT < 200, ]
 
 # median values for each side
@@ -335,8 +203,6 @@ write.csv(PMIfilt, 'lateralPMI-filtered.csv', row.names = FALSE)
 write.csv(res_mediansF, 'lateral-medians_filtered.csv', row.names = FALSE)
 write.csv(res_meansF, 'lateral-means_filtered.csv', row.names = FALSE)
 
-##### need to change the ordering of plot data-frames, worry about this for publication
-### PLOT FILTERED PMI DATA
 ggplot(PMIfilt, aes(x = DOM, y = PMI, colour = SITE), position = position_dodge(.2)) + 
   geom_point(shape = 1, size = 4) +
   geom_line(aes(group = PPT), alpha = .5, size = .8) +
@@ -375,7 +241,7 @@ ggplot(PMIfilt_av, aes(x = DIAGNOSIS, y = PMI, colour = SITE)) +
 ggsave('lateralPMI-filtered-av.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 3, height = 3, path = anaPath)
 
-######## step 4: single case stats, filtered data #########
+######## step 3: single case stats, filtered data #########
 # create data-frames (controls and patients) with key information
 td_summary <- summarySE(data = PMIfilt, measurevar = 'PMI', 
                         groupvars = c('DIAGNOSIS','DOM'), na.rm = TRUE)
@@ -508,5 +374,136 @@ ECC_ANOVA <- ezANOVA(
 print(ECC_ANOVA)
 
 
+######## step 5: single case stats, all controls (no outliers) #########
+# correlate PMI with possible co-variates, age + education
+agecov <- cor.test(PMIdata$AGE, PMIdata$PMI, method = 'pearson')
+ggscatter(PMIdata, x = "AGE", y = "PMI", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "spearman",
+          xlab = "Age", ylab = "PMI (mm)")
+
+# correlate PMI with years of education
+PMIdata$ED <- as.numeric(PMIdata$ED)
+edcov <- cor.test(PMIdata$ED, PMIdata$PMI, method = 'pearson')
+ggscatter(PMIdata, x = "ED", y = "PMI", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "spearman",
+          xlab = "Years of Education", ylab = "PMI (mm)")
+
+# create data-frames (controls and patients) with key information
+td_summary <- summarySE(data = PMIdata, measurevar = 'PMI', 
+                        groupvars = c('DIAGNOSIS','DOM'), na.rm = TRUE)
+# isolating control data for analysis
+td_control <- td_summary[td_summary$DIAGNOSIS == 'HC', ]
+
+#patient data for test of deficit
+td_patient <- PMIdata[, c(1,4,6,11)]
+td_patient <- td_patient[td_patient$DIAGNOSIS != 'HC' ,] #removing controls
+td_patient <- dcast(td_patient, PPT+DIAGNOSIS ~ DOM)
+# NA values  = -1, so t-value is negative and can remove later
+td_patient[is.na(td_patient$D), "D"] <- -1 
+
+# time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
+# using Crawford's (1998) test of deficit
+td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,DOM,PPT,DIAGNOSIS')
+td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,DOM,PPT,DIAGNOSIS')
+for (l in 1:length(td_patient$PPT)){
+  #left data first
+  NDres <- TD(td_patient$ND[l], td_control$PMI[1], td_control$sd[1], 24, 
+              alternative = 'greater', na.rm = FALSE)
+  ltmp <- data.frame(td_patient$ND[l], NDres$statistic, NDres$p.value, 'ND') 
+  ltmp$PPT <- td_patient$PPT[l]
+  ltmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
+  td_ndom <- rbind(td_ndom, ltmp)
+  #then right data
+  Dres <- TD(td_patient$D[l], td_control$PMI[2], td_control$sd[2], 24, 
+             alternative = 'greater', na.rm = FALSE)
+  rtmp <- data.frame(td_patient$D[l], Dres$statistic, Dres$p.value, 'D') 
+  rtmp$PPT <- td_patient$PPT[l]
+  rtmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
+  td_dom <- rbind(td_dom, rtmp)
+}
+
+# merging and renaming data-frames
+td_results <- read.csv(text = 'PMI,TSTAT,PVALUE,DOM,PPT,DIAGNOSIS')
+# changing names of td data-frames to match td-res
+names(td_ndom) <- names(td_results)
+names(td_dom) <- names(td_results)
+td_results <- rbind(td_results, td_ndom, td_dom)
+# remove original NA values (PMI = -1), where patients had no data
+td_results <- td_results[td_results$PMI > 0 ,]
+td_results$PPT <- factor(td_results$PPT)
+
+# identifying patients with significant deficit
+td_results$DEFICIT <- td_results$PVALUE < 0.025
+# identifying patients with possible deficit
+td_results$BL <- td_results$PVALUE < 0.05
+# convert logicals into numerics, useful for binomial later
+td_results$DEFICIT <- as.numeric(td_results$DEFICIT)
+td_results$BL <- as.numeric(td_results$BL)
+
+# seperating data-frame into different groups
+MCI <- td_results[td_results$DIAGNOSIS == 'MCI' ,]
+AD <- td_results[td_results$DIAGNOSIS == 'AD' ,]
+ndom <- td_results[td_results$DOM == 'ND' ,]
+dom <- td_results[td_results$DOM == 'D' ,]
+
+## plotting p-values
+ggplot(td_results, aes(x = DOM, y = PVALUE, group = PPT, colour = DIAGNOSIS)) +
+  geom_point(size = 2, position = position_dodge(.2)) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5, position = position_dodge(.2)) + 
+  scale_color_manual(values = c('black', 'grey50')) +
+  geom_hline(yintercept = 0.025, color = 'red') +
+  geom_hline(yintercept = 0.05, color = 'blue') +
+  labs(title = 'Single case stats', x = 'Side', y = 'Probability of deficit', 
+       element_text(size = 10)) +
+  theme_bw()
+
+ggsave('SCS_probability-scatter.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 6, height = 7, path = anaPath)
+
+### binomial test ###
+# calculating the likelihood that inflated PMI occurs at above chance in each patient group
+## take any p < .025 for either side,
+pval <- .05
+# extracting p-value for each side (non-dominant and dominant) using td_results
+td_side <- dcast(td_results, PPT+DIAGNOSIS ~ DOM, value.var = 'PVALUE')
+td_side[is.na(td_side$D), "D"] <- 10
+# finding defcits and borderline cases
+td_side$DEFICIT <- (td_side$ND < 0.025 | td_side$D < 0.025)
+td_side$BL <- (td_side$ND < 0.05 | td_side$D < 0.05)
+# changing to numerical value
+td_side$DEFICIT <- as.numeric(td_side$DEFICIT)
+td_side$BL <- as.numeric(td_side$BL)
+
+# splitting into MCI and AD
+MCIP <- td_side[td_side$DIAGNOSIS == 'MCI', ]
+ADP <- td_side[td_side$DIAGNOSIS == 'AD', ]
+
+# binomial test of deficit
+binMCI <- binom.test(sum(MCIP$DEFICIT), length(MCIP$PPT), pval, alternative = 'greater')
+binAD <- binom.test(sum(ADP$DEFICIT), length(ADP$DEFICIT), pval, alternative = 'greater')
+binALL <- binom.test(sum(td_side$DEFICIT), length(td_side$DEFICIT), pval, alternative = 'greater')
+
+## no cases that are borderline and not full deficit ( > 0.025, yet < 0.05), 
+# so no need to run borderline analysis here
+
+## ANOVA ## 
+# use PMI data-frame to run between-subject ANOVA
+# removing NA values for ANOVA - entire participant (not just side)
+PMIanova_all <- PMIdata[PMIdata$PPT != 212, ]
+PMIanova_all <- PMIanova_all[PMIanova_all$PPT != 407, ]
+
+# FULL ANOVA ON FILTERED DATA
+PMI_ANOVA <- ezANOVA(
+  data = PMIanova_all
+  , dv = .(PMI)
+  , wid = .(PPT)
+  , within = .(DOM)
+  , between = .(DIAGNOSIS)
+  , type = 3
+)
+
+print(PMI_ANOVA)
 
 
