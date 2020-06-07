@@ -62,7 +62,7 @@ ecc <- ggarrange(eccND, eccD,
                  ncol=2, nrow=1)
 ecc
 ggsave('eccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 8, height = 6, path = latPath)
+       width = 8, height = 5, path = latPath)
 
 ## PLOT 2: PMI ##
 # make plot data-frame
@@ -140,7 +140,7 @@ ecc <- ggarrange(eccND, eccD,
                  ncol=2, nrow=1)
 ecc
 ggsave('eccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 8, height = 6, path = radPath)
+       width = 8, height = 5, path = radPath)
 
 ## PLOT 2: PMI ##
 # make plot data-frame
