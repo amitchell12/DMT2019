@@ -213,6 +213,7 @@ res_meansF <- res_means[!(res_means$PPT %in% XCLUDE$PPT), ]
 write.csv(PMIfilt, 'radialPMI-filtered.csv', row.names = FALSE)
 write.csv(res_mediansF, 'radial-medians_filtered.csv', row.names = FALSE)
 write.csv(res_meansF, 'radial-means_filtered.csv', row.names = FALSE)
+write.csv(res_medians_allF, 'radial-medians-all_filtered.csv', row.names = FALSE)
 
 ### PLOT FILTERED PMI DATA
 ggplot(PMIfilt, aes(x = SIDE, y = PMI), position = position_dodge(.2)) + 
