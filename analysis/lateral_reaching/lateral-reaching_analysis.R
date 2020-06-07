@@ -160,7 +160,7 @@ ggsave('AD_ecc.png', plot = last_plot(), device = NULL, dpi = 300,
 PMIav <- aggregate(PMI ~ PPT * SITE * GRP * DIAGNOSIS * AGE * ED, mean, data = PMIdata)
 PMIav <- PMIav[order(PMIav$PPT), ]
 
-######## step 2: outlier removal, filtered PMI #########
+######## step 3: outlier removal, filtered PMI #########
 controlData <- PMIdata[PMIdata$PPT < 200, ]
 
 # median values for each side
