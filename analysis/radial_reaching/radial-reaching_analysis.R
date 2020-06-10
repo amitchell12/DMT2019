@@ -5,11 +5,11 @@ library(ggpubr)
 library(Rmisc)
 
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 # on desktop mac
-anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
-dataPath <- '/Users/Alex/Documents/DMT/data'
+#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
+#dataPath <- '/Users/Alex/Documents/DMT/data'
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
 #anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
@@ -307,6 +307,8 @@ tdfilt_results$BL <- tdfilt_results$PVALUE < 0.05
 tdfilt_results$DEFICIT <- as.numeric(tdfilt_results$DEFICIT)
 tdfilt_results$BL <- as.numeric(tdfilt_results$BL)
 
+write.csv(tdfilt_results, 'radial-reaching_case-control.csv', row.names = FALSE)
+
 ## plotting p-values
 ggplot(tdfilt_results, aes(x = DOM, y = PVALUE, group = PPT, colour = DIAGNOSIS)) +
   geom_point(size = 2, position = position_dodge(.2)) +
@@ -369,14 +371,17 @@ FILT_ANOVA <- ezANOVA(
   , dv = .(PMI)
   , wid = .(PPT)
   , within = .(DOM)
-  , between = .(DIAGNOSIS)
+  , between = .(GRP)
   , type = 3
 )
 
 print(FILT_ANOVA)
 
 ### ANOVA BY ECCENTRICITY ###
-res_medians_allF$ECC <- abs(res_medians_allF$POSITION)
+# converting factor back to numeric keeping values
+tmp <- as.numeric(levels(res_medians_allF$POSITION))[res_medians_allF$POSITION]
+
+res_medians_allF$ECC <- abs(tmp)
 ECCanova <- res_medians_allF[res_medians_allF$ECC != 400 ,]
 
 ECCanova <- ECCanova[ECCanova$PPT != 212 ,]
@@ -388,7 +393,7 @@ ECC_ANOVA <- ezANOVA(
   , dv = .(AE)
   , wid = .(PPT)
   , within = .(DOM, VIEW, ECC)
-  , between = .(DIAGNOSIS)
+  , between = .(GRP)
   , type = 3
 )
 
