@@ -251,27 +251,31 @@ tdfilt_control <- td_summary[td_summary$DIAGNOSIS == 'HC', ]
 #patient data for test of deficit = same as above
 # time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
 # using Crawford's (1998) test of deficit
-td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,DOM,PPT,DIAGNOSIS')
-td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,DOM,PPT,DIAGNOSIS')
+td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
+td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 for (l in 1:length(td_patient$PPT)){
   #left data first
   leftres <- TD(td_patient$ND[l], tdfilt_control$PMI[1], tdfilt_control$sd[1], 24, 
                 alternative = 'greater', na.rm = FALSE)
-  ltmp <- data.frame(td_patient$ND[l], leftres$statistic, leftres$p.value, 'ND') 
+  diff <- t(leftres$estimate)
+  ltmp <- data.frame(td_patient$ND[l], leftres$statistic, leftres$p.value, 
+                     diff[1], diff[2], t(leftres$interval), 'ND', check.names = FALSE) 
   ltmp$PPT <- td_patient$PPT[l]
   ltmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
   td_ndom <- rbind(td_ndom, ltmp)
   #then right data
   rightres <- TD(td_patient$D[l], tdfilt_control$PMI[2], tdfilt_control$sd[2], 24, 
                  alternative = 'greater', na.rm = FALSE)
-  rtmp <- data.frame(td_patient$D[l], rightres$statistic, rightres$p.value, 'D') 
+  diff <- t(rightres$estimate)
+  rtmp <- data.frame(td_patient$D[l], rightres$statistic, rightres$p.value, 
+                     diff[1], diff[2], t(rightres$interval), 'D', check.names = FALSE) 
   rtmp$PPT <- td_patient$PPT[l]
   rtmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
   td_dom <- rbind(td_dom, rtmp)
 }
 
 # merging and renaming data-frames
-tdfilt_results <- read.csv(text = 'PMI,TSTAT,PVALUE,DOM,PPT,DIAGNOSIS')
+tdfilt_results <- read.csv(text = 'PMI,TSTAT,PVALUE,ZCC,PROP,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 # changing names of td data-frames to match td-res
 names(td_ndom) <- names(tdfilt_results)
 names(td_dom) <- names(tdfilt_results)

@@ -9,11 +9,11 @@ library(reshape2)
 
 #set working directory to where data is
 # on desktop mac
-latPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
-radPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
+#latPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
+#radPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
 # on laptop
-#latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-#radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
 #on pc
 #latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 #radPath <- 'S:/groups/DMT/analysis/radial_reaching'
@@ -46,19 +46,19 @@ ggplot(plot_ecc, aes(x = POSITION, y = PMI, colour = DIAGNOSIS, group= DIAGNOSIS
   geom_errorbar(aes(ymin=PMI-ci, ymax=PMI+ci), 
                 width=.4, position = position_dodge(width = .5)) +
   geom_line(aes(group = DIAGNOSIS), size = 1, position = position_dodge(width = .5)) +
-  scale_color_manual(values = c('grey50','goldenrod2','dodgerblue3')) +
+  scale_color_manual(values = c('grey70','grey70','grey70')) +
   labs(x = 'Eccentricity (°)', y = 'PMI (mm)') + ylim(0,25) + 
   facet_wrap(~DOM) +
   theme_classic() + theme(legend.position = 'none', 
-                          axis.text = element_text(size = 18),
-                          axis.title = element_text(size = 20),
-                          strip.text = element_text(size = 20)
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12)
   ) -> ecc
 
 ecc
 
 ggsave('LATeccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 8, height = 5, path = latPath)
+       width = 6, height = 3, path = latPath)
 
 ## PLOT 2: PMI ##
 # make control data-frame
