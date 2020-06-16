@@ -41,15 +41,17 @@ plot_ecc$DIAGNOSIS <- factor(plot_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 # re-labelling and ordering
 
 # seperating, create different plots for dominant and non-dominant sides
-ggplot(plot_ecc, aes(x = POSITION, y = PMI, colour = DIAGNOSIS, group= DIAGNOSIS)) +
-  geom_point(size = 5, position = position_dodge(width = .5)) + 
+ggplot(plot_ecc, aes(x = POSITION, y = PMI, shape = DIAGNOSIS, colour = DIAGNOSIS,
+                     group= DIAGNOSIS)) +
+  geom_point(size = 4, position = position_dodge(width = .3)) + 
   geom_errorbar(aes(ymin=PMI-ci, ymax=PMI+ci), 
-                width=.4, position = position_dodge(width = .5)) +
-  geom_line(aes(group = DIAGNOSIS), size = 1, position = position_dodge(width = .5)) +
-  scale_color_manual(values = c('grey70','grey70','grey70')) +
+                width=.4, position = position_dodge(width = .3)) +
+  geom_line(aes(group = DIAGNOSIS), size = 0.8, position = position_dodge(width = .3)) +
+  scale_shape_manual(values = c(15, 16, 18)) +
+  scale_color_manual(values = c('black','grey30','grey70')) +
   labs(x = 'Eccentricity (°)', y = 'PMI (mm)') + ylim(0,25) + 
   facet_wrap(~DOM) +
-  theme_classic() + theme(legend.position = 'none', 
+  theme_classic() + theme(legend.position = 'right', 
                           axis.text = element_text(size = 10),
                           axis.title = element_text(size = 12),
                           strip.text = element_text(size = 12)
