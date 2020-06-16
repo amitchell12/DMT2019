@@ -9,6 +9,7 @@ library(Hmisc)
 library(ggpubr)
 library(singcar)
 library(ez)
+library(psychReport)
 
 #set working directory to where data is
 #on mac
@@ -69,36 +70,6 @@ PMIdata <- dcast(res_means, PPT+GRP+SITE+DOM+SIDE+DIAGNOSIS+AGE+ED ~ VIEW) #diff
 PMIdata$PMI <- PMIdata$Peripheral - PMIdata$Free
 write.csv(PMIdata, 'lateral-reaching_PMI.csv', row.names = FALSE)
 
-
-# mean plot 
-ggplot(res_means, aes(x = DOM, y = AEmean, colour = SITE)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(VIEW), rows = vars(DIAGNOSIS)) + 
-  labs(x = 'Side', y = 'Mean AE (mm)', element_text(size = 12)) +
-  scale_colour_manual(values = c('grey50', 'black')) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8)) 
-
-ggsave('allmeans_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-# PMI plot 
-ggplot(PMIdata, aes(x = DOM, y = PMI, colour = SITE), position = position_dodge(.2)) + 
-  geom_point(shape = 1, size = 4) +
-  geom_line(aes(group = PPT), alpha = .5, size = .8) +
-  scale_colour_manual(values = c('grey50', 'black')) +
-  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
-  labs(title = '', x = 'Side', y = 'Reaching error (mm)', 
-                     element_text(size = 14)) +
-  facet_wrap(~DIAGNOSIS) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
-                     strip.text.x = element_text(size = 12)) 
-
-ggsave('lateralPMI.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 7, height = 4, path = anaPath)
-
 # summary
 meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'DOM'),
                        na.rm = TRUE)
@@ -157,7 +128,7 @@ ggsave('AD_ecc.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, path = anaPath)
 
 # PMI collapsed across side
-PMIav <- aggregate(PMI ~ PPT * SITE * GRP * DIAGNOSIS * AGE * ED, mean, data = PMIdata)
+PMIav <- aggregate(PMI ~ PPT * SITE * DIAGNOSIS * AGE * ED, mean, data = PMIdata)
 PMIav <- PMIav[order(PMIav$PPT), ]
 
 ######## step 3: outlier removal, filtered PMI #########
@@ -210,7 +181,7 @@ meanFPMI_all <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS')
                           na.rm = TRUE)
 
 #average across side
-PMIfilt_av <- aggregate(PMI ~ PPT * DOM * DIAGNOSIS * SITE, mean, data = PMIfilt)
+PMIfilt_av <- aggregate(PMI ~ PPT * DIAGNOSIS * SITE, mean, data = PMIfilt)
 
 ######## step 3: single case stats, filtered data #########
 # create data-frames (controls and patients) with key information
@@ -218,6 +189,12 @@ td_summary <- summarySE(data = PMIfilt, measurevar = 'PMI',
                         groupvars = c('DIAGNOSIS','DOM'), na.rm = TRUE)
 # isolating control data for analysis
 tdfilt_control <- td_summary[td_summary$DIAGNOSIS == 'HC', ]
+#patient data for test of deficit
+td_patient <- PMIdata[, c(1,4,6,11)]
+td_patient <- td_patient[td_patient$DIAGNOSIS != 'HC' ,] #removing controls
+td_patient <- dcast(td_patient, PPT+DIAGNOSIS ~ DOM)
+# NA values  = -1, so t-value is negative and can remove later
+td_patient[is.na(td_patient$D), "D"] <- -1 
 
 #patient data for test of deficit = same as above
 # time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
@@ -285,7 +262,8 @@ ggsave('SCS_probability-scatter_filtered.png', plot = last_plot(), device = NULL
 # with filtered data. Deficit and borderline deficit
 ## take any p < .025 for either side, re-run binomial on this data
 # extracting p-value for each side (left and right) using td_results
-pval_Bl <- .01
+pval <- .05
+pval_Bl <- .1
 
 td_sideF <- dcast(tdfilt_results, PPT+DIAGNOSIS ~ DOM, value.var = 'PVALUE')
 td_sideF[is.na(td_sideF$D), "D"] <- 10
@@ -329,12 +307,33 @@ FILT_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(DOM)
   , between = .(DIAGNOSIS)
-  , type = 3
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
 )
 
-print(FILT_ANOVA)
+FILT_ANOVA$ANOVA
+FILT_ANOVA$`Mauchly's Test for Sphericity`
+FILT_ANOVA$`Sphericity Corrections`
+aovPMI <- aovEffectSize(ezObj = FILT_ANOVA, effectSize = "pes")
+aovDispTable(aovPMI)
 
 ## ANOVA FOR AV PMI
+AV_ANOVA <- ezANOVA(
+  data = PMIfilt_av
+  , dv = .(PMI)
+  , wid = .(PPT)
+  , between = .(DIAGNOSIS)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+AV_ANOVA$ANOVA
+AV_ANOVA$`Mauchly's Test for Sphericity`
+AV_ANOVA$`Sphericity Corrections`
+aovPMIAV <- aovEffectSize(ezObj = AV_ANOVA, effectSize = "pes")
+aovDispTable(aovPMIAV)
 
 ### ANOVA BY ECCENTRICITY ###
 ECCanova <- res_mediansF[res_mediansF$PPT != 212 ,]
@@ -348,10 +347,16 @@ ECC_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(DOM, VIEW, POSITION)
   , between = .(DIAGNOSIS)
-  , type = 3
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
 )
 
-print(ECC_ANOVA)
+ECC_ANOVA$ANOVA
+ECC_ANOVA$`Mauchly's Test for Sphericity`
+ECC_ANOVA$`Sphericity Corrections`
+aovECC <- aovEffectSize(ezObj = ECC_ANOVA, effectSize = "pes")
+aovDispTable(aovECC)
 
 
 ######## step 5: single case stats, all controls (no outliers) #########
@@ -376,12 +381,6 @@ td_summary <- summarySE(data = PMIdata, measurevar = 'PMI',
 # isolating control data for analysis
 td_control <- td_summary[td_summary$DIAGNOSIS == 'HC', ]
 
-#patient data for test of deficit
-td_patient <- PMIdata[, c(1,4,6,11)]
-td_patient <- td_patient[td_patient$DIAGNOSIS != 'HC' ,] #removing controls
-td_patient <- dcast(td_patient, PPT+DIAGNOSIS ~ DOM)
-# NA values  = -1, so t-value is negative and can remove later
-td_patient[is.na(td_patient$D), "D"] <- -1 
 
 # time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
 # using Crawford's (1998) test of deficit
