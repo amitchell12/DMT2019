@@ -203,21 +203,6 @@ write.csv(PMIfilt, 'lateralPMI-filtered.csv', row.names = FALSE)
 write.csv(res_mediansF, 'lateral-medians_filtered.csv', row.names = FALSE)
 write.csv(res_meansF, 'lateral-means_filtered.csv', row.names = FALSE)
 
-ggplot(PMIfilt, aes(x = DOM, y = PMI, colour = SITE), position = position_dodge(.2)) + 
-  geom_point(shape = 1, size = 4) +
-  geom_line(aes(group = PPT), alpha = .5, size = .8) +
-  scale_colour_manual(values = c('grey50', 'black')) +
-  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
-  labs(title = 'Lateral Reaching', x = 'Side', y = 'Reaching error (mm)', 
-                      element_text(size = 14)) +
-  facet_wrap(~DIAGNOSIS) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
-                     strip.text.x = element_text(size = 12)) 
-
-ggsave('lateralPMI-filtered.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 7, height = 4, path = anaPath)
-
 ## averaging PMI data across sides
 meanFPMI <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'DOM'),
                       na.rm = TRUE)
@@ -226,20 +211,6 @@ meanFPMI_all <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS')
 
 #average across side
 PMIfilt_av <- aggregate(PMI ~ PPT * DOM * DIAGNOSIS * SITE, mean, data = PMIfilt)
-jitter <- position_jitter(width = 0.1, height = 0.1)
-
-ggplot(PMIfilt_av, aes(x = DIAGNOSIS, y = PMI, colour = SITE)) + 
-  geom_point(position = jitter, shape = 21, size = 3) +
-  scale_colour_manual(values = c('grey40', 'black')) +
-  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  labs(title = '', x = '', y = 'Reaching error (mm)', 
-                     element_text(size = 8)) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8))
-
-ggsave('lateralPMI-filtered-av.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 3, height = 3, path = anaPath)
 
 ######## step 3: single case stats, filtered data #########
 # create data-frames (controls and patients) with key information
@@ -362,6 +333,8 @@ FILT_ANOVA <- ezANOVA(
 )
 
 print(FILT_ANOVA)
+
+## ANOVA FOR AV PMI
 
 ### ANOVA BY ECCENTRICITY ###
 ECCanova <- res_mediansF[res_mediansF$PPT != 212 ,]

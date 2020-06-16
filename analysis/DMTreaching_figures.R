@@ -46,12 +46,13 @@ ggplot(plot_ecc, aes(x = POSITION, y = PMI, shape = DIAGNOSIS, colour = DIAGNOSI
   geom_point(size = 4, position = position_dodge(width = .3)) + 
   geom_errorbar(aes(ymin=PMI-ci, ymax=PMI+ci), 
                 width=.4, position = position_dodge(width = .3)) +
-  geom_line(aes(group = DIAGNOSIS), size = 0.8, position = position_dodge(width = .3)) +
-  scale_shape_manual(values = c(15, 16, 18)) +
-  scale_color_manual(values = c('black','grey30','grey70')) +
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
+  scale_shape_manual(values = c(1, 16, 16)) +
+  scale_color_manual(values = c('black','grey60','grey20')) +
   labs(x = 'Eccentricity (°)', y = 'PMI (mm)') + ylim(0,25) + 
   facet_wrap(~DOM) +
   theme_classic() + theme(legend.position = 'right', 
+                          legend.title = element_blank(),
                           axis.text = element_text(size = 10),
                           axis.title = element_text(size = 12),
                           strip.text = element_text(size = 12)
@@ -60,7 +61,7 @@ ggplot(plot_ecc, aes(x = POSITION, y = PMI, shape = DIAGNOSIS, colour = DIAGNOSI
 ecc
 
 ggsave('LATeccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 6, height = 3, path = latPath)
+       width = 6, height = 3.5, path = latPath)
 
 ## PLOT 2: PMI ##
 # make control data-frame
@@ -70,103 +71,69 @@ control_PMI$PVALUE <- 1
 control_PMI$DEFICIT <- 0
 control_PMI$BL <- 0
 # get deficit data for patients
-plot_PMI <- merge(PMIdata, res_cc, by = c('PPT', 'DOM', 'DIAGNOSIS', 'PMI'))
+plot_PMI <- merge(PMIdata, res_cc, by = c('PPT','DOM','DIAGNOSIS'))
+# include only relevant info
+plot_PMI$PMI <- plot_PMI$PMI.x
+plot_PMI <- plot_PMI[, c(1:10,13:14,22:24)]
+
 # make plot data frame
 plot_PMI <- rbind(control_PMI, plot_PMI)
 
-plot_PMI$DOM <- factor(plot_PMI$DOM, labels = c('Dom', 'Non-dom'))
-plot_PMI$DOM <- factor(plot_PMI$DOM, levels = c('Non-dom', 'Dom'))
+plot_PMI$DOM <- factor(plot_PMI$DOM, labels = c('D', 'ND'))
+plot_PMI$DOM <- factor(plot_PMI$DOM, levels = c('ND', 'D'))
 plot_PMI$DIAGNOSIS <- factor(plot_PMI$DIAGNOSIS, levels = c('HC','MCI','AD'))
 plot_PMI$PPT <- factor(plot_PMI$PPT)
-plot_PMI$DEFICIT <- factor(plot_PMI$DEFICIT)
+# make column where deficit and BL cases are combined
+# 1 = no deficit, 2 = borderline deficit, 3 = deficit
+plot_PMI$DEFICITS <- as.numeric(plot_PMI$DEFICIT) + as.numeric(plot_PMI$BL)
+plot_PMI$DEFICITS <- factor(plot_PMI$DEFICITS)
 
-ggplot(plot_PMI, aes(x = DOM, y = PMI, colour = DIAGNOSIS, group = PPT, shape = DEFICIT)) + 
-  geom_point(size = 6, position = position_dodge(.2)) +
-  geom_line(aes(group = PPT), alpha = .5, size = 1, position = position_dodge(.2)) +
+ggplot(plot_PMI, aes(x = DOM, y = PMI, colour = DIAGNOSIS, group = PPT, shape = DEFICITS)) + 
+  geom_line(aes(group = PPT), alpha = .7, size = 0.7, position = position_dodge(.2)) +
+  geom_point(size = 2.5, position = position_dodge(.2)) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1.5, size = 5, group = 1) +
-  scale_color_manual(values = c('grey50','goldenrod2','dodgerblue3')) +
-  scale_shape_manual(values = c(16, 1)) +
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  scale_color_manual(values = c('grey45','grey45','grey45')) +
+  scale_shape_manual(values = c(1,18,16)) +
   facet_wrap(~DIAGNOSIS) +
-  labs(x = '', y = 'PMI (mm)') +
+  labs(x = 'Side', y = 'PMI (mm)') +
   theme_classic() + theme(legend.position = 'none', 
-                            axis.title = element_text(size = 22),
-                            axis.text = element_text(size = 20),
-                            strip.text = element_text(size = 20), 
+                            axis.title = element_text(size = 12),
+                            axis.text = element_text(size = 10),
+                            strip.text = element_text(size = 10) 
     ) -> pPMI
 pPMI
-# saving
-ggsave('LATPMI_side-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 8, height = 5, path = latPath)
 
+## PLOT 3: average PMI across sides - combine with PLOT 2
+PMIav_plot <- aggregate(PMI ~ PPT*DIAGNOSIS*AGE*ED*SITE, mean, data = plot_PMI)
+PMIav_plot <- PMIav_plot[order(PMIav_plot$PPT),]
+plot_PMI$DEFICITS <- as.numeric(plot_PMI$DEFICITS)
+deficit <- aggregate(DEFICITS ~ PPT*DIAGNOSIS, max, data = plot_PMI)
+deficit <- deficit[order(deficit$PPT),]
+PMIav_plot$DEFICITS <- factor(deficit$DEFICITS)
 
-## PLOT 3: scatter plot showing significant cases ##
-plot_CC <- subset(PMIdata, PMIdata$GRP == 'Patient') #data-frame with just patient data
-control <- subset(PMIdata, PMIdata$GRP == 'Control')
-# calculate control means
-control_mean <- summarySEwithin(control, measurevar = 'PMI', withinvars = c('DOM'))
-# neating data-frame for plotting
-plot_CC$DOM <- factor(plot_CC$DOM, labels = c('Dominant', 'Non-dominant'))
-plot_CC$DOM <- factor(plot_CC$DOM, levels = c('Non-dominant', 'Dominant'))
-plot_CC$DIAGNOSIS <- factor(plot_CC$DIAGNOSIS, levels = c('MCI','AD'))
-
-# need 2 plots for this 
-# DOMINANT
-plot_CCD <- subset(plot_CC, plot_CC$DOM == 'Dominant')
-plot_CCD$PPTindex <- factor(1:length(plot_CCD$PPT))
-# getting y-intercept values for h-line
-CCDy <- control_mean$PMI[1]
-CCDy1 <- control_mean$sd[1]
-
-ggplot(plot_CCD) +
-  geom_hline(yintercept = CCDy, size = 1) +
-  geom_hline(yintercept = CCDy-CCDy1, size = 1, linetype = 'dashed') +
-  geom_hline(yintercept = CCDy+CCDy1, size = 1, linetype = 'dashed') +
-  geom_point(aes(x = PPTindex, y = PMI, colour = DIAGNOSIS), size = 5) +
-  scale_colour_manual(values = c('goldenrod2', 'dodgerblue3')) +
-  ylim(0,50) +
-  labs(title = 'Dominant', x = '', y = 'PMI (mm)') +
+ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = DIAGNOSIS, group = PPT, shape = DEFICITS)) + 
+  geom_point(size = 2.5, position = position_dodge(.2)) +
+  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  scale_color_manual(values = c('grey45','grey45','grey45')) +
+  scale_shape_manual(values = c(1,18,16)) +
+  labs(x = 'Diagnosis', y = '') +
   theme_classic() + theme(legend.position = 'none', 
-                          title = element_text(size = 22),
-                          axis.title = element_text(size = 22),
-                          axis.text = element_text(size = 18),
-                          axis.text.x = element_text(size = 16, angle = 90, hjust = 0.5),
-                          strip.text = element_text(size = 22), 
-                          legend.text = element_text(size = 20),
-                          axis.ticks.x = element_blank()
-                          ) -> CCD
-
-# NON-DOMINANT
-plot_CCND <- subset(plot_CC, plot_CC$DOM == 'Non-dominant')
-plot_CCND$PPTindex <- factor(1:length(plot_CCND$PPT))
-# getting y-intercept values for h-line
-CCNDy <- control_mean$PMI[2]
-CCNDy1 <- control_mean$sd[2]
-
-ggplot(plot_CCND) +
-  geom_hline(yintercept = CCNDy, size = 1) +
-  geom_hline(yintercept = CCNDy-CCNDy1, size = 1, linetype = 'dashed') +
-  geom_hline(yintercept = CCNDy+CCNDy1, size = 1, linetype = 'dashed') +
-  geom_point(aes(x = PPTindex, y = PMI, colour = DIAGNOSIS), size = 5) +
-  scale_colour_manual(values = c('goldenrod2', 'dodgerblue3')) +
-  labs(title = 'Non-dominant', x = '', y = 'PMI (mm)') +
-  ylim(0,50) +
-  theme_classic() + theme(legend.position = 'none', 
-                          title = element_text(size = 22),
-                          axis.title = element_text(size = 22),
-                          axis.text = element_text(size = 18),
-                          strip.text = element_text(size = 22), 
-                          legend.text = element_text(size = 20),
-                          axis.ticks.x = element_blank(),
-                          axis.text.x = element_blank()
-  ) -> CCND
-
-# compiling and saving
-CC <- ggarrange(CCND, CCD,
-                 ncol=1, nrow=2)
-CC
-ggsave('LATcase-control.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 7, height = 10, path = latPath)
+                          axis.title = element_text(size = 12),
+                          axis.text = element_text(size = 10),
+                          strip.text = element_text(size = 10) 
+  ) -> avPMI
+avPMI
+  
+PMIfig <- ggarrange(pPMI, avPMI,
+                ncol=2, nrow=1,
+                widths = c(1.5,1),
+                labels = c('a','b'),
+                hjust = -1)
+PMIfig
+ggsave('LATPMI-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 8, height = 4, path = latPath)
 
 ###### RADIAL REACHING FIGURES ######
 setwd(radPath)
