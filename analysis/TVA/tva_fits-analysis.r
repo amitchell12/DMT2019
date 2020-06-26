@@ -219,9 +219,8 @@ ggsave('processing-speed.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, path = anaPath)
 
 # vSTM
-ggplot(tva_values, aes(x = GRP, y = K)) + 
-  geom_jitter(aes(colour = SITE), position = position_jitter(0.1)) + 
-  scale_color_manual(values = c('grey50', 'red')) +
+ggplot(tva_values, aes(x = diagnosis, y = K)) + 
+  geom_jitter(aes(colour = diagnosis), position = position_jitter(0.1)) + 
   stat_summary(aes(y = K, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   labs(title = 'vSTM', x = 'Group', y = 'K (number of items)', 
