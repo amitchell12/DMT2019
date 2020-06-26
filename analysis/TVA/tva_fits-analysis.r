@@ -6,6 +6,10 @@
 # on pc
 #fitPath <- ("S:/groups/DMT/analysis/TVA/fits/") # Enter path to data
 #anaPath <- "S:/groups/DMT/analysis/TVA/"
+# on mac
+fitPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/fits/" # Enter path to data
+anaPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/"
+dataPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/"
 
 # Enter directory to save converted files to
 setwd(fitPath)
@@ -84,6 +88,19 @@ levels(tva_values$GRP) <- c('Control', 'Patient')
 levels(tva_values$SITE) <- c('UOE', 'UEA')
 tva_values$SUB <- factor(tva_values$SUB)
 
+# adding demographic info to this data-frame
+setwd(dataPath) 
+control_demos <- read.csv('control_demographics.csv')
+patient_demos <- read.csv('patient_demographics.csv')
+#extracting ACE data into seperate data-frame
+ACEscores <- patient_demos[ ,c(1, 8:13)]
+#isolating patient demographic information to bind with control
+patient_demos <- patient_demos[, c(1:6)]
+demo <- rbind(control_demos, patient_demos)
+names(demo)[1] <- 'SUB'
+
+# merge tva_values with demographics
+tva_values <- merge(demo, tva_values, by = 'SUB')
 
 # remove data with SPD > 0
 tva_values <- tva_values[tva_values$SPD == 0 ,]
@@ -101,7 +118,7 @@ write.csv(tva_values, 'tva_values.csv', row.names = FALSE)
 #melting so have information by condition
 tva_dat <- melt(
   tva_values, 
-  id.vars = c('ECC','SUB','GRP','SITE', 'K','C','t0','mu'), 
+  id.vars = c('ECC','SUB','diagnosis','SITE', 'K','C','t0','mu'), 
   measure.vars = c('ExpDurC1','ExpDurC2','ExpDurC3', 'ExpDurC4', 'ExpDurC5', 'ExpDurC6', 'ExpDurC7'))
 #sort new melted data frame
 tva_dat <- tva_dat[order(tva_dat$SUB) ,]
@@ -140,7 +157,7 @@ tva_dat <- merge(tva_dat, ttmp, by = c('SUB','COND'), all.y = TRUE)
 # renaming
 colnames(tva_dat)[colnames(tva_dat)=='V1'] <- 'MS'
 # order by group
-tva_dat <- tva_dat[order(tva_dat$GRP) ,]
+tva_dat <- tva_dat[order(tva_dat$diagnosis) ,]
 
 
 #save tva-values
@@ -190,9 +207,8 @@ ggsave('fits7.pdf', plot = last_plot(), device = NULL, dpi = 300,
 
 ##### plotting outcome vars #####
 # processing speed
-ggplot(tva_values, aes(x = GRP, y = C)) + 
-  geom_jitter(aes(colour = SITE), position = position_jitter(0.1)) + 
-  scale_color_manual(values = c('grey50', 'red')) +
+ggplot(tva_values, aes(x = diagnosis, y = C)) + 
+  geom_jitter(aes(colour = diagnosis), position = position_jitter(0.1)) + 
   stat_summary(aes(y = C, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   labs(title = 'Processing speed (C)', x = 'Group', y = 'C (item/s)', 
