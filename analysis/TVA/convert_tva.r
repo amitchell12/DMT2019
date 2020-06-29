@@ -8,7 +8,7 @@
 dataPath <- ("/Users/Alex/Documents/DMT/data/") # Enter path to data
 # Enter directory to save converted files to
 wPath <- ("/Users/Alex/Documents/git/DMT2019/analysis/TVA/")
-outputPath <- ("/Users/Alex/Documents/DMT/data/")
+outputPath <- ("/Users/Alex/Documents/DMT/data/formatted_TVA/")
 
 ##on pc
 #dataPath <- ("S:/groups/DMT/data/")
