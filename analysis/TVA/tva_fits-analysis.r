@@ -7,13 +7,14 @@
 #fitPath <- ("S:/groups/DMT/analysis/TVA/fits/") # Enter path to data
 #anaPath <- "S:/groups/DMT/analysis/TVA/"
 # on mac
-#fitPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/fits/" # Enter path to data
-#anaPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/"
-#dataPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/"
+fitPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/fits/" # Enter path to data
+anaPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/"
+dataPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/"
+latPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/"
 # on desktop mac
-fitPath <- "/Users/Alex/Documents/DMT/analysis/TVA/fits/" # Enter path to data
-anaPath <- "/Users/Alex/Documents/DMT/analysis/TVA/"
-dataPath <- "/Users/Alex/Documents/DMT/data/"
+#fitPath <- "/Users/Alex/Documents/DMT/analysis/TVA/fits/" # Enter path to data
+#anaPath <- "/Users/Alex/Documents/DMT/analysis/TVA/"
+#dataPath <- "/Users/Alex/Documents/DMT/data/"
 
 # Enter directory to save converted files to
 setwd(fitPath)
@@ -255,33 +256,67 @@ ggplot(tva_dat, aes(x = DUR, y = MS)) +
 ggsave('fits2.pdf', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-## average predicted duration for group
+## get individual participant data
+tvafits_HC <- tva_dat[tva_dat$SUB == '115',]
+tvafits_MCI <- tva_dat[tva_dat$SUB == '210',]
+tvafits_AD <- tva_dat[tva_dat$SUB == '408',]
+
+# changing levels for plot
+ggplot() + 
+  geom_point(data = tvafits_HC, aes(x = DUR, y = MS), size = 4, colour = 'grey50') + 
+  geom_line(data = tvafits_HC, aes(x = DUR, y = pMS), size = 2, colour = 'grey50') + 
+  geom_point(data = tvafits_MCI, aes(x = DUR, y = MS), size = 4, colour = 'goldenrod2') + 
+  geom_line(data = tvafits_MCI, aes(x = DUR, y = pMS), size = 2, colour = 'goldenrod2') + 
+  geom_point(data = tvafits_AD, aes(x = DUR, y = MS), size = 4, colour = 'dodgerblue3') + 
+  geom_line(data = tvafits_AD, aes(x = DUR, y = pMS), size = 2, colour = 'dodgerblue3') + 
+  labs(x = 'Perceived Duration (ms)', y = 'V-STM') +
+  theme_classic() +
+  theme(legend.position = 'none', axis.text = element_text(size = 20),
+        axis.title = element_text(size = 22))
+
+ggsave('example_tvafits.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 6, height = 5, path = anaPath)
 
 
 ##### plotting outcome vars #####
+# loading case-controls to identify individuals with reaching deficit
+setwd(latPath)
+case_control <- read.csv('lateral-reaching_case-control.csv')
+names(case_control)[12] <- 'SUB'
+
+tva_values
+tva_values$diagnosis <- factor(tva_values$diagnosis, levels = c('HC', 'MCI', 'AD'))
+
 # processing speed
 ggplot(tva_values, aes(x = diagnosis, y = C)) + 
-  geom_jitter(aes(colour = diagnosis), position = position_jitter(0.1)) + 
+  geom_jitter(aes(colour = diagnosis), position = position_jitter(0.2), size = 4.5) + 
+  scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
   stat_summary(aes(y = C, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  labs(title = 'Processing speed (C)', x = 'Group', y = 'C (item/s)', 
-                              element_text(size = 10)) +
-  theme_bw() + theme(legend.position = 'bottom', text = element_text(size = 10))
+               geom = 'point', shape = 3, stroke = 2.5, size = 5, group = 1) +
+  labs(title = 'Processing speed (C)', x = '', y = 'C (item/s)') +
+  theme_classic() + 
+  theme(legend.position = 'none', 
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 22),
+        title = element_text(size = 22))
 
 ggsave('processing-speed.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+       width = 5, height = 6, path = anaPath)
 
 # vSTM
 ggplot(tva_values, aes(x = diagnosis, y = K)) + 
-  geom_jitter(aes(colour = diagnosis), position = position_jitter(0.1)) + 
+  geom_jitter(aes(colour = diagnosis), position = position_jitter(0.2),  size = 4.5) + 
   stat_summary(aes(y = K, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  labs(title = 'vSTM', x = 'Group', y = 'K (number of items)', 
-       element_text(size = 10)) +
-  theme_bw() + theme(legend.position = 'bottom', text = element_text(size = 10))
+               geom = 'point', shape = 3, stroke = 2.5, size = 5, group = 1) +
+  scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
+  labs(title = 'Visual STM', x = '', y = 'K (# items)') +
+  theme_classic() + theme(legend.position = '', 
+                          axis.text = element_text(size = 20),
+                          axis.title = element_text(size = 22),
+                          title = element_text(size = 22))
 
 ggsave('vSTM.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+       width = 5, height = 6, path = anaPath)
 
 # t0
 ggplot(tva_values, aes(x = diagnosis, y = t0)) + 
