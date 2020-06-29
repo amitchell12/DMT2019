@@ -27,6 +27,7 @@ library(xpose)
 library(plyr)
 library(ez)
 library(psychReport)
+library(ggpubr)
 
 # list all files in working directory
 txt_filelist <- list.files(fitPath, ".txt")
@@ -194,20 +195,48 @@ C_ANOVA <- ezANOVA(
 print(C_ANOVA)
 # pairwise t-test to identify group differences
 Cttest <- pairwise.t.test(tva_values$C, tva_values$diagnosis, p.adj = 'bonf')
+print(Cttest)
 
-#### reached here - change this
 # vSTM
-tva_values$SUB <- factor(tva_values$SUB)
-C_ANOVA <- ezANOVA(
+K_ANOVA <- ezANOVA(
   data = tva_values
-  , dv = .(C)
+  , dv = .(K)
   , wid = .(SUB)
   , between = .(diagnosis)
   , type = 3
 )
-print(C_ANOVA)
+print(K_ANOVA)
 # pairwise t-test to identify group differences
-Cttest <- pairwise.t.test(tva_values$C, tva_values$diagnosis, p.adj = 'bonf')
+Kttest <- pairwise.t.test(tva_values$K, tva_values$diagnosis, p.adj = 'bonf')
+print(Kttest)
+
+### correlate with ACE
+names(ACEscores)[1] <- 'SUB'
+tvaACE <- merge(tva_values, ACEscores, by = 'SUB')
+tvaACE$ACEall <- as.numeric(as.character(tvaACE$ACEall))
+
+## processing speed
+ggscatter(tvaACE, x = 'ACEall', y = 'C', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +
+  ylab('Items/s (C)') + xlab('ACE score (%)') +
+  theme(text = element_text(size = 10))
+#ACE memory score
+ggscatter(tvaACE, x = 'ACEattention', y = 'C', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +
+  ylab('Items/s (C)') + xlab('ACE score (%)') +
+  theme(text = element_text(size = 10))
+
+## visual working memory
+ggscatter(tvaACE, x = 'ACEall', y = 'K', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +
+  ylab('VSTM (k)') + xlab('ACE score (%)') +
+  theme(text = element_text(size = 10))
+#ACE memory score
+ggscatter(tvaACE, x = 'ACEmemory', y = 'K', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +
+  ylab('IVSTM (k)') + xlab('ACE score (%)') +
+  theme(text = element_text(size = 10))
+
 
 ######### PLOTTING ##########
 # plotting predicted duration for each participant

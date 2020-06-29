@@ -6,40 +6,36 @@ library(ggpubr)
 
 ##### correlations #####
 #anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/task-correlations' #mac
-anaPath <- 'S:/groups/DMT/analysis/task-correlations' #pc
+#anaPath <- 'S:/groups/DMT/analysis/task-correlations' #pc
+anaPath <- "/Users/Alex/Documents/DMT/analysis/task-correlations/"
 # loading lateral reaching data
 #latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+#latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+latPath <- "/Users/Alex/Documents/DMT/analysis/lateral_reaching/"
 setwd(latPath)
 latData <- read.csv('lateral-reaching_PMI.csv')
 latData_dir <- read.csv('lateral-reaching_dPMI.csv')
 # loading radial reaching data
 #radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-radPath <- 'S:/groups/DMT/analysis/radial_reaching'
+#radPath <- 'S:/groups/DMT/analysis/radial_reaching'
+radPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
 setwd(radPath)
 radData <- read.csv('radial-reaching_PMI.csv')
 radData_dir <- read.csv('radial-reaching_dPMI.csv')
 # TVA path
 #TVApath <- radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA'
-TVApath <- 'S:/groups/DMT/analysis/TVA/'
+TVApath <- "/Users/Alex/Documents/DMT/analysis/TVA/"
 setwd(TVApath)
 TVAData <- read.csv('tva_values.csv')
-
-# making sure all matrices are the same
-names(latData)[1] <- 'PPT'
-names(latData)[2] <- 'GRP'
-names(latData)[4] <- 'SIDE'
-names(latData)[5] <- 'Peripheral'
-names(latData)[6] <- 'Free'
-latData <- latData[c(1,2,4,6,5,7)] #reorgansing to fit radData
 
 # adding extra info necessary to merge
 latData$TASK <- 'Lateral'
 radData$TASK <- 'Radial'
 
+## not now
 #adding directional PMI into data-frame (along x-axis only)
-latData$dPMI <- latData_dir$PMI
-radData$dPMI <- radData_dir$PMI
+#latData$dPMI <- latData_dir$PMI
+#radData$dPMI <- radData_dir$PMI
 
 ##### PMI data ######
 dat_side <- rbind(latData, radData)
