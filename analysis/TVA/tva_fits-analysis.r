@@ -7,9 +7,13 @@
 #fitPath <- ("S:/groups/DMT/analysis/TVA/fits/") # Enter path to data
 #anaPath <- "S:/groups/DMT/analysis/TVA/"
 # on mac
-fitPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/fits/" # Enter path to data
-anaPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/"
-dataPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/"
+#fitPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/fits/" # Enter path to data
+#anaPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/"
+#dataPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/"
+# on desktop mac
+fitPath <- "/Users/Alex/Documents/DMT/analysis/TVA/fits/" # Enter path to data
+anaPath <- "/Users/Alex/Documents/DMT/analysis/TVA/"
+dataPath <- "/Users/Alex/Documents/DMT/data/"
 
 # Enter directory to save converted files to
 setwd(fitPath)
@@ -20,6 +24,7 @@ library(ggplot2)
 library(reshape2)
 library(ggforce)
 library(xpose)
+library(plyr)
 
 # list all files in working directory
 txt_filelist <- list.files(fitPath, ".txt")
@@ -43,7 +48,7 @@ tva_values <- read.csv(
   text = 'SUB,ECC,K,C,t0,MU,t1,t2,t3,t4,t5,t6,t7,SPD'
   )
 tva_filelist <- dir(fitPath, recursive = TRUE, full.names = FALSE, pattern = '.csv')
-##### BOTH ECCs #####
+
 # key values from .csv files - ALL COND FIRST
 for (file in tva_filelist){
   if (isTRUE(str_sub(basename(file), -10, -10)=='r')){
@@ -102,20 +107,25 @@ names(demo)[1] <- 'SUB'
 # merge tva_values with demographics
 tva_values <- merge(demo, tva_values, by = 'SUB')
 
+# count N in groups and missing data
+Ngroup <- count(tva_values, vars = 'diagnosis')
+Filt <- count(tva_values, vars = 'SPD')
+
 # remove data with SPD > 0
 tva_values <- tva_values[tva_values$SPD == 0 ,]
-# have a chat with rob about this - save current data-set
+# re-count N per group without SPD > 0 (poorly fitted data)
+Ngroup_filt <- count(tva_values, vars = 'diagnosis')
 
-
-#adding processing speed
-#adding mu to ExpDurc6 and c7
+##### adding processing speed to seperate DF #####
+# adding mu to ExpDurc6 and c7 (unmasked conditions)
 tva_values$ExpDurC6 <- tva_values$ExpDurC6 + tva_values$mu
 tva_values$ExpDurC7 <- tva_values$ExpDurC7 + tva_values$mu
 # saving tva-values
 setwd(anaPath)
 write.csv(tva_values, 'tva_values.csv', row.names = FALSE)
 
-#melting so have information by condition
+# creating data-frame so can have predicted and actual values for each condition
+# melting so have information by condition
 tva_dat <- melt(
   tva_values, 
   id.vars = c('ECC','SUB','diagnosis','SITE', 'K','C','t0','mu'), 
@@ -154,17 +164,21 @@ for (file in tva_filelist){
 
 # merging the two data-frames by SUB and COND
 tva_dat <- merge(tva_dat, ttmp, by = c('SUB','COND'), all.y = TRUE)
-# renaming
+# renaming V1 (which is actually mean score)
 colnames(tva_dat)[colnames(tva_dat)=='V1'] <- 'MS'
-# order by group
+# order by group (diagnosis)
 tva_dat <- tva_dat[order(tva_dat$diagnosis) ,]
-
 
 #save tva-values
 setwd(anaPath)
 write.csv(tva_dat, 'tva_fits.csv', row.names = FALSE)
 
+######### DATA ANALYSIS #########
+
+######### PLOTTING ##########
 # plotting predicted duration for each participant
+# plot one for example control, MCI and AD - for presentation
+
 # seperate plots for every 4 participants
 # 107-112
 ggplot(tva_dat, aes(x = DUR, y = MS)) + 
