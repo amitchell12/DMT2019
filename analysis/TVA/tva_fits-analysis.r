@@ -243,19 +243,6 @@ ggscatter(tvaACE, x = 'ACEmemory', y = 'K', add = 'reg.line', conf.int = TRUE,
 # plotting predicted duration for each participant
 # plot one for example control, MCI and AD - for presentation
 
-# seperate plots for every 4 participants
-# 107-112
-ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
-                      strip.position = 'top', page = 2) +
-  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
-       element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 8))
-
-ggsave('fits2.pdf', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
 ## get individual participant data
 tvafits_HC <- tva_dat[tva_dat$SUB == '115',]
 tvafits_MCI <- tva_dat[tva_dat$SUB == '210',]
@@ -282,15 +269,24 @@ ggsave('example_tvafits.png', plot = last_plot(), device = NULL, dpi = 300,
 # loading case-controls to identify individuals with reaching deficit
 setwd(latPath)
 case_control <- read.csv('lateral-reaching_case-control.csv')
-names(case_control)[12] <- 'SUB'
+case_control <- aggregate(DEFICIT ~ PPT*DIAGNOSIS, sum, data = case_control)
+names(case_control)[1] <- 'SUB'
+names(case_control)[2] <- 'diagnosis'
 
-tva_values
+tva_controls <- tva_values[tva_values$diagnosis == 'HC' ,]
+tva_controls$DEFICIT <- 0
+tva_cases <- merge(tva_values, case_control, by = c('SUB','diagnosis'))
+tva_values <- rbind(tva_controls, tva_cases)
+
 tva_values$diagnosis <- factor(tva_values$diagnosis, levels = c('HC', 'MCI', 'AD'))
+tva_values$DEFICIT <- factor(tva_values$DEFICIT)
 
 # processing speed
 ggplot(tva_values, aes(x = diagnosis, y = C)) + 
-  geom_jitter(aes(colour = diagnosis), position = position_jitter(0.2), size = 4.5) + 
+  geom_jitter(aes(colour = diagnosis, shape = DEFICIT),
+              position = position_jitter(0.2), size = 5) + 
   scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
+  scale_shape_manual(values = c(16,1,1)) +
   stat_summary(aes(y = C, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 2.5, size = 5, group = 1) +
   labs(title = 'Processing speed (C)', x = '', y = 'C (item/s)') +
@@ -298,22 +294,24 @@ ggplot(tva_values, aes(x = diagnosis, y = C)) +
   theme(legend.position = 'none', 
         axis.text = element_text(size = 20),
         axis.title = element_text(size = 22),
-        title = element_text(size = 22))
+        title = element_text(size = 20))
 
 ggsave('processing-speed.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 5, height = 6, path = anaPath)
 
 # vSTM
 ggplot(tva_values, aes(x = diagnosis, y = K)) + 
-  geom_jitter(aes(colour = diagnosis), position = position_jitter(0.2),  size = 4.5) + 
+  geom_jitter(aes(colour = diagnosis, shape = DEFICIT), 
+              position = position_jitter(0.2),  size = 5) + 
   stat_summary(aes(y = K, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 2.5, size = 5, group = 1) +
   scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
+  scale_shape_manual(values = c(16,1,1)) +
   labs(title = 'Visual STM', x = '', y = 'K (# items)') +
   theme_classic() + theme(legend.position = '', 
                           axis.text = element_text(size = 20),
                           axis.title = element_text(size = 22),
-                          title = element_text(size = 22))
+                          title = element_text(size = 20))
 
 ggsave('vSTM.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 5, height = 6, path = anaPath)
