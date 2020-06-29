@@ -5,17 +5,21 @@ library(ggpubr)
 library(Rmisc)
 
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+
 # on desktop mac
-#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
-#dataPath <- '/Users/Alex/Documents/DMT/data'
+anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
+dataPath <- '/Users/Alex/Documents/DMT/data'
+UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
+
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
 #anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
-setwd(anaPath)
-
-res <- read.csv('radial-reaching_compiled.csv')
+setwd(anaPath) #for Edinburgh data 
+resUOE <- read.csv('radial-reaching_compiled.csv')
+setwd(UEApath) #for Norwich data
+resUEA <- read.csv('radial-reaching_compiled.csv') 
 
 # changing levelsfor plotting
 res$VIEW <- factor(res$VIEW) #changing so only 2 levels recorded
