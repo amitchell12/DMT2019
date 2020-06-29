@@ -25,6 +25,8 @@ library(reshape2)
 library(ggforce)
 library(xpose)
 library(plyr)
+library(ez)
+library(psychReport)
 
 # list all files in working directory
 txt_filelist <- list.files(fitPath, ".txt")
@@ -109,11 +111,16 @@ tva_values <- merge(demo, tva_values, by = 'SUB')
 
 # count N in groups and missing data
 Ngroup <- count(tva_values, vars = 'diagnosis')
-Filt <- count(tva_values, vars = 'SPD')
+SPD <- count(tva_values, vars = 'SPD')
 
 # remove data with SPD > 0
 tva_values <- tva_values[tva_values$SPD == 0 ,]
-# re-count N per group without SPD > 0 (poorly fitted data)
+tva_values$lowT0 <- tva_values$t0 < -1
+lowTO <- count(tva_values, vars = 'lowT0')
+# removing data with t0 > 0 (for this data-set, otherwise C is incorrectly fitted)
+tva_values <- tva_values[tva_values$t0 > -1 ,]
+tva_values <- tva_values[, c(1:21)] #removing t0 true/false column
+# re-count N per group without SPD > 0 (poorly fitted data) and t0 > 0 (cannot use)
 Ngroup_filt <- count(tva_values, vars = 'diagnosis')
 
 ##### adding processing speed to seperate DF #####
@@ -174,6 +181,33 @@ setwd(anaPath)
 write.csv(tva_dat, 'tva_fits.csv', row.names = FALSE)
 
 ######### DATA ANALYSIS #########
+# run ANOVAs on processing speed & vSTM
+# processing speed
+tva_values$SUB <- factor(tva_values$SUB)
+C_ANOVA <- ezANOVA(
+  data = tva_values
+  , dv = .(C)
+  , wid = .(SUB)
+  , between = .(diagnosis)
+  , type = 3
+)
+print(C_ANOVA)
+# pairwise t-test to identify group differences
+Cttest <- pairwise.t.test(tva_values$C, tva_values$diagnosis, p.adj = 'bonf')
+
+#### reached here - change this
+# vSTM
+tva_values$SUB <- factor(tva_values$SUB)
+C_ANOVA <- ezANOVA(
+  data = tva_values
+  , dv = .(C)
+  , wid = .(SUB)
+  , between = .(diagnosis)
+  , type = 3
+)
+print(C_ANOVA)
+# pairwise t-test to identify group differences
+Cttest <- pairwise.t.test(tva_values$C, tva_values$diagnosis, p.adj = 'bonf')
 
 ######### PLOTTING ##########
 # plotting predicted duration for each participant
@@ -190,30 +224,6 @@ ggplot(tva_dat, aes(x = DUR, y = MS)) +
   theme(legend.position = 'none', text = element_text(size = 8))
 
 ggsave('fits2.pdf', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-# 201-207
-ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
-                      strip.position = 'top', page = 5) +
-  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
-       element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 8))
-
-ggsave('fits5.pdf', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-# 304-309
-ggplot(tva_dat, aes(x = DUR, y = MS)) + 
-  geom_point(size = 1) + geom_line(aes(x = DUR, y = pMS), size = 0.5) + 
-  facet_wrap_paginate(~SUB, nrow = 3, ncol = 2, scales = 'free_x',
-                      strip.position = 'top', page = 7) +
-  labs(x = 'Perceived Duration (ms)', y = 'vSTM', 
-       element_text(size = 6)) + theme_bw() + 
-  theme(legend.position = 'none', text = element_text(size = 8))
-
-ggsave('fits7.pdf', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 ## average predicted duration for group
