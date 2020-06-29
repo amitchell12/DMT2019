@@ -216,9 +216,8 @@ ggsave('vSTM.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, path = anaPath)
 
 # t0
-ggplot(tva_values, aes(x = GRP, y = t0)) + 
-  geom_jitter(aes(colour = SITE), position = position_jitter(0.1)) + 
-  scale_color_manual(values = c('grey50', 'red')) +
+ggplot(tva_values, aes(x = diagnosis, y = t0)) + 
+  geom_jitter(aes(colour = diagnosis), position = position_jitter(0.1)) + 
   stat_summary(aes(y = t0, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   labs(title = 'Perceptual threshold (t0)', x = 'Group', y = 't0 (ms)', 
