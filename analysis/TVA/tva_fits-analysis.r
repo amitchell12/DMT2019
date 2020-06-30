@@ -289,7 +289,7 @@ ggplot(tva_values, aes(x = diagnosis, y = C)) +
   scale_shape_manual(values = c(16,1,1)) +
   stat_summary(aes(y = C, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 2.5, size = 5, group = 1) +
-  labs(title = 'Processing speed (C)', x = '', y = 'C (item/s)') +
+  labs(title = 'Processing capacity (C)', x = '', y = 'C (item/s)') +
   theme_classic() + 
   theme(legend.position = 'none', 
         axis.text = element_text(size = 20),
@@ -307,7 +307,7 @@ ggplot(tva_values, aes(x = diagnosis, y = K)) +
                geom = 'point', shape = 3, stroke = 2.5, size = 5, group = 1) +
   scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
   scale_shape_manual(values = c(16,1,1)) +
-  labs(title = 'Visual STM', x = '', y = 'K (# items)') +
+  labs(title = 'Visual STM (k)', x = '', y = 'K (# items)') +
   theme_classic() + theme(legend.position = '', 
                           axis.text = element_text(size = 20),
                           axis.title = element_text(size = 22),
