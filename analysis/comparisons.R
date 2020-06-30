@@ -5,9 +5,9 @@ library(reshape2)
 library(ggpubr)
 
 ##### correlations #####
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/task-correlations' #mac
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/task-correlations' #mac
 #anaPath <- 'S:/groups/DMT/analysis/task-correlations' #pc
-anaPath <- "/Users/Alex/Documents/DMT/analysis/task-correlations/"
+#anaPath <- "/Users/Alex/Documents/DMT/analysis/task-correlations/"
 # loading lateral reaching data
 #latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
 #latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
@@ -90,6 +90,7 @@ setwd(anaPath)
 write.csv(allDat, 'all-task_results.csv', row.names = FALSE)
 
 # removing NA values for plotting
+allDat <- allDat[c(1:11, 15:25)]
 corr_allDat <- na.omit(allDat)
 
 ##### TVA lateral reaching
