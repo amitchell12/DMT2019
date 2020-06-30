@@ -8,7 +8,7 @@
 #anaPath <- "S:/groups/DMT/analysis/TVA/"
 # on mac
 #fitPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/fits/" # Enter path to data
-#anaPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/"
+anaPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/"
 #dataPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/"
 # on desktop mac
 fitPath <- "/Users/Alex/Documents/DMT/analysis/TVA/fits/" # Enter path to data
