@@ -64,7 +64,7 @@ res$DOM <- factor(res$DOM, labels= c('ND','D'))
 # change order so important var up-front
 res <- res[, c(1,6,21:23,2:5,7:20)]
 # save Edinburgh & UEA compiled data
-cd(anaPath)
+setwd(anaPath)
 write.csv(res, 'all_radial-reaching_compiled.csv', row.names = FALSE)
 
 # summary data
@@ -74,6 +74,9 @@ res_periph <- subset(res, res$POSITION == -200 | res$POSITION == -300 |
 res_medians <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE*ED, 
                          mean, data = res_periph)
 colnames(res_medians)[colnames(res_medians)=='AE'] <- 'AEmed'
+res_medians_all <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE*ED, 
+                         mean, data = res)
+colnames(res_medians_all)[colnames(res_medians_all)=='AE'] <- 'AEmed'
 # removing free + peripheral trails at 100mm left for 101, error
 res_medians <- res_medians[order(res_medians$PPT) ,]
 res_medians <- res_medians[!(res_medians$PPT == '101' & res_medians$AEmed > 50) ,]
@@ -88,34 +91,6 @@ write.csv(res_means, 'radial-reaching_means.csv', row.names = FALSE)
 PMIdata <- dcast(res_means, PPT+GRP+DIAGNOSIS+DOM+SIDE+SITE+AGE+ED ~ VIEW)
 PMIdata$PMI <- PMIdata$Peripheral - PMIdata$Free
 write.csv(PMIdata, 'radial-reaching_PMI.csv', row.names = FALSE)
-
-##### plots #####
-# mean plot 
-ggplot(res_means, aes(x = DOM, y = AEmean)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(VIEW), rows = vars(DIAGNOSIS)) + 
-  labs(x = 'Side', y = 'Mean AE (mm)', element_text(size = 12)) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8)) 
-
-ggsave('radial_meanerr.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-# PMI plot
-ggplot(PMIdata, aes(x = DOM, y = PMI, group = DIAGNOSIS), position = position_dodge(.2)) + 
-  geom_point(shape = 1, size = 4) +
-  geom_line(aes(group = PPT), alpha = .5, size = .8) +
-  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 5, group = 1) +
-  labs(title = 'Radial reaching', x = 'Side', y = 'PMI (mm)', 
-                     element_text(size = 14)) +
-  facet_wrap(~DIAGNOSIS) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
-                     strip.text.x = element_text(size = 12)) 
-
-ggsave('radialPMI.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 7, height = 4, path = anaPath)
 
 ## summary data
 meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'DOM'),
@@ -181,10 +156,6 @@ ggplot(meds_AD, aes(x = POSITION, y = AE, colour = SIDE)) +
 ggsave('AD_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-# PMI collapsed across side
-PMIav <- aggregate(PMI ~ PPT * SITE * DOM * GRP * DIAGNOSIS * AGE * ED, mean, data = PMIdata)
-PMIav <- PMIav[order(PMIav$PPT), ]
-
 # correlate PMI with possible co-variates, age + education
 agecov <- cor.test(PMIdata$AGE, PMIdata$PMI, method = 'pearson')
 ggscatter(PMIdata, x = "AGE", y = "PMI", 
@@ -200,27 +171,30 @@ ggscatter(PMIdata, x = "ED", y = "PMI",
           cor.coef = TRUE, cor.method = "spearman",
           xlab = "Years of Education", ylab = "PMI (mm)")
 
-######## step 3: outlier removal, filtered PMI #########
-controlData <- PMIdata[PMIdata$PPT < 200, ]
+######## OUTLIER REMOVAL, filtered PMI #########
+# two different sites and set-ups, use data from control group in each site to remove outliers
+# need to run same removal for outliers in each site
+#### UOE FIRST #####
+controlUOE <- PMIdata[PMIdata$PPT < 200, ]
 
 # median values for each side
-tmp <- aggregate(PMI ~ GRP, median, data = controlData)
+tmp <- aggregate(PMI ~ GRP, median, data = controlUOE)
 names(tmp)[2] <- 'med'
-controlData <- merge(tmp, controlData)
+controlUOE <- merge(tmp, controlUOE)
 
 # calculating MAD for each (absolute value)
-controlData$AD <- abs(controlData$PMI - controlData$med)
-tmp <- aggregate(AD ~ GRP, median, data=controlData)
+controlUOE$AD <- abs(controlUOE$PMI - controlUOE$med)
+tmp <- aggregate(AD ~ GRP, median, data=controlUOE)
 names(tmp)[2] <- 'MAD'
-controlData <- merge(controlData, tmp)
+controlUOE <- merge(controlUOE, tmp)
 
 # adjusted z-score from these values
-controlData$az <- (controlData$PMI - controlData$med)/(controlData$MAD * 1.4826)
-controlData$z <- scale(controlData$PMI)
-controlData$PPT <- factor(controlData$PPT)
+controlUOE$az <- (controlUOE$PMI - controlUOE$med)/(controlUOE$MAD * 1.4826)
+controlUOE$z <- scale(controlUOE$PMI)
+controlUOE$PPT <- factor(controlUOE$PPT)
 
-plot_name = 'adjustedZ.png'
-ggplot(controlData, aes(x = GRP, y = az, colour = PPT)) +
+plot_name = 'adjustedZ_UOE.png'
+ggplot(controlUOE, aes(x = GRP, y = az, colour = PPT)) +
   geom_point(size = 3, position = position_dodge(.1)) +  
   stat_summary(aes(y = az, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', group = 1) + 
@@ -232,21 +206,63 @@ ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300,
 
 ### outlier removal ###
 # find controls with az > 2.5 - need to remove entire control, not just side
-XCLUDE <- controlData[controlData$az > 2.5, ]
-write.csv(XCLUDE, 'radialoutliers.csv', row.names = FALSE)
+XCLUDE_UOE <- controlUOE[controlUOE$az > 2.5, ]
+write.csv(XCLUDE_UOE, 'radialoutliers_UOE.csv', row.names = FALSE)
+
+#### UEA SECOND #####
+controlUEA <- PMIdata[PMIdata$SITE == 'UEA' ,]
+controlUEA <- controlUEA[controlUEA$PPT < 400 ,]
+
+# median values for each side
+tmp <- aggregate(PMI ~ GRP, median, data = controlUEA)
+names(tmp)[2] <- 'med'
+controlUEA <- merge(tmp, controlUEA)
+
+# calculating MAD for each (absolute value)
+controlUEA$AD <- abs(controlUEA$PMI - controlUEA$med)
+tmp <- aggregate(AD ~ GRP, median, data=controlUEA)
+names(tmp)[2] <- 'MAD'
+controlUEA <- merge(controlUEA, tmp)
+
+# adjusted z-score from these values
+controlUEA$az <- (controlUEA$PMI - controlUEA$med)/(controlUEA$MAD * 1.4826)
+controlUEA$z <- scale(controlUEA$PMI)
+controlUEA$PPT <- factor(controlUEA$PPT)
+
+plot_name = 'adjustedZ_UEA.png'
+ggplot(controlUEA, aes(x = GRP, y = az, colour = PPT)) +
+  geom_point(size = 3, position = position_dodge(.1)) +  
+  stat_summary(aes(y = az, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', group = 1) + 
+  labs(x = '', y = 'Adjusted z-score', element_text(size = 13)) +
+  theme_bw() + theme(legend.position = "right", legend.title = element_blank())
+
+ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, width = 5, height = 6.5, path = anaPath)
+
+### outlier removal ###
+# find controls with az > 2.5 - need to remove entire control, not just side
+XCLUDE_UEA <- controlUEA[controlUEA$az > 2.5, ]
+write.csv(XCLUDE_UEA, 'radialoutliers_UEA.csv', row.names = FALSE)
+
+
+### combinging outliers and removing
+XCLUDE <- rbind(XCLUDE_UOE,XCLUDE_UEA)
 # creating data-frame with control data removed
 PMIfilt <- PMIdata[!(PMIdata$PPT %in% XCLUDE$PPT), ]
+
 res_mediansF <- res_medians[!(res_medians$PPT %in% XCLUDE$PPT), ]
 res_medians_allF <- res_medians_all[!(res_medians_all$PPT %in% XCLUDE$PPT), ]
 res_meansF <- res_means[!(res_means$PPT %in% XCLUDE$PPT), ]
 # saving filered data
+setwd(anaPaths)
 write.csv(PMIfilt, 'radialPMI-filtered.csv', row.names = FALSE)
 write.csv(res_mediansF, 'radial-medians_filtered.csv', row.names = FALSE)
 write.csv(res_meansF, 'radial-means_filtered.csv', row.names = FALSE)
 write.csv(res_medians_allF, 'radial-medians-all_filtered.csv', row.names = FALSE)
 
 ### PLOT FILTERED PMI DATA
-ggplot(PMIfilt, aes(x = SIDE, y = PMI), position = position_dodge(.2)) + 
+ggplot(PMIfilt, aes(x = SIDE, y = PMI, colour = SITE), position = position_dodge(.2)) + 
   geom_point(shape = 1, size = 4) +
   geom_line(aes(group = PPT), alpha = .5, size = .8) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
@@ -254,7 +270,7 @@ ggplot(PMIfilt, aes(x = SIDE, y = PMI), position = position_dodge(.2)) +
   labs(title = 'Lateral Reaching', x = 'Side', y = 'Reaching error (mm)', 
        element_text(size = 14)) +
   facet_wrap(~DIAGNOSIS) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 14),
+  theme_bw() + theme(legend.position = 'right', text = element_text(size = 14),
                      strip.text.x = element_text(size = 12)) 
 
 ggsave('radialPMI-filtered.png', plot = last_plot(), device = NULL, dpi = 300, 
