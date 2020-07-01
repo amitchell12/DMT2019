@@ -23,20 +23,38 @@ resUEA <- read.csv('radial-reaching_compiled.csv')
 
 ##### DATA ORGANISE #####
 # UOE data, getting rid of 'deg' values - just use mm
+resUOE <- resUOE[, c(1:7,14,15,8:13,16:19,22,24,25)]
+# UEA data getting rid of not needed values
+resUEA <- resUEA[, c(1:9,15:18,21,22,24:30)]
+# change group labelling in UEA (3 = control, 4 = patient) to match UOE (1 = control, 2 = patient)
+resUEA$GRP <- factor(resUEA$GRP, labels = c('1','2'))
+# change position labelling here too - needs to match UOE (100,200,300,400mm)
+# split into two data-frames (left/right sides) and label, the bind again
+UEAright <- resUEA[resUEA$SIDE == 'Right' ,]
+UEAleft <- resUEA[resUEA$SIDE == 'Left' ,]
+# for right 1= closest, 4= furthest away
+UEAright$POSITION <- factor(UEAright$POSITION, labels = c('100','200','300','400'))
+# for left 1=furthest, 4= nearest
+UEAleft$POSITION <- factor(UEAleft$POSITION, labels = c('-400','-300','-200','-100'))
+# bind back together!
+resUEA <- rbind(UEAright, UEAleft)
 
-
+# now let's bind! & order by participant
+res <- rbind(resUOE, resUEA)
+res <- res[order(res$PPT),]
 
 # changing levelsfor plotting
 res$VIEW <- factor(res$VIEW) #changing so only 2 levels recorded
-levels(res$VIEW) <- c('Free','Peripheral')
-levels(res$SIDE) <- c('Left', 'Right')
 res$GRP <- factor(res$GRP)
 levels(res$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
 res$diagnosis <- factor(res$diagnosis)
-names(res)[25] <- 'DIAGNOSIS'
-names(res)[22] <- 'AGE'
-names(res)[23] <- 'HAND'
-names(res)[24] <- 'ED'
+res$POSITION <- factor(res$POSITION)
+# capitalising names of demographics to match rest
+colnames(res)[colnames(res) == 'gender'] <- 'GENDER'
+colnames(res)[colnames(res) == 'age'] <- 'AGE'
+colnames(res)[colnames(res) == 'hand'] <- 'HAND'
+colnames(res)[colnames(res) == 'education'] <- 'ED'
+colnames(res)[colnames(res) == 'diagnosis'] <- 'DIAGNOSIS'
 
 ## getting dominant + non-dominant sides, for analysis
 res$HAND <- factor(res$HAND, labels = c('Left','Right'))
@@ -44,7 +62,10 @@ res$HAND <- factor(res$HAND, labels = c('Left','Right'))
 res$DOM <- as.numeric(res$SIDE == res$HAND) #1 = dominant, 0 = non-dominant
 res$DOM <- factor(res$DOM, labels= c('ND','D'))
 # change order so important var up-front
-res <- res[, c(1,25,26,9,10,19:24,2:8,11:18)]
+res <- res[, c(1,6,21:23,2:5,7:20)]
+# save Edinburgh & UEA compiled data
+cd(anaPath)
+write.csv(res, 'all_radial-reaching_compiled.csv', row.names = FALSE)
 
 # summary data
 # extracting data from furthest two target locs
