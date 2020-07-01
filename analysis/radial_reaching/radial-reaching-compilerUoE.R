@@ -8,8 +8,8 @@ library(Rmisc)
 #anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
 #dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on mac desktop
-anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
-dataPath <- '/Users/Alex/Documents/DMT/data'
+anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching/'
+dataPath <- '/Users/Alex/Documents/DMT/data/'
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
 #anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
@@ -115,7 +115,10 @@ demo <- rbind(control_demos, patient_demos)
 names(demo)[1] <- 'PPT'
 
 #merging demo with res
-res <- merge(res, demo, by = 'PPT')
+res <- merge(demo, res, by = 'PPT')
+#do some pre-emptive renaming
+res$VIEW <- factor(res$VIEW, labels = c('Free', 'Peripheral'))
+res$SIDE <- factor(res$SIDE, labels = c('Left','Right'))
 
 #save compiled data-set
 setwd(anaPath)

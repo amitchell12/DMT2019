@@ -18,8 +18,13 @@ UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
 #anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
 setwd(anaPath) #for Edinburgh data 
 resUOE <- read.csv('radial-reaching_compiled.csv')
-setwd(UEApath) #for Norwich data
+setwd(UEAPath) #for Norwich data
 resUEA <- read.csv('radial-reaching_compiled.csv') 
+
+##### DATA ORGANISE #####
+# UOE data, getting rid of 'deg' values - just use mm
+
+
 
 # changing levelsfor plotting
 res$VIEW <- factor(res$VIEW) #changing so only 2 levels recorded
