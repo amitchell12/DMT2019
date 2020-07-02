@@ -115,7 +115,7 @@ print(SITE_ANOVA)
 # no difference across sites! Hooray!
 
 ggplot(siteANOVA, aes(x = VIEW, y = AEmean, colour = DIAGNOSIS)) +
-  geom_point(position = position_dodge(.2)) +
+  geom_point(size =2, position = position_dodge(.3)) +
   facet_wrap(~SITE)
 
 # Eccentricity plots
@@ -229,7 +229,6 @@ ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300,
 ### outlier removal ###
 # find controls with az > 2.5 - need to remove entire control, not just side
 XCLUDE_UOE <- controlUOE[controlUOE$az > 2.5, ]
-write.csv(XCLUDE_UOE, 'radialoutliers_UOE.csv', row.names = FALSE)
 
 #### UEA SECOND #####
 controlUEA <- PMIdata[PMIdata$SITE == 'UEA' ,]
@@ -265,11 +264,11 @@ ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300,
 ### outlier removal ###
 # find controls with az > 2.5 - need to remove entire control, not just side
 XCLUDE_UEA <- controlUEA[controlUEA$az > 2.5, ]
-write.csv(XCLUDE_UEA, 'radialoutliers_UEA.csv', row.names = FALSE)
-
 
 ### combinging outliers and removing
+cd(anaPath)
 XCLUDE <- rbind(XCLUDE_UOE,XCLUDE_UEA)
+write.csv(XCLUDE, 'radial-reaching_outliers.csv', row.names = FALSE)
 # creating data-frame with control data removed
 PMIfilt <- PMIdata[!(PMIdata$PPT %in% XCLUDE$PPT), ]
 
@@ -277,51 +276,17 @@ res_mediansF <- res_medians[!(res_medians$PPT %in% XCLUDE$PPT), ]
 res_medians_allF <- res_medians_all[!(res_medians_all$PPT %in% XCLUDE$PPT), ]
 res_meansF <- res_means[!(res_means$PPT %in% XCLUDE$PPT), ]
 # saving filered data
-setwd(anaPaths)
+setwd(anaPath)
 write.csv(PMIfilt, 'radialPMI-filtered.csv', row.names = FALSE)
 write.csv(res_mediansF, 'radial-medians_filtered.csv', row.names = FALSE)
 write.csv(res_meansF, 'radial-means_filtered.csv', row.names = FALSE)
 write.csv(res_medians_allF, 'radial-medians-all_filtered.csv', row.names = FALSE)
 
-### PLOT FILTERED PMI DATA
-ggplot(PMIfilt, aes(x = DOM, y = PMI, colour = SITE), position = position_dodge(.2)) + 
-  geom_point(shape = 1, size = 3) +
-  geom_line(aes(group = PPT), alpha = .5, size = .8) +
-  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  labs(title = 'Radial Reaching', x = 'Side', y = 'PMI (mm)', 
-       element_text(size = 12)) +
-  facet_wrap(~DIAGNOSIS) +
-  theme_bw() + theme(legend.position = 'right', text = element_text(size = 12),
-                     strip.text.x = element_text(size = 10)) 
-
-ggsave('radialPMI-filtered.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 7, height = 4, path = anaPath)
-
-## averaging PMI data across sides
-meanFPMI <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'DOM'),
-                      na.rm = TRUE)
-meanFPMI_all <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
-                          na.rm = TRUE)
-
-#average across side
-PMIfilt_av <- aggregate(PMI ~ PPT * SITE * DIAGNOSIS, mean, data = PMIfilt)
-jitter <- position_jitter(width = 0.1, height = 0.1)
-
-ggplot(PMIfilt_av, aes(x = DIAGNOSIS, y = PMI, colour = SITE)) + 
-  geom_point(position = jitter, shape = 21, size = 3) +
-  scale_colour_manual(values = c('grey40', 'black')) +
-  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  labs(title = '', x = '', y = 'Reaching error (mm)', 
-       element_text(size = 8)) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8))
-
-ggsave('radialPMI-filtered-av.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 3, height = 3, path = anaPath)
-
 ######## step 4: single case stats on filtered data ########
+# do this independently for each site - different set ups
+
+## UOE CASE CONTROL ##
+############ edit here - change so only Edinburgh cases analysed, then add UEA case-control after
 # create data-frames (controls and patients) with key information
 td_summary <- summarySE(data = PMIfilt, measurevar = 'PMI', 
                         groupvars = c('DIAGNOSIS','DOM'), na.rm = TRUE)
