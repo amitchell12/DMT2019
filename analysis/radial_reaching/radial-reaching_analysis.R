@@ -3,11 +3,13 @@ library(ggplot2)
 library(reshape2)
 library(ggpubr)
 library(Rmisc)
+library(ez)
+library(psychReport)
 
 #on mac
 anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
 dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
-UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
 
 # on desktop mac
 #anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
@@ -75,9 +77,7 @@ res_periph <- subset(res, res$POSITION == -200 | res$POSITION == -300 |
 res_medians <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE*ED, 
                          mean, data = res_periph)
 colnames(res_medians)[colnames(res_medians)=='AE'] <- 'AEmed'
-res_medians_all <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE*ED, 
-                         mean, data = res)
-colnames(res_medians_all)[colnames(res_medians_all)=='AE'] <- 'AEmed'
+
 # removing free + peripheral trails at 100mm left for 101, error
 res_medians <- res_medians[order(res_medians$PPT) ,]
 res_medians <- res_medians[!(res_medians$PPT == '101' & res_medians$AEmed > 50) ,]
@@ -85,13 +85,10 @@ res_medians <- res_medians[!(res_medians$PPT == '101' & res_medians$AEmed > 50) 
 res_means <- aggregate(AEmed ~ PPT*VIEW*SIDE*DOM*GRP*DIAGNOSIS*SITE*AGE*ED, 
                        mean, data = res_medians)
 colnames(res_means)[colnames(res_means)=='AEmed'] <- 'AEmean'
-write.csv(res_medians, 'radial-reaching_medians.csv', row.names = FALSE)
-write.csv(res_means, 'radial-reaching_means.csv', row.names = FALSE)
 
 # casting by task
 PMIdata <- dcast(res_means, PPT+GRP+DIAGNOSIS+DOM+SIDE+SITE+AGE+ED ~ VIEW)
 PMIdata$PMI <- PMIdata$Peripheral - PMIdata$Free
-write.csv(PMIdata, 'radial-reaching_PMI.csv', row.names = FALSE)
 
 ## summary data
 meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'DOM'),
@@ -99,7 +96,29 @@ meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS',
 meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
                          na.rm = TRUE)
 
-#### plot by eccentricity
+##### ANOVA - differences between sites #####
+siteANOVA <- na.omit(res_means)
+siteANOVA <- siteANOVA[siteANOVA$PPT != 212 ,]
+siteANOVA <- siteANOVA[siteANOVA$PPT != 310 , c(1:7,10)]
+siteANOVA <- aggregate(AEmean ~ PPT+VIEW+DOM+DIAGNOSIS+SITE, mean, data = siteANOVA)
+
+SITE_ANOVA <- ezANOVA(
+  data = siteANOVA
+  , dv = .(AEmean)
+  , wid = .(PPT)
+  , within = .(VIEW)
+  , between =. (SITE)
+  , type = 3
+)
+
+print(SITE_ANOVA)
+# no difference across sites! Hooray!
+
+ggplot(siteANOVA, aes(x = VIEW, y = AEmean, colour = DIAGNOSIS)) +
+  geom_point(position = position_dodge(.2)) +
+  facet_wrap(~SITE)
+
+# Eccentricity plots
 # creating another data-frame with all position data, for plotting eccentricity info
 res_medians_all <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE*ED, 
                              mean, data = res)
@@ -108,6 +127,8 @@ res_medians_all <- res_medians_all[order(res_medians_all$PPT) ,]
 res_medians_all <- res_medians_all[!(res_medians_all$PPT == '101' & res_medians_all$AE > 50) ,]
 
 # controls
+#re-ordering position data to fit correct order
+res_medians_all$POSITION <- as.numeric(as.character(res_medians_all$POSITION))
 res_medians_all$POSITION <- factor(res_medians_all$POSITION)
 meds_control <- res_medians_all[res_medians_all$GRP == 'Control' ,]
 
