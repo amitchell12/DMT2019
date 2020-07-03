@@ -9,11 +9,11 @@ library(reshape2)
 
 #set working directory to where data is
 # on desktop mac
-#latPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
-#radPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
+latPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
+radPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
 # on laptop
-latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+#radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
 #on pc
 #latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 #radPath <- 'S:/groups/DMT/analysis/radial_reaching'

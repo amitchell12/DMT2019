@@ -6,7 +6,6 @@ library(Rmisc)
 library(ez)
 library(psychReport)
 library(singcar)
-library
 
 #on mac
 #anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
@@ -403,6 +402,8 @@ tdUEA_results$BL <- as.numeric(tdUEA_results$BL)
 
 ## merge UOE and UEA data-frames
 td_results <- rbind(tdUOE_results, tdUEA_results)
+#save
+write.csv(td_results, 'radial-reaching_case-control.csv', row.names = FALSE)
 
 ##### BINOMIAL STATS #####
 # calculating the likelihood that inflated PMI occurs at above chance in each patient group
@@ -453,10 +454,16 @@ FILT_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(DOM)
   , between = .(GRP)
-  , type = 3
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
 )
 
-print(FILT_ANOVA)
+FILT_ANOVA$ANOVA
+FILT_ANOVA$`Mauchly's Test for Sphericity`
+FILT_ANOVA$`Sphericity Corrections`
+aovPMI <- aovEffectSize(ezObj = FILT_ANOVA, effectSize = "pes")
+aovDispTable(aovPMI)
 
 ### ANOVA BY ECCENTRICITY ###
 # converting factor back to numeric keeping values
@@ -465,8 +472,9 @@ tmp <- as.numeric(levels(res_medians_allF$POSITION))[res_medians_allF$POSITION]
 res_medians_allF$ECC <- abs(tmp)
 ECCanova <- res_medians_allF[res_medians_allF$ECC != 400 ,]
 
-ECCanova <- ECCanova[ECCanova$PPT != 212 ,]
-ECCanova <- ECCanova[ECCanova$PPT != 101 ,]
+# removing participants with incomplete data-sets
+ECCanova <- ECCanova[ECCanova$PPT != 212 & ECCanova$PPT != 101
+                     & ECCanova$PPT != 310,]
 ECCanova$ECC <- factor(ECCanova$ECC)
 
 ECC_ANOVA <- ezANOVA(
@@ -475,7 +483,13 @@ ECC_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(DOM, VIEW, ECC)
   , between = .(GRP)
-  , type = 3
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
 )
 
-print(ECC_ANOVA)
+ECC_ANOVA$ANOVA
+ECC_ANOVA$`Mauchly's Test for Sphericity`
+ECC_ANOVA$`Sphericity Corrections`
+aovECC <- aovEffectSize(ezObj = ECC_ANOVA, effectSize = "pes")
+aovDispTable(aovECC)
