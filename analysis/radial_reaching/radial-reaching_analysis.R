@@ -6,6 +6,7 @@ library(Rmisc)
 library(ez)
 library(psychReport)
 library(singcar)
+library
 
 #on mac
 #anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
@@ -285,7 +286,7 @@ write.csv(res_mediansF, 'radial-medians_filtered.csv', row.names = FALSE)
 write.csv(res_meansF, 'radial-means_filtered.csv', row.names = FALSE)
 write.csv(res_medians_allF, 'radial-medians-all_filtered.csv', row.names = FALSE)
 
-######## step 4: single case stats on filtered data ########
+######## CASE CONTROL ANALYSIS ########
 # create data-frames (controls and patients) with key information
 td_summary <- summarySE(data = PMIfilt, measurevar = 'PMI', 
                         groupvars = c('DIAGNOSIS','DOM','SITE'), na.rm = TRUE)
@@ -350,59 +351,60 @@ tdUOE_results$BL <- as.numeric(tdUOE_results$BL)
 
 ## UEA CASE CONTROL ##
 # isolating control data for analysis
-tdUOE_control <- td_summary[td_summary$DIAGNOSIS == 'HC' 
-                            & td_summary$SITE == 'UOE' ,]
-tdUOE_patient <- td_patient[td_patient$SITE == 'UOE' ,]
-tdUOE_patient <- dcast(tdUOE_patient, PPT+DIAGNOSIS ~ DOM)
-# NA values  = -1, so t-value is negative and can remove later
-tdUOE_patient[is.na(tdUOE_patient$D), "D"] <- -1 
+tdUEA_control <- td_summary[td_summary$DIAGNOSIS == 'HC' 
+                            & td_summary$SITE == 'UEA' ,]
+tdUEA_patient <- td_patient[td_patient$SITE == 'UEA' ,]
+tdUEA_patient <- dcast(tdUEA_patient, PPT+DIAGNOSIS ~ DOM)
 
 # time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
 # using Crawford's (1998) test of deficit
 td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
-for (l in 1:length(tdUOE_patient$PPT)){
+for (l in 1:length(tdUEA_patient$PPT)){
   #left data first
-  leftres <- TD(tdUOE_patient$ND[l], tdUOE_control$PMI[1], tdUOE_control$sd[1], 24, 
+  leftres <- TD(tdUEA_patient$ND[l], tdUEA_control$PMI[1], tdUEA_control$sd[1], 24, 
                 alternative = 'greater', na.rm = FALSE)
   diff <- t(leftres$estimate)
-  ltmp <- data.frame(tdUOE_patient$ND[l], leftres$statistic, leftres$p.value, 
+  ltmp <- data.frame(tdUEA_patient$ND[l], leftres$statistic, leftres$p.value, 
                      diff[1], diff[2], t(leftres$interval), 'ND', check.names = FALSE) 
-  ltmp$PPT <- tdUOE_patient$PPT[l]
-  ltmp$DIAGNOSIS <- tdUOE_patient$DIAGNOSIS[l]
+  ltmp$PPT <- tdUEA_patient$PPT[l]
+  ltmp$DIAGNOSIS <- tdUEA_patient$DIAGNOSIS[l]
   td_ndom <- rbind(td_ndom, ltmp)
   #then right data
-  rightres <- TD(tdUOE_patient$D[l], tdUOE_control$PMI[2], tdUOE_control$sd[2], 24, 
+  rightres <- TD(tdUEA_patient$D[l], tdUEA_control$PMI[2], tdUEA_control$sd[2], 24, 
                  alternative = 'greater', na.rm = FALSE)
   diff <- t(rightres$estimate)
-  rtmp <- data.frame(tdUOE_patient$D[l], rightres$statistic, rightres$p.value, 
+  rtmp <- data.frame(tdUEA_patient$D[l], rightres$statistic, rightres$p.value, 
                      diff[1], diff[2], t(rightres$interval), 'D', check.names = FALSE) 
-  rtmp$PPT <- tdUOE_patient$PPT[l]
-  rtmp$DIAGNOSIS <- tdUOE_patient$DIAGNOSIS[l]
+  rtmp$PPT <- tdUEA_patient$PPT[l]
+  rtmp$DIAGNOSIS <- tdUEA_patient$DIAGNOSIS[l]
   td_dom <- rbind(td_dom, rtmp)
 }
 
 # merging and renaming data-frames
-tdUOE_results <- read.csv(text = 'PMI,TSTAT,PVALUE,ZCC,PROP,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
+tdUEA_results <- read.csv(text = 'PMI,TSTAT,PVALUE,ZCC,PROP,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 # changing names of td data-frames to match td-res
-names(td_ndom) <- names(tdUOE_results)
-names(td_dom) <- names(tdUOE_results)
-tdUOE_results <- rbind(tdUOE_results, td_ndom, td_dom)
+names(td_ndom) <- names(tdUEA_results)
+names(td_dom) <- names(tdUEA_results)
+tdUEA_results <- rbind(tdUEA_results, td_ndom, td_dom)
 # remove original NA values (PMI = -1), where patients had no data
-tdUOE_results <- tdUOE_results[tdUOE_results$PMI > -0.9 ,]
-tdUOE_results$PPT <- factor(tdUOE_results$PPT)
+tdUEA_results <- tdUEA_results[tdUEA_results$PMI > -0.9 ,]
+tdUEA_results$PPT <- factor(tdUEA_results$PPT)
 # add site back to results
-tdUOE_results$SITE <- 'UOE'
+tdUEA_results$SITE <- 'UEA'
 
 # identifying patients with significant deficit
-tdUOE_results$DEFICIT <- tdUOE_results$PVALUE < 0.025
+tdUEA_results$DEFICIT <- tdUEA_results$PVALUE < 0.025
 # identifying patients with possible deficit
-tdUOE_results$BL <- tdUOE_results$PVALUE < 0.05
+tdUEA_results$BL <- tdUEA_results$PVALUE < 0.05
 # convert logicals into numerics, useful for binomial later
-tdUOE_results$DEFICIT <- as.numeric(tdUOE_results$DEFICIT)
-tdUOE_results$BL <- as.numeric(tdUOE_results$BL)
+tdUEA_results$DEFICIT <- as.numeric(tdUEA_results$DEFICIT)
+tdUEA_results$BL <- as.numeric(tdUEA_results$BL)
 
-# Binomial statistics
+## merge UOE and UEA data-frames
+td_results <- rbind(tdUOE_results, tdUEA_results)
+
+##### BINOMIAL STATS #####
 # calculating the likelihood that inflated PMI occurs at above chance in each patient group
 # with filtered data. Deficit and borderline deficit
 pval <- .05
@@ -410,36 +412,36 @@ pval_Bl <- .1
 
 ## take any p < .025 for either side, re-run binomial on this data
 # extracting p-value for each side (left and right) using td_results
-td_sideF <- dcast(tdfilt_results, PPT+DIAGNOSIS ~ DOM, value.var = 'PVALUE')
-td_sideF[is.na(td_sideF$D), "D"] <- 10
+td_side <- dcast(td_results, PPT+DIAGNOSIS+SITE ~ DOM, value.var = 'PVALUE')
+td_side[is.na(td_side$D), "D"] <- 10
 # finding defcits and borderline cases
-td_sideF$DEFICIT <- (td_sideF$ND < 0.025 | td_sideF$D < 0.025)
-td_sideF$BL <- (td_sideF$ND < 0.05 | td_sideF$D < 0.05)
+td_side$DEFICIT <- (td_side$ND < 0.025 | td_side$D < 0.025)
+td_side$BL <- (td_side$ND < 0.05 | td_side$D < 0.05)
 # changing to numerical value
-td_sideF$DEFICIT <- as.numeric(td_sideF$DEFICIT)
-td_sideF$BL <- as.numeric(td_sideF$BL)
+td_side$DEFICIT <- as.numeric(td_side$DEFICIT)
+td_side$BL <- as.numeric(td_side$BL)
 
 # splitting into MCI and AD
-MCIPF <- td_sideF[td_sideF$DIAGNOSIS == 'MCI', ]
-ADPF <- td_sideF[td_sideF$DIAGNOSIS == 'AD', ]
+MCIP <- td_side[td_side$DIAGNOSIS == 'MCI', ]
+ADP <- td_side[td_side$DIAGNOSIS == 'AD', ]
 
 # binomial test of deficit
-binMCIfilt <- binom.test(sum(MCIPF$DEFICIT), length(MCIPF$PPT), pval, alternative = 'greater')
-print(binMCIfilt)
-binADfilt <- binom.test(sum(ADPF$DEFICIT), length(ADPF$PPT), pval, alternative = 'greater')
-print(binADfilt)
-binALLfilt <- binom.test(sum(td_sideF$DEFICIT), length(td_sideF$PPT), pval, alternative = 'greater')
-print(binALLfilt)
+binMCI <- binom.test(sum(MCIP$DEFICIT), length(MCIP$PPT), pval, alternative = 'greater')
+print(binMCI)
+binAD <- binom.test(sum(ADP$DEFICIT), length(ADP$PPT), pval, alternative = 'greater')
+print(binAD)
+binALL <- binom.test(sum(td_side$DEFICIT), length(td_side$PPT), pval, alternative = 'greater')
+print(binALL)
 
 # binomial test of borderline deficit
-binMCIfilt <- binom.test(sum(MCIPF$BL), length(MCIPF$PPT), pval_Bl, alternative = 'greater')
-print(binMCIfilt)
-binADfilt <- binom.test(sum(ADPF$BL), length(ADPF$PPT), pval_Bl, alternative = 'greater')
-print(binADfilt)
-binALLfilt <- binom.test(sum(td_sideF$BL), length(td_sideF$PPT), pval_Bl, alternative = 'greater')
-print(binALLfilt)
+binMCI <- binom.test(sum(MCIP$BL), length(MCIP$PPT), pval_Bl, alternative = 'greater')
+print(binMCI)
+binAD <- binom.test(sum(ADP$BL), length(ADP$PPT), pval_Bl, alternative = 'greater')
+print(binAD)
+binALL <- binom.test(sum(td_side$BL), length(td_side$PPT), pval_Bl, alternative = 'greater')
+print(binALL)
 
-## ANOVA ## 
+##### ANOVAS, group comparisons #####
 # use PMIfilt data-frame to run between-subject ANOVA
 # removing NA values for ANOVA - entire participant (not just side)
 PMIanova <- PMIfilt[PMIfilt$PPT != 212, ]
