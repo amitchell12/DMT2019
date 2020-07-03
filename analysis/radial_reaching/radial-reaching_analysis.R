@@ -5,16 +5,17 @@ library(ggpubr)
 library(Rmisc)
 library(ez)
 library(psychReport)
+library(singcar)
 
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
-UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
 
 # on desktop mac
-#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
-#dataPath <- '/Users/Alex/Documents/DMT/data'
-#UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
+anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
+dataPath <- '/Users/Alex/Documents/DMT/data'
+UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
 
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
@@ -117,6 +118,8 @@ print(SITE_ANOVA)
 ggplot(siteANOVA, aes(x = VIEW, y = AEmean, colour = DIAGNOSIS)) +
   geom_point(size =2, position = position_dodge(.3)) +
   facet_wrap(~SITE)
+ggsave('site_comparison.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
 
 # Eccentricity plots
 # creating another data-frame with all position data, for plotting eccentricity info
@@ -196,7 +199,7 @@ ggscatter(PMIdata, x = "ED", y = "PMI",
 ######## OUTLIER REMOVAL, filtered PMI #########
 # two different sites and set-ups, use data from control group in each site to remove outliers
 # need to run same removal for outliers in each site
-#### UOE FIRST #####
+## UOE FIRST ##
 controlUOE <- PMIdata[PMIdata$PPT < 200, ]
 
 # median values for each side
@@ -226,11 +229,10 @@ ggplot(controlUOE, aes(x = GRP, y = az, colour = PPT)) +
 ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 5, height = 6.5, path = anaPath)
 
-### outlier removal ###
 # find controls with az > 2.5 - need to remove entire control, not just side
 XCLUDE_UOE <- controlUOE[controlUOE$az > 2.5, ]
 
-#### UEA SECOND #####
+## UEA SECOND ##
 controlUEA <- PMIdata[PMIdata$SITE == 'UEA' ,]
 controlUEA <- controlUEA[controlUEA$PPT < 400 ,]
 
@@ -261,16 +263,17 @@ ggplot(controlUEA, aes(x = GRP, y = az, colour = PPT)) +
 ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, width = 5, height = 6.5, path = anaPath)
 
-### outlier removal ###
 # find controls with az > 2.5 - need to remove entire control, not just side
 XCLUDE_UEA <- controlUEA[controlUEA$az > 2.5, ]
 
 ### combinging outliers and removing
-cd(anaPath)
+setwd(anaPath)
 XCLUDE <- rbind(XCLUDE_UOE,XCLUDE_UEA)
 write.csv(XCLUDE, 'radial-reaching_outliers.csv', row.names = FALSE)
 # creating data-frame with control data removed
 PMIfilt <- PMIdata[!(PMIdata$PPT %in% XCLUDE$PPT), ]
+# get rid of NA values
+PMIfilt <- na.omit(PMIfilt)
 
 res_mediansF <- res_medians[!(res_medians$PPT %in% XCLUDE$PPT), ]
 res_medians_allF <- res_medians_all[!(res_medians_all$PPT %in% XCLUDE$PPT), ]
@@ -283,82 +286,121 @@ write.csv(res_meansF, 'radial-means_filtered.csv', row.names = FALSE)
 write.csv(res_medians_allF, 'radial-medians-all_filtered.csv', row.names = FALSE)
 
 ######## step 4: single case stats on filtered data ########
-# do this independently for each site - different set ups
-
-## UOE CASE CONTROL ##
-############ edit here - change so only Edinburgh cases analysed, then add UEA case-control after
 # create data-frames (controls and patients) with key information
 td_summary <- summarySE(data = PMIfilt, measurevar = 'PMI', 
-                        groupvars = c('DIAGNOSIS','DOM'), na.rm = TRUE)
-# isolating control data for analysis
-tdfilt_control <- td_summary[td_summary$DIAGNOSIS == 'HC', ]
-
+                        groupvars = c('DIAGNOSIS','DOM','SITE'), na.rm = TRUE)
 #patient data for test of deficit
-td_patient <- PMIdata[, c(1,3,4,11)] #extract from PMI because patient data not filtered
+td_patient <- PMIfilt[, c(1,3,4,6,11)]
 td_patient <- td_patient[td_patient$DIAGNOSIS != 'HC' ,] #removing controls
-td_patient <- dcast(td_patient, PPT+DIAGNOSIS ~ DOM)
-# NA values  = -1, so t-value is negative and can remove later
-td_patient[is.na(td_patient$D), "D"] <- -1 
+# next, run case-control independently for each site - different set ups
 
-#patient data for test of deficit = same as above
+## UOE CASE CONTROL ##
+# isolating control data for analysis
+tdUOE_control <- td_summary[td_summary$DIAGNOSIS == 'HC' 
+                            & td_summary$SITE == 'UOE' ,]
+tdUOE_patient <- td_patient[td_patient$SITE == 'UOE' ,]
+tdUOE_patient <- dcast(tdUOE_patient, PPT+DIAGNOSIS ~ DOM)
+# NA values  = -1, so t-value is negative and can remove later
+tdUOE_patient[is.na(tdUOE_patient$D), "D"] <- -1 
+
 # time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
 # using Crawford's (1998) test of deficit
 td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
-for (l in 1:length(td_patient$PPT)){
+for (l in 1:length(tdUOE_patient$PPT)){
   #left data first
-  leftres <- TD(td_patient$ND[l], tdfilt_control$PMI[1], tdfilt_control$sd[1], 24, 
+  leftres <- TD(tdUOE_patient$ND[l], tdUOE_control$PMI[1], tdUOE_control$sd[1], 24, 
                 alternative = 'greater', na.rm = FALSE)
   diff <- t(leftres$estimate)
-  ltmp <- data.frame(td_patient$ND[l], leftres$statistic, leftres$p.value, 
+  ltmp <- data.frame(tdUOE_patient$ND[l], leftres$statistic, leftres$p.value, 
                      diff[1], diff[2], t(leftres$interval), 'ND', check.names = FALSE) 
-  ltmp$PPT <- td_patient$PPT[l]
-  ltmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
+  ltmp$PPT <- tdUOE_patient$PPT[l]
+  ltmp$DIAGNOSIS <- tdUOE_patient$DIAGNOSIS[l]
   td_ndom <- rbind(td_ndom, ltmp)
   #then right data
-  rightres <- TD(td_patient$D[l], tdfilt_control$PMI[2], tdfilt_control$sd[2], 24, 
+  rightres <- TD(tdUOE_patient$D[l], tdUOE_control$PMI[2], tdUOE_control$sd[2], 24, 
                  alternative = 'greater', na.rm = FALSE)
   diff <- t(rightres$estimate)
-  rtmp <- data.frame(td_patient$D[l], rightres$statistic, rightres$p.value, 
+  rtmp <- data.frame(tdUOE_patient$D[l], rightres$statistic, rightres$p.value, 
                      diff[1], diff[2], t(rightres$interval), 'D', check.names = FALSE) 
-  rtmp$PPT <- td_patient$PPT[l]
-  rtmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
+  rtmp$PPT <- tdUOE_patient$PPT[l]
+  rtmp$DIAGNOSIS <- tdUOE_patient$DIAGNOSIS[l]
   td_dom <- rbind(td_dom, rtmp)
 }
 
 # merging and renaming data-frames
-tdfilt_results <- read.csv(text = 'PMI,TSTAT,PVALUE,ZCC,PROP,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
+tdUOE_results <- read.csv(text = 'PMI,TSTAT,PVALUE,ZCC,PROP,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 # changing names of td data-frames to match td-res
-names(td_ndom) <- names(tdfilt_results)
-names(td_dom) <- names(tdfilt_results)
-tdfilt_results <- rbind(tdfilt_results, td_ndom, td_dom)
+names(td_ndom) <- names(tdUOE_results)
+names(td_dom) <- names(tdUOE_results)
+tdUOE_results <- rbind(tdUOE_results, td_ndom, td_dom)
 # remove original NA values (PMI = -1), where patients had no data
-tdfilt_results <- tdfilt_results[tdfilt_results$PMI > -0.9 ,]
-tdfilt_results$PPT <- factor(tdfilt_results$PPT)
+tdUOE_results <- tdUOE_results[tdUOE_results$PMI > -0.9 ,]
+tdUOE_results$PPT <- factor(tdUOE_results$PPT)
+# add site back to results
+tdUOE_results$SITE <- 'UOE'
 
 # identifying patients with significant deficit
-tdfilt_results$DEFICIT <- tdfilt_results$PVALUE < 0.025
+tdUOE_results$DEFICIT <- tdUOE_results$PVALUE < 0.025
 # identifying patients with possible deficit
-tdfilt_results$BL <- tdfilt_results$PVALUE < 0.05
+tdUOE_results$BL <- tdUOE_results$PVALUE < 0.05
 # convert logicals into numerics, useful for binomial later
-tdfilt_results$DEFICIT <- as.numeric(tdfilt_results$DEFICIT)
-tdfilt_results$BL <- as.numeric(tdfilt_results$BL)
+tdUOE_results$DEFICIT <- as.numeric(tdUOE_results$DEFICIT)
+tdUOE_results$BL <- as.numeric(tdUOE_results$BL)
 
-write.csv(tdfilt_results, 'radial-reaching_case-control.csv', row.names = FALSE)
+## UEA CASE CONTROL ##
+# isolating control data for analysis
+tdUOE_control <- td_summary[td_summary$DIAGNOSIS == 'HC' 
+                            & td_summary$SITE == 'UOE' ,]
+tdUOE_patient <- td_patient[td_patient$SITE == 'UOE' ,]
+tdUOE_patient <- dcast(tdUOE_patient, PPT+DIAGNOSIS ~ DOM)
+# NA values  = -1, so t-value is negative and can remove later
+tdUOE_patient[is.na(tdUOE_patient$D), "D"] <- -1 
 
-## plotting p-values
-ggplot(tdfilt_results, aes(x = DOM, y = PVALUE, group = PPT, colour = DIAGNOSIS)) +
-  geom_point(size = 2, position = position_dodge(.2)) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5, position = position_dodge(.2)) + 
-  scale_color_manual(values = c('black', 'grey50')) +
-  geom_hline(yintercept = 0.025, color = 'red') +
-  geom_hline(yintercept = 0.05, color = 'blue') +
-  labs(title = 'Single case stats, filtered', x = 'Side', y = 'Probability of deficit', 
-       element_text(size = 10)) +
-  theme_bw()
+# time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
+# using Crawford's (1998) test of deficit
+td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
+td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
+for (l in 1:length(tdUOE_patient$PPT)){
+  #left data first
+  leftres <- TD(tdUOE_patient$ND[l], tdUOE_control$PMI[1], tdUOE_control$sd[1], 24, 
+                alternative = 'greater', na.rm = FALSE)
+  diff <- t(leftres$estimate)
+  ltmp <- data.frame(tdUOE_patient$ND[l], leftres$statistic, leftres$p.value, 
+                     diff[1], diff[2], t(leftres$interval), 'ND', check.names = FALSE) 
+  ltmp$PPT <- tdUOE_patient$PPT[l]
+  ltmp$DIAGNOSIS <- tdUOE_patient$DIAGNOSIS[l]
+  td_ndom <- rbind(td_ndom, ltmp)
+  #then right data
+  rightres <- TD(tdUOE_patient$D[l], tdUOE_control$PMI[2], tdUOE_control$sd[2], 24, 
+                 alternative = 'greater', na.rm = FALSE)
+  diff <- t(rightres$estimate)
+  rtmp <- data.frame(tdUOE_patient$D[l], rightres$statistic, rightres$p.value, 
+                     diff[1], diff[2], t(rightres$interval), 'D', check.names = FALSE) 
+  rtmp$PPT <- tdUOE_patient$PPT[l]
+  rtmp$DIAGNOSIS <- tdUOE_patient$DIAGNOSIS[l]
+  td_dom <- rbind(td_dom, rtmp)
+}
 
-ggsave('SCS_probability-scatter_filtered.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 6, height = 7, path = anaPath)
+# merging and renaming data-frames
+tdUOE_results <- read.csv(text = 'PMI,TSTAT,PVALUE,ZCC,PROP,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
+# changing names of td data-frames to match td-res
+names(td_ndom) <- names(tdUOE_results)
+names(td_dom) <- names(tdUOE_results)
+tdUOE_results <- rbind(tdUOE_results, td_ndom, td_dom)
+# remove original NA values (PMI = -1), where patients had no data
+tdUOE_results <- tdUOE_results[tdUOE_results$PMI > -0.9 ,]
+tdUOE_results$PPT <- factor(tdUOE_results$PPT)
+# add site back to results
+tdUOE_results$SITE <- 'UOE'
+
+# identifying patients with significant deficit
+tdUOE_results$DEFICIT <- tdUOE_results$PVALUE < 0.025
+# identifying patients with possible deficit
+tdUOE_results$BL <- tdUOE_results$PVALUE < 0.05
+# convert logicals into numerics, useful for binomial later
+tdUOE_results$DEFICIT <- as.numeric(tdUOE_results$DEFICIT)
+tdUOE_results$BL <- as.numeric(tdUOE_results$BL)
 
 # Binomial statistics
 # calculating the likelihood that inflated PMI occurs at above chance in each patient group
