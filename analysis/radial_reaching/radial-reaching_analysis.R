@@ -8,14 +8,14 @@ library(psychReport)
 library(singcar)
 
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
-#UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
 
 # on desktop mac
-anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
-dataPath <- '/Users/Alex/Documents/DMT/data'
-UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
+#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
+#dataPath <- '/Users/Alex/Documents/DMT/data'
+#UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
 
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
@@ -454,6 +454,7 @@ FILT_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(DOM)
   , between = .(GRP)
+  , between_covariates = .(SITE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -483,6 +484,7 @@ ECC_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(DOM, VIEW, ECC)
   , between = .(GRP)
+  , between_covariates = .(SITE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
