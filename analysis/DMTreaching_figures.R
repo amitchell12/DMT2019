@@ -89,7 +89,9 @@ ggplot(plot_Decc, aes(x = POSITION, y = AEmed, shape = DIAGNOSIS, colour = DIAGN
 Decc
 
 ecc <- ggarrange(NDecc, Decc,
-                 ncol=1, nrow=2)
+                 ncol=1, nrow=2,
+                 common.legend = TRUE, 
+                 legend = 'bottom')
 ecc
 
 ggsave('LATeccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
@@ -265,14 +267,17 @@ plot_PMI$DOM <- factor(plot_PMI$DOM, labels = c('Dom', 'Non-dom'))
 plot_PMI$DOM <- factor(plot_PMI$DOM, levels = c('Non-dom', 'Dom'))
 plot_PMI$DIAGNOSIS <- factor(plot_PMI$DIAGNOSIS, levels = c('HC','MCI','AD'))
 plot_PMI$PPT <- factor(plot_PMI$PPT)
-plot_PMI$DEFICIT <- factor(plot_PMI$DEFICIT)
+# make column where deficit and BL cases are combined
+# 1 = no deficit, 2 = borderline deficit, 3 = deficit
+plot_PMI$DEFICITS <- as.numeric(plot_PMI$DEFICIT) + as.numeric(plot_PMI$BL)
+plot_PMI$DEFICITS <- factor(plot_PMI$DEFICITS)
 
-ggplot(plot_PMI, aes(x = DOM, y = PMI, colour = SITE, group = PPT, shape = DEFICIT)) + 
+ggplot(plot_PMI, aes(x = DOM, y = PMI, colour = SITE, group = PPT, shape = DEFICITS)) + 
   geom_line(aes(group = PPT), alpha = .7, size = 0.7, position = position_dodge(.2)) +
   geom_point(size = 2.5, position = position_dodge(.2)) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  scale_color_manual(values = c('black','grey45')) +
+  scale_color_manual(values = c('grey45','grey45')) +
   scale_shape_manual(values = c(1,18,16)) +
   facet_wrap(~DIAGNOSIS) +
   labs(x = 'Side', y = 'PMI (mm)') +
@@ -286,16 +291,16 @@ pPMI
 ## PLOT 3: average PMI across sides - combine with PLOT 2
 PMIav_plot <- aggregate(PMI ~ PPT*DIAGNOSIS*AGE*ED*SITE, mean, data = plot_PMI)
 PMIav_plot <- PMIav_plot[order(PMIav_plot$PPT),]
-plot_PMI$DEFICIT <- as.numeric(plot_PMI$DEFICIT)
-deficit <- aggregate(DEFICIT ~ PPT*DIAGNOSIS, max, data = plot_PMI)
+plot_PMI$DEFICITS <- as.numeric(plot_PMI$DEFICITS)
+deficit <- aggregate(DEFICITS ~ PPT*DIAGNOSIS, max, data = plot_PMI)
 deficit <- deficit[order(deficit$PPT),]
-PMIav_plot$DEFICIT <- factor(deficit$DEFICIT)
+PMIav_plot$DEFICITS <- factor(deficit$DEFICITS)
 
-ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = SITE, group = PPT, shape = DEFICIT)) + 
+ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = SITE, group = PPT, shape = DEFICITS)) + 
   geom_point(size = 2.5, position = position_dodge(.2)) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  scale_color_manual(values = c('black','grey45')) +
+  scale_color_manual(values = c('grey45','grey45')) +
   scale_shape_manual(values = c(1,18,16)) +
   labs(x = 'Diagnosis', y = '') +
   theme_classic() + theme(legend.position = 'none', 
