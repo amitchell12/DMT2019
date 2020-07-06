@@ -49,7 +49,7 @@ ggplot(plot_NDecc, aes(x = POSITION, y = AEmed, shape = DIAGNOSIS, colour = DIAG
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
   scale_shape_manual(values = c(1, 16, 16)) + ylim(0,30) +
   scale_color_manual(values = c('black','grey60','grey20')) +
-  labs(title = 'Non-dominant', x = 'Eccentricity (°)', y = 'PMI (mm)') + 
+  labs(title = 'Non-dominant', x = 'Eccentricity (°)', y = 'Lateral reaching error (mm)') + 
   facet_wrap(~VIEW) +
   theme_classic() + theme(legend.position = 'none', 
                           legend.title = element_blank(),
@@ -77,7 +77,7 @@ ggplot(plot_Decc, aes(x = POSITION, y = AEmed, shape = DIAGNOSIS, colour = DIAGN
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
   scale_shape_manual(values = c(1, 16, 16)) + ylim(0,30) +
   scale_color_manual(values = c('black','grey60','grey20')) +
-  labs(title = 'Dominant', x = 'Eccentricity (°)', y = 'PMI (mm)') + 
+  labs(title = 'Dominant', x = 'Eccentricity (°)', y = 'Lateral reaching error (mm)') + 
   facet_wrap(~VIEW) +
   theme_classic() + theme(legend.position = 'none', 
                           legend.title = element_blank(),
@@ -130,7 +130,7 @@ ggplot(plot_PMI, aes(x = DOM, y = PMI, colour = DIAGNOSIS, group = PPT, shape = 
   scale_color_manual(values = c('grey45','grey45','grey45')) +
   scale_shape_manual(values = c(1,18,16)) +
   facet_wrap(~DIAGNOSIS) +
-  labs(x = 'Side', y = 'PMI (mm)') +
+  labs(x = 'Side', y = 'Lateral PMI (mm)') +
   theme_classic() + theme(legend.position = 'none', 
                             axis.title = element_text(size = 12),
                             axis.text = element_text(size = 10),
@@ -202,7 +202,7 @@ ggplot(plot_NDecc, aes(x = ECC, y = AE, shape = DIAGNOSIS, colour = DIAGNOSIS,
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
   scale_shape_manual(values = c(1, 16, 16)) + ylim(0,30) +
   scale_color_manual(values = c('black','grey60','grey20')) +
-  labs(title = 'Non-dominant', x = 'Eccentricity (°)', y = 'PMI (mm)') + 
+  labs(title = 'Non-dominant', x = 'Eccentricity (°)', y = 'Radial reaching error (mm)') + 
   facet_wrap(~VIEW) +
   theme_classic() + theme(legend.position = 'none', 
                           legend.title = element_blank(),
@@ -230,7 +230,7 @@ ggplot(plot_Decc, aes(x = ECC, y = AE, shape = DIAGNOSIS, colour = DIAGNOSIS,
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
   scale_shape_manual(values = c(1, 16, 16)) + ylim(0,30) +
   scale_color_manual(values = c('black','grey60','grey20')) +
-  labs(title = 'Dominant', x = 'Eccentricity (°)', y = 'PMI (mm)') + 
+  labs(title = 'Dominant', x = 'Eccentricity (°)', y = 'Radial reaching error (mm)') + 
   facet_wrap(~VIEW) +
   theme_classic() + theme(legend.position = 'none', 
                           legend.title = element_blank(),
@@ -242,7 +242,9 @@ ggplot(plot_Decc, aes(x = ECC, y = AE, shape = DIAGNOSIS, colour = DIAGNOSIS,
 Decc
 
 ecc <- ggarrange(NDecc, Decc,
-          ncol=1, nrow=2)
+          ncol=1, nrow=2,
+          common.legend = TRUE,
+          legend = 'bottom')
 ecc
 
 ggsave('RADeccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
@@ -280,7 +282,7 @@ ggplot(plot_PMI, aes(x = DOM, y = PMI, colour = SITE, group = PPT, shape = DEFIC
   scale_color_manual(values = c('grey45','grey45')) +
   scale_shape_manual(values = c(1,18,16)) +
   facet_wrap(~DIAGNOSIS) +
-  labs(x = 'Side', y = 'PMI (mm)') +
+  labs(x = 'Side', y = 'Radial PMI (mm)') +
   theme_classic() + theme(legend.position = 'none', 
                           axis.title = element_text(size = 12),
                           axis.text = element_text(size = 10),
