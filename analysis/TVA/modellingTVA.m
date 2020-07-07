@@ -12,7 +12,7 @@
 %anaDir = '/Users/Alex/Documents/DMT/analysis/TVA/fits';
 % on desktop
 dataDir = 'S:\groups\DMT\data\formatted_TVA';
-anaDir = 'S:\groups\DMT\analysis\TVA';
+anaDir = 'S:\groups\DMT\analysis\TVA\all';
 cd(dataDir)
 files = dir(fullfile(dataDir, 'subject*.dat'));
 
