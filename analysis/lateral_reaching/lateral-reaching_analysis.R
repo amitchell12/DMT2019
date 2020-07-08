@@ -294,7 +294,7 @@ print(binADfilt)
 binALLfilt <- binom.test(sum(td_sideF$BL), length(td_sideF$PPT), pval_Bl, alternative = 'greater')
 print(binALLfilt)
 
-## ANOVA ## 
+###### ANOVAS ######
 # use PMIfilt data-frame to run between-subject ANOVA
 # removing NA values for ANOVA - entire participant (not just side)
 PMIanova <- PMIfilt[PMIfilt$PPT != 212, ]
@@ -339,6 +339,7 @@ aovDispTable(aovPMIAV)
 ECCanova <- res_mediansF[res_mediansF$PPT != 212 ,]
 ECCanova <- ECCanova[ECCanova$PPT != 407 ,]
 ECCanova <- ECCanova[, c(1:9,11)]
+## create 'eccentricity' variable where left are -ve and right are +ve
 ECCanova$POSITION <- factor(ECCanova$POSITION)
 
 ECC_ANOVA <- ezANOVA(
@@ -359,7 +360,7 @@ aovECC <- aovEffectSize(ezObj = ECC_ANOVA, effectSize = "pes")
 aovDispTable(aovECC)
 
 
-######## step 5: single case stats, all controls (no outliers) #########
+######## step 4: single case stats, all controls (no outliers) #########
 # correlate PMI with possible co-variates, age + education
 agecov <- cor.test(PMIdata$AGE, PMIdata$PMI, method = 'pearson')
 ggscatter(PMIdata, x = "AGE", y = "PMI", 

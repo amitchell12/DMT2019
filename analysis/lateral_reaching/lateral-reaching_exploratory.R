@@ -7,6 +7,8 @@ library(tidyverse)
 library(reshape2)
 library(Hmisc)
 library(ggpubr)
+library(ez)
+library(psychReport)
 
 ###### GETTING DATA #######
 #on mac
@@ -82,8 +84,76 @@ mean_dPMI <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', '
 mean_dPMI_all <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
                            na.rm = TRUE)
 
-##### DIRECTIONAL ERROR: ECCENTRICITY #####
+## ANOVA ##
+dPMIanova <- dPMIdata[dPMIdata$PPT != 212 & dPMIdata$PPT != 407 ,] #removing participants where we only have 1 data-point
 
+# FULL ANOVA ON FILTERED DATA
+DPMI_ANOVA <- ezANOVA(
+  data = dPMIanova
+  , dv = .(PMI)
+  , wid = .(PPT)
+  , within = .(SIDE)
+  , between = .(DIAGNOSIS)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+DPMI_ANOVA$ANOVA
+DPMI_ANOVA$`Mauchly's Test for Sphericity`
+DPMI_ANOVA$`Sphericity Corrections`
+aovDPMI <- aovEffectSize(ezObj = DPMI_ANOVA, effectSize = "pes")
+aovDispTable(aovDPMI)
+
+##### DIRECTIONAL ERROR: ECCENTRICITY #####
+# adding eccentricity as a function of side to medians
+dir_medians$ECC <- dir_medians$POSITION
+#making left side negative
+index <- dir_medians$SIDE == 'left'
+dir_medians$ECC[index] <- -(dir_medians$ECC[index])
+dir_medians$ECC <- factor(dir_medians$ECC)
+
+## plotting data frame
+av_ecc <- summarySE(dir_medians, measurevar = 'xerr_med', 
+                              groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
+av_ecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
+# plot 
+ggplot(av_ecc, aes(x = ECC, y = xerr_med, group = DIAGNOSIS, colour = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(width = .4)) +
+  geom_errorbar(aes(ymin=xerr_med-ci, ymax=xerr_med+ci), 
+                width=.4, position = position_dodge(width = .4)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
+  geom_hline(yintercept = 0) + ylim(-30,30) +
+  labs(x = 'Directional error (mm)', y = 'Eccentricity (°)') +
+  facet_grid(~VIEW) + theme_classic() +
+  theme(legend.position = 'bottom',
+        legend.title = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 12)
+        )
+
+## ANOVA ##
+dECCanova <- dir_medians[dir_medians$PPT != 212 & dir_medians$PPT != 407 ,]
+dECCanova$POSITION <- factor(dECCanova$POSITION)
+
+# FULL ANOVA ON ECCENTRICITY DATA
+DECC_ANOVA <- ezANOVA(
+  data = dECCanova
+  , dv = .(xerr_med)
+  , wid = .(PPT)
+  , within = .(VIEW, SIDE, POSITION)
+  , between = .(DIAGNOSIS)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+DECC_ANOVA$ANOVA
+DECC_ANOVA$`Mauchly's Test for Sphericity`
+DECC_ANOVA$`Sphericity Corrections`
+aovDECC <- aovEffectSize(ezObj = DECC_ANOVA, effectSize = "pes")
+aovDispTable(aovDECC)
 
 ### analysis of response times
 # do in the same manner as with absolute error
