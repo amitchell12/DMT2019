@@ -30,6 +30,7 @@ resUEA <- read.csv('radial-reaching_compiled.csv')
 resUOE <- resUOE[, c(1:7,14,15,8:13,16:19,22,24,25)]
 # UEA data getting rid of not needed values
 resUEA <- resUEA[, c(1:9,15:18,21,22,24:30)]
+resUEA <- resUEA[resUEA$PPT != '311' ,]
 # change group labelling in UEA (3 = control, 4 = patient) to match UOE (1 = control, 2 = patient)
 resUEA$GRP <- factor(resUEA$GRP, labels = c('1','2'))
 # change position labelling here too - needs to match UOE (100,200,300,400mm)
