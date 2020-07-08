@@ -29,44 +29,49 @@ res$DOM <- factor(res$DOM, labels= c('ND','D'))
 # change order so dominance up-front
 res <- res[, c(1:8,27,9:26)]
 
-###### step xx DIRECTIONAL ERROR ######
-dir_medians <- aggregate(xerr_deg ~ POSITION * DOM * VIEW * PPT * SITE * GRP * DIAGNOSIS, 
+# changing levels to be more informative
+res$GRP <- factor(res$GRP, labels = c('Control','Patient'))
+levels(res$VIEW) <- c('Free', 'Peripheral')
+res$SITE <- factor(res$SITE, labels = c('UOE','UEA'))
+res$DIAGNOSIS <- factor(res$DIAGNOSIS)
+
+## find outliers and remove ##
+xclude <- read.csv('lateraloutliers.csv')
+res <- res[!(res$PPT %in% xclude$PPT), ]
+
+###### DIRECTIONAL ERROR: PMI ######
+dir_medians <- aggregate(xerr_mm ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS, 
                          median, data = res)
-colnames(dir_medians)[colnames(dir_medians)=='xerr_deg'] <- 'xerr_med' #change name to be more logical
-dir_means <- aggregate(xerr_med ~ VIEW * SIDE * PPT * SITE * GRP * DIAGNOSIS, 
+colnames(dir_medians)[colnames(dir_medians)=='xerr_mm'] <- 'xerr_med' #change name to be more logical
+dir_means <- aggregate(xerr_med ~ PPT* VIEW * SIDE * SITE * GRP * DIAGNOSIS, 
                        mean, data = dir_medians)
 colnames(dir_means)[colnames(dir_means) == 'xerr_med'] <- 'xerr_mean'
 
 # PMI for directional data (DMI - directional misreaching index)
-dPMIdata <- dcast(dir_means, PPT+GRP+DIAGNOSIS+SITE+SIDE ~ VIEW) #different data-frame
-dPMIdata$PMI <- dPMIdata$periph - dPMIdata$free
-write.csv(dPMIdata, 'lateral-reaching_dPMI.csv', row.names = FALSE)
+dPMIdata <- dcast(dir_means, PPT+SIDE+DIAGNOSIS+SITE ~ VIEW) #different data-frame
+dPMIdata$PMI <- dPMIdata$Peripheral - dPMIdata$Free
+write.csv(dPMIdata, 'lateral-reaching_dirPMI.csv', row.names = FALSE)
 
 # plotting this
-ggplot(dir_means, aes(x = VIEW, y = xerr_mean, colour = SITE)) +
+ggplot(dir_means, aes(x = VIEW, y = xerr_mean, colour = DIAGNOSIS)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(SIDE), rows = vars(DIAGNOSIS)) + ylim(-8,8) +
-  labs(x = 'Side', y = 'Directional error (deg)', element_text(size = 12)) +
-  scale_colour_manual(values = c('grey50', 'black')) +
+  facet_grid(cols = vars(SIDE), rows = vars(DIAGNOSIS)) + 
+  labs(x = '', y = 'Directional error (mm)', element_text(size = 12)) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8)) -> meansPlot
-
-ggsave('directional_means_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+                     strip.text.x = element_text(size = 8)) 
 
 # dPMI plot 
-ggplot(dPMIdata, aes(x = SIDE, y = PMI, colour = SITE), position = position_dodge(.2)) + 
+ggplot(dPMIdata, aes(x = SIDE, y = PMI, colour = DIAGNOSIS)) + 
   geom_point(shape = 1, size = 1.5, stroke = .8) +
   geom_line(aes(group = PPT), alpha = .5, size = .5) +
-  scale_colour_manual(values = c('grey40', 'black')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
-  ylim(-8,8) + labs(title = 'Lateral Reaching', x = 'Side', y = 'dPMI (deg)', 
+  labs(title = 'Lateral Reaching', x = 'Side', y = 'dPMI (mm)', 
                     element_text(size = 12)) +
   facet_wrap(~DIAGNOSIS) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) -> dPMIplot
+                     strip.text.x = element_text(size = 10))
 
 ggsave('dPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
@@ -76,6 +81,8 @@ mean_dPMI <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', '
                        na.rm = TRUE)
 mean_dPMI_all <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
                            na.rm = TRUE)
+
+##### DIRECTIONAL ERROR: ECCENTRICITY #####
 
 
 ### analysis of response times
