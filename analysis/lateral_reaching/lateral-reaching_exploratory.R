@@ -8,22 +8,29 @@ library(reshape2)
 library(Hmisc)
 library(ggpubr)
 
-#set working directory to where data is
+###### GETTING DATA #######
 #on mac
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
 # on desktop mac
 #anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
 #dataPath <- '/Users/Alex/Documents/DMT/data'
 #on pc
-dataPath <- 'S:/groups/DMT/data'
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+#dataPath <- 'S:/groups/DMT/data'
+#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(anaPath)
 
 res <- read.csv('lateral-reaching_compiled.csv')
+## getting dominant + non-dominant sides, for analysis
+names(res)[4] <- 'HAND'
+res$HAND <- factor(res$HAND, labels = c('left','right'))
+# if hand = side, dominant; else non dominant
+res$DOM <- as.numeric(res$SIDE == res$HAND) #1 = dominant, 0 = non-dominant
+res$DOM <- factor(res$DOM, labels= c('ND','D'))
+# change order so dominance up-front
+res <- res[, c(1:8,27,9:26)]
 
 ###### step xx DIRECTIONAL ERROR ######
-dir_medians <- aggregate(xerr_deg ~ POSITION * SIDE * VIEW * PPT * SITE * GRP * DIAGNOSIS, 
+dir_medians <- aggregate(xerr_deg ~ POSITION * DOM * VIEW * PPT * SITE * GRP * DIAGNOSIS, 
                          median, data = res)
 colnames(dir_medians)[colnames(dir_medians)=='xerr_deg'] <- 'xerr_med' #change name to be more logical
 dir_means <- aggregate(xerr_med ~ VIEW * SIDE * PPT * SITE * GRP * DIAGNOSIS, 
