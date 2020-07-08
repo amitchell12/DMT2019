@@ -155,25 +155,124 @@ DECC_ANOVA$`Sphericity Corrections`
 aovDECC <- aovEffectSize(ezObj = DECC_ANOVA, effectSize = "pes")
 aovDispTable(aovDECC)
 
+###### MOVEMENT TIME #######
+MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * POSITION * SITE * GRP * DIAGNOSIS, 
+                        median, data = res)
+MT_means <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
+                      mean, data = MT_medians)
+# average across side
+MTav <- aggregate(MT ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
+                  mean, data = MT_medians)
+
+## plotting :)
+# both sides
+ggplot(MT_means, aes(x = DOM, y = MT, colour = DIAGNOSIS, group = DIAGNOSIS)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(VIEW), rows = vars(DIAGNOSIS)) + ylim(0, 1000) +
+  labs(title = 'Reach Duration', x = 'Side', 
+       y = 'Reach duration (ms)', element_text(size = 12)) +
+  theme_bw() + theme(legend.position = 'none', 
+                     text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)) 
+
+# average across sides
+MTav$DIAGNOSIS <- factor(MTav$DIAGNOSIS, levels = c('HC','MCI','AD'))
+ggplot(MTav, aes(x = VIEW, y = MT, colour = DIAGNOSIS, group = PPT)) +
+  geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
+            position = position_dodge(width = .3)) +
+  stat_summary(aes(y = MT, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  facet_wrap(~DIAGNOSIS) + 
+  labs(title = 'Reach Duration', x = '', 
+       y = 'Reach duration (ms)', element_text(size = 12)) +
+  theme_classic() + theme(legend.position = 'none', 
+                     text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)
+                     ) 
+
+ggsave('lateral-MT.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+# by eccentricity
+MT_medians$ECC <- dir_medians$POSITION
+#making left side negative
+index <- MT_medians$SIDE == 'left'
+MT_medians$ECC[index] <- -(MT_medians$ECC[index])
+MT_medians$ECC <- factor(MT_medians$ECC)
+
+# summary data
+MTecc <- summarySE(MT_medians, measurevar = 'MT', 
+                    groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
+MTecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(width = .4)) +
+  geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
+                width=.4, position = position_dodge(width = .4)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
+  labs(x = 'Movement time (ms)', y = 'Eccentricity (°)') +
+  facet_grid(~VIEW) + theme_classic() +
+  theme(legend.position = 'bottom',
+        legend.title = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 12)
+  )
+
+## ANOVA ## 
+MTanova <- MT_means[MT_means$PPT != 212 & MT_means$PPT != 407 ,]
+# FULL ANOVA ON MOVEMENT TIME DATA
+MT_ANOVA <- ezANOVA(
+  data = MTanova
+  , dv = .(MT)
+  , wid = .(PPT)
+  , within = .(VIEW, DOM)
+  , between = .(DIAGNOSIS)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+MT_ANOVA$ANOVA
+MT_ANOVA$`Mauchly's Test for Sphericity`
+MT_ANOVA$`Sphericity Corrections`
+aovMT <- aovEffectSize(ezObj = MT_ANOVA, effectSize = "pes")
+aovDispTable(aovMT)
+
+# FULL ANOVA ON MOVEMENT TIME DATA BY ECCENTRICITY
+MTECCanova <- MT_medians[MT_medians$PPT != 212 & MT_medians$PPT != 407 ,]
+MTECCanova$POSITION <- factor(MTECCanova$POSITION)
+MTECC_ANOVA <- ezANOVA(
+  data = MTECCanova
+  , dv = .(MT)
+  , wid = .(PPT)
+  , within = .(VIEW, DOM, POSITION)
+  , between = .(DIAGNOSIS)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+MTECC_ANOVA$ANOVA
+MTECC_ANOVA$`Mauchly's Test for Sphericity`
+MTECC_ANOVA$`Sphericity Corrections`
+aovMTECC <- aovEffectSize(ezObj = MTECC_ANOVA, effectSize = "pes")
+aovDispTable(aovMTECC)
+
+###### REACTION TIME ######
+
+
 ### analysis of response times
 # do in the same manner as with absolute error
 # medians
 res_offset_medians <- aggregate(
   time_touch_offset ~ ecc * side * task * subject_nr * site * group, median, data = res)
-res_reach_medians <- aggregate(
-  reach_duration ~ ecc * side * task * subject_nr * site * group, median, data = res)
+
 # means of medians
 res_offset_means <- aggregate(
   time_touch_offset ~ task * side * subject_nr * site * group, mean, data = res_offset_medians)
-res_reach_means <- aggregate(
-  reach_duration ~ task * side * subject_nr * site * group, mean, data = res_reach_medians)
-levels(res_offset_means$group) <- c('Control', 'Patient')
-levels(res_reach_means$group) <- c('Control', 'Patient')
-levels(res_offset_means$site) <- c('UOE', 'UEA')
-levels(res_reach_means$site) <- c('UOE', 'UEA')
-#adding diagnosis to this info
-res_offset_means <- merge(demo, res_offset_means)
-res_reach_means <- merge(demo, res_reach_means)
 
 
 # plotting means
@@ -192,18 +291,8 @@ ggsave('touchoffset_meansPlot.png', plot = last_plot(), device = NULL, dpi = 300
        scale = 1, width = 5, height = 6.5, path = anaPath)
   
 #reach
-ggplot(res_reach_means, aes(x = side, y = reach_duration, colour = site)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(task), rows = vars(diagnosis)) + ylim(0, 1000) +
-  labs(title = 'Reach Duration', x = 'Side', 
-       y = 'Reach duration (ms)', element_text(size = 12)) +
-  scale_colour_manual(values = c('grey50', 'black')) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) -> reachPlot
 
-ggsave('reachDur.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 5, height = 6.5, path = anaPath)
+
 
 #means of both sides
 res_reach_meansall <- aggregate(reach_duration~task * subject_nr * site * diagnosis, mean, 
