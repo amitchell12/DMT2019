@@ -221,6 +221,10 @@ ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS)) +
         strip.text = element_text(size = 12)
   )
 
+ggsave('lateral-MTecc.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+
 ## ANOVA ## 
 MTanova <- MT_means[MT_means$PPT != 212 & MT_means$PPT != 407 ,]
 # FULL ANOVA ON MOVEMENT TIME DATA
