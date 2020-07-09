@@ -59,7 +59,8 @@ ggplot(dir_means, aes(x = VIEW, y = xerr_mean, colour = DIAGNOSIS)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
   facet_grid(cols = vars(SIDE), rows = vars(DIAGNOSIS)) + 
-  labs(x = '', y = 'Directional error (mm)', element_text(size = 12)) +
+  labs(title = 'Lateral reaching',
+       x = '', y = 'Directional error (mm)', element_text(size = 12)) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
                      strip.text.x = element_text(size = 8)) 
 
@@ -123,8 +124,8 @@ ggplot(av_ecc, aes(x = ECC, y = xerr_med, group = DIAGNOSIS, colour = DIAGNOSIS)
   geom_errorbar(aes(ymin=xerr_med-ci, ymax=xerr_med+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  geom_hline(yintercept = 0) + ylim(-30,30) +
-  labs(x = 'Directional error (mm)', y = 'Eccentricity (°)') +
+  geom_hline(yintercept = 0) + ylim(-25,25) +
+  labs(title= 'Lateral reaching', x = 'Eccentricity (°)', y = 'Directional error (mm)') +
   facet_grid(~VIEW) + theme_classic() +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
@@ -132,6 +133,9 @@ ggplot(av_ecc, aes(x = ECC, y = xerr_med, group = DIAGNOSIS, colour = DIAGNOSIS)
         axis.title = element_text(size = 12),
         strip.text = element_text(size = 12)
         )
+
+ggsave('Lateral-dAE-ECC.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
 
 ## ANOVA ##
 dECCanova <- dir_medians[dir_medians$PPT != 212 & dir_medians$PPT != 407 ,]
