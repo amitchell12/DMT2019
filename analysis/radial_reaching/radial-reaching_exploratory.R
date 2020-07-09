@@ -1,64 +1,94 @@
-###### EXPLORATORY ANALYSIS FOR RADIAL REACHING TASK ######
+# EXPLORATORY ANALYSIS FOR RADIAL REACHING TASK 
 ## AG.Mitchell 22.04.20 ##
-
 library(readr)
 library(ggplot2)
-library(reshape2)
-library(ggpubr)
 library(Rmisc)
+library(gridExtra)
+library(plyr)
+library(tidyverse)
+library(reshape2)
+library(Hmisc)
+library(ggpubr)
+library(ez)
+library(psychReport)
 
+###### GETTING DATA ######
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
 #dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on pc
-dataPath <- 'S:/groups/DMT/data'
-anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
+#dataPath <- 'S:/groups/DMT/data'
+#anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
 setwd(anaPath)
 
-res <- read.csv('radial_reaching_compiled.csv')
+res <- read.csv('all_radial-reaching_compiled.csv')
+## find outliers and remove ##
+xclude <- read.csv('radial-reaching_outliers.csv')
+res <- res[!(res$PPT %in% xclude$PPT), ]
 
-##### directional error calc #####
-dir_medians <- aggregate(LANDx_deg ~ PPT*POSITION*VIEW*SIDE*GRP*SITE, mean, data = res)
-colnames(dir_medians)[colnames(dir_medians)=='LANDx_deg'] <- 'dirmed'
-dir_means <- aggregate(dirmed ~ PPT*VIEW*SIDE*GRP*SITE, mean, data = dir_medians)
-colnames(dir_means)[colnames(dir_means)=='dirmed'] <- 'dirmean'
+##### DIRECTIONAL ERROR: PMI #####
+dir_medians <- aggregate(LANDx ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS, 
+                         median, data = res)
+# remove outlier in P101
+dir_medians <- dir_medians[!(dir_medians$PPT == '101' & dir_medians$LANDx > 50) ,]
+
+dir_means <- aggregate(LANDx ~ PPT* VIEW * SIDE * SITE * GRP * DIAGNOSIS, 
+                       mean, data = dir_medians)
 
 # casting by task
-dPMIdata <- dcast(dir_means, PPT+GRP+SIDE+SITE ~ VIEW)
-dPMIdata$PMI <- dPMIdata$Peripheral - PMIdata$Free
-write.csv(dPMIdata, 'radial-reaching_dPMI.csv', row.names = FALSE)
+dPMIdata <- dcast(dir_means, PPT+DIAGNOSIS+GRP+SIDE+SITE ~ VIEW)
+dPMIdata$PMI <- dPMIdata$Peripheral - dPMIdata$Free
+write.csv(dPMIdata, 'radial-reaching_dirPMI.csv', row.names = FALSE)
 
-## plotting
-# mean plot 
-ggplot(dir_means, aes(x = VIEW, y = dirmean, colour = GRP)) +
+# plotting this
+ggplot(dir_means, aes(x = VIEW, y = LANDx, colour = DIAGNOSIS)) +
   geom_point(shape = 1, size = 2) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(SIDE), rows = vars(GRP)) + ylim(-8,8) +
-  labs(x = 'Side', y = 'Directional error (deg)', element_text(size = 12)) +
-  scale_colour_manual(values = c('black', 'grey50')) +
+  facet_grid(cols = vars(SIDE), rows = vars(DIAGNOSIS)) + 
+  labs(title = 'Radial reaching',
+       x = '', y = 'Directional error (mm)', element_text(size = 12)) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8)) -> meansPlot
+                     strip.text.x = element_text(size = 8)) 
 
-ggsave('directionalerror_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-# PMI plot
-ggplot(dPMIdata, aes(x = SIDE, y = PMI, colour = GRP), position = position_dodge(.2)) + 
+# dPMI plot 
+ggplot(dPMIdata, aes(x = SIDE, y = PMI, colour = DIAGNOSIS)) + 
   geom_point(shape = 1, size = 1.5, stroke = .8) +
   geom_line(aes(group = PPT), alpha = .5, size = .5) +
-  scale_colour_manual(values = c('grey40', 'grey40')) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 2, group = 1) +
-  ylim(-8,8) + labs(title = 'Radial reaching', x = 'Side', y = 'dPMI (deg)', 
-                    element_text(size = 12)) +
-  facet_wrap(~GRP) +
+               geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
+  labs(title = 'Radial Reaching', x = 'Side', y = 'dPMI (mm)', 
+       element_text(size = 12)) +
+  facet_wrap(~DIAGNOSIS) +
   theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8)) -> PMIplot
+                     strip.text.x = element_text(size = 10))
 
-ggsave('dPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('radial-dirPMI.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-##### summary response time #####
+## ANOVA ##
+dPMIanova <- dPMIdata[dPMIdata$PPT != 212 & dPMIdata$PPT != 407 ,] #removing participants where we only have 1 data-point
+
+# FULL ANOVA ON FILTERED DATA
+DPMI_ANOVA <- ezANOVA(
+  data = dPMIanova
+  , dv = .(PMI)
+  , wid = .(PPT)
+  , within = .(SIDE)
+  , between = .(DIAGNOSIS)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+DPMI_ANOVA$ANOVA
+DPMI_ANOVA$`Mauchly's Test for Sphericity`
+DPMI_ANOVA$`Sphericity Corrections`
+aovDPMI <- aovEffectSize(ezObj = DPMI_ANOVA, effectSize = "pes")
+aovDispTable(aovDPMI)
+
+
+
+
 #response time
 res_rt_posmean <- aggregate(RT ~ POSITION*VIEW*SIDE*PPT*GRP, mean, data = res)
 res_rt_means <- aggregate(RT ~ VIEW*SIDE*PPT*GRP, mean, data = res)

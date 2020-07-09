@@ -86,7 +86,7 @@ mean_dPMI_all <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS
                            na.rm = TRUE)
 
 ## ANOVA ##
-dPMIanova <- dPMIdata[dPMIdata$PPT != 212 & dPMIdata$PPT != 407 ,] #removing participants where we only have 1 data-point
+dPMIanova <- dPMIdata[dPMIdata$PPT != 212 & dPMIdata$PPT != 310,] #removing participants where we only have 1 data-point
 
 # FULL ANOVA ON FILTERED DATA
 DPMI_ANOVA <- ezANOVA(
