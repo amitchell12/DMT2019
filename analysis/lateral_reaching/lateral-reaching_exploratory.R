@@ -218,7 +218,7 @@ ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = VIEW)) +
   geom_line(aes(group = VIEW), size = 0.7, position = position_dodge(width = .4)) +
   labs(title = 'Lateral reaching',
        x = 'Eccentricity (°)', y = 'Movement time (ms)') +
-  facet_grid(~DIAGNOSIS) + theme_classic() +
+  facet_grid(DIAGNOSIS) + theme_classic() +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
