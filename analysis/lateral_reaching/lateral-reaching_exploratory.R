@@ -185,7 +185,7 @@ ggplot(MTav, aes(x = VIEW, y = MT, colour = DIAGNOSIS, group = PPT)) +
   stat_summary(aes(y = MT, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   facet_wrap(~DIAGNOSIS) + 
-  labs(title = 'Reach Duration', x = '', 
+  labs(title = 'Lateral reaching', x = '', 
        y = 'Reach duration (ms)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'none', 
                      text = element_text(size = 10),
@@ -212,7 +212,8 @@ ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = VIEW)) +
   geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = VIEW), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = 'Eccentricity (°)', y = 'Movement time (ms)') +
+  labs(title = 'Lateral reaching',
+       x = 'Eccentricity (°)', y = 'Movement time (ms)') +
   facet_grid(~DIAGNOSIS) + theme_classic() +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
@@ -266,56 +267,114 @@ aovMTECC <- aovEffectSize(ezObj = MTECC_ANOVA, effectSize = "pes")
 aovDispTable(aovMTECC)
 
 ###### REACTION TIME ######
+RT_medians <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * POSITION * SITE * GRP * DIAGNOSIS, 
+                        median, data = res)
+RT_means <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
+                      mean, data = RT_medians)
+# average across side
+RTav <- aggregate(RT ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
+                  mean, data = RT_medians)
 
-
-### analysis of response times
-# do in the same manner as with absolute error
-# medians
-res_offset_medians <- aggregate(
-  time_touch_offset ~ ecc * side * task * subject_nr * site * group, median, data = res)
-
-# means of medians
-res_offset_means <- aggregate(
-  time_touch_offset ~ task * side * subject_nr * site * group, mean, data = res_offset_medians)
-
-
-# plotting means
-# offset
-ggplot(res_offset_means, aes(x = side, y = time_touch_offset, colour = site)) +
+## plotting :)
+# both sides
+ggplot(RT_means, aes(x = DOM, y = RT, colour = DIAGNOSIS, group = DIAGNOSIS)) +
   geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(task), rows = vars(diagnosis)) + ylim(0, 1000) +
-  labs(title = 'Touch Offset', x = 'Side', 
-       y = 'Touch offset RT (ms)', element_text(size = 12)) +
-  scale_colour_manual(values = c('grey50', 'black')) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) -> touchoffsetPlot
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(VIEW), rows = vars(DIAGNOSIS)) + ylim(0, 1000) +
+  labs(title = 'Reach Duration', x = 'Side', 
+       y = 'Reaction time (ms)', element_text(size = 12)) +
+  theme_bw() + theme(legend.position = 'none', 
+                     text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)) 
 
-ggsave('touchoffset_meansPlot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 5, height = 6.5, path = anaPath)
-  
-#reach
-
-
-
-#means of both sides
-res_reach_meansall <- aggregate(reach_duration~task * subject_nr * site * diagnosis, mean, 
-                                data= res_reach_means) 
-res_reach_meansall$task <- with(res_reach_meansall, factor(task, levels = rev(levels(task))))
-
-ggplot(res_reach_meansall, aes(x = task, y = reach_duration, colour = site)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = subject_nr), size = 0.5, alpha = .5) +
-  facet_wrap(~diagnosis) + ylim(0, 1000) +
-  labs(title = 'Lateral reaching', x = 'Task', 
+# average across sides
+RTav$DIAGNOSIS <- factor(RTav$DIAGNOSIS, levels = c('HC','MCI','AD'))
+ggplot(RTav, aes(x = VIEW, y = RT, colour = DIAGNOSIS, group = PPT)) +
+  geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
+            position = position_dodge(width = .3)) +
+  stat_summary(aes(y = RT, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  facet_wrap(~DIAGNOSIS) + 
+  labs(title = 'Lateral reaching', x = '', 
        y = 'Reach duration (ms)', element_text(size = 12)) +
-  scale_colour_manual(values = c('grey50', 'black')) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) -> reachPlot
+  theme_classic() + theme(legend.position = 'none', 
+                          text = element_text(size = 10),
+                          strip.text.x = element_text(size = 10)
+  ) 
 
-ggsave('reachDur_means.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('lateral-RT.png', plot = last_plot(),  device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
+# by eccentricity
+RT_medians$ECC <- dir_medians$POSITION
+#making left side negative
+index <- RT_medians$SIDE == 'left'
+RT_medians$ECC[index] <- -(RT_medians$ECC[index])
+RT_medians$ECC <- factor(RT_medians$ECC)
+
+# summary data
+RTecc <- summarySE(RT_medians, measurevar = 'RT', 
+                   groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
+RTecc$DIAGNOSIS <- factor(RTecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(RTecc, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = VIEW)) +
+  geom_point(size = 3, position = position_dodge(width = .4)) +
+  geom_errorbar(aes(ymin=RT-ci, ymax=RT+ci), 
+                width=.4, position = position_dodge(width = .4)) + 
+  geom_line(aes(group = VIEW), size = 0.7, position = position_dodge(width = .4)) +
+  labs(title = 'Lateral reaching',
+       x = 'Eccentricity (°)', y = 'Reaction time (ms)') +
+  facet_grid(~DIAGNOSIS) + theme_classic() +
+  theme(legend.position = 'bottom',
+        legend.title = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 12)
+  )
+
+ggsave('lateral-RTecc.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
+
+## ANOVA ## 
+RTanova <- RT_means[RT_means$PPT != 212 & RT_means$PPT != 407 ,]
+# FULL ANOVA ON MOVEMENT TIME DATA
+RT_ANOVA <- ezANOVA(
+  data = RTanova
+  , dv = .(RT)
+  , wid = .(PPT)
+  , within = .(VIEW, DOM)
+  , between = .(DIAGNOSIS)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+RT_ANOVA$ANOVA
+RT_ANOVA$`Mauchly's Test for Sphericity`
+RT_ANOVA$`Sphericity Corrections`
+aovRT <- aovEffectSize(ezObj = RT_ANOVA, effectSize = "pes")
+aovDispTable(aovRT)
+
+# FULL ANOVA ON MOVEMENT TIME DATA BY ECCENTRICITY
+RTECCanova <- RT_medians[RT_medians$PPT != 212 & RT_medians$PPT != 407 ,]
+RTECCanova$POSITION <- factor(RTECCanova$POSITION)
+RTECC_ANOVA <- ezANOVA(
+  data = RTECCanova
+  , dv = .(RT)
+  , wid = .(PPT)
+  , within = .(VIEW, DOM, POSITION)
+  , between = .(DIAGNOSIS)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+RTECC_ANOVA$ANOVA
+RTECC_ANOVA$`Mauchly's Test for Sphericity`
+RTECC_ANOVA$`Sphericity Corrections`
+aovRTECC <- aovEffectSize(ezObj = RTECC_ANOVA, effectSize = "pes")
+aovDispTable(aovRTECC)
 
 # correlating peripheral reach duration with PMI
 # cast 
@@ -338,6 +397,3 @@ ggscatter(corrData, x = "pAE", y = "reachRT", add = 'reg.line', conf.int = TRUE,
 ggscatter(corrData, x = "pAE", y = "offsetRT", add = 'reg.line', conf.int = TRUE,
           cor.coef = TRUE, cor.method = 'pearson') + 
   facet_grid(cols = vars(side), rows = vars(diagnosis))
-
-
-########### next steps: comparing patients to controls
