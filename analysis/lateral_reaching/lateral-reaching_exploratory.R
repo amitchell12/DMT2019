@@ -205,15 +205,15 @@ MT_medians$ECC <- factor(MT_medians$ECC)
 # summary data
 MTecc <- summarySE(MT_medians, measurevar = 'MT', 
                     groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
-MTecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
+MTecc$DIAGNOSIS <- factor(MTecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS)) +
+ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = VIEW)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
-  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = 'Movement time (ms)', y = 'Eccentricity (°)') +
-  facet_grid(~VIEW) + theme_classic() +
+  geom_line(aes(group = VIEW), size = 0.7, position = position_dodge(width = .4)) +
+  labs(x = 'Eccentricity (°)', y = 'Movement time (ms)') +
+  facet_grid(~DIAGNOSIS) + theme_classic() +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
