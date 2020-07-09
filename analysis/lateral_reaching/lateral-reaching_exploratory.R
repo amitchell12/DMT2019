@@ -376,24 +376,34 @@ RTECC_ANOVA$`Sphericity Corrections`
 aovRTECC <- aovEffectSize(ezObj = RTECC_ANOVA, effectSize = "pes")
 aovDispTable(aovRTECC)
 
-# correlating peripheral reach duration with PMI
-# cast 
-rt_offset <- dcast(res_offset_means, subject_nr+diagnosis+site+side ~ task)
-rt_reach <- dcast(res_reach_means, subject_nr+diagnosis+site+side ~ task) #different data-frame
-#correlations
-corrData <- data.frame(PMIdata$PMI)
-colnames(corrData)[colnames(corrData) == 'PMIdata.PMI'] <- 'PMI' #renaming
-corrData$pAE <- PMIdata$periph
-corrData$reachRT <- rt_reach$periph
-corrData$offsetRT <- rt_offset$periph
-corrData$diagnosis <- PMIdata$diagnosis
-corrData$side <- PMIdata$side
+##### CORRELATE PMI + MT, RT ######
+# load PMI data
+PMIdata <- read.csv('lateralPMI-filtered.csv')
+# cast MT and RT
+MT <- dcast(MT_means, PPT+DIAGNOSIS+SITE+DOM ~ VIEW)
+RT <- dcast(RT_means, PPT+DIAGNOSIS+SITE+DOM ~ VIEW)
+#renaming for mergings
+colnames(MT)[colnames(MT) == 'Free'] <- 'FreeMT' 
+colnames(MT)[colnames(MT) == 'Peripheral'] <- 'PeripheralMT' 
+colnames(RT)[colnames(RT) == 'Free'] <- 'FreeRT' 
+colnames(RT)[colnames(RT) == 'Peripheral'] <- 'PeripheralRT' 
 
-# reach dur plot
-ggscatter(corrData, x = "pAE", y = "reachRT", add = 'reg.line', conf.int = TRUE,
+# merging MT with PMI
+corrData <- merge(PMIdata, MT, by = c('PPT','DIAGNOSIS','SITE','DOM'))
+# merging RT with PMI
+corrData <- merge(corrData, RT, by = c('PPT','DIAGNOSIS','SITE','DOM'))
+
+## correlate peripheral PMI w peripheral MT
+ggscatter(corrData, x = "Peripheral", y = "PeripheralMT", add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, cor.method = 'spearman') + 
+  facet_grid(cols = vars(DOM), rows = vars(GRP)) +
+  labs(x = 'Reaching error (mm)', y = 'Movement time (ms)')
+
+## correlate peripheral PMI w peripheral RT
+ggscatter(corrData, x = "Peripheral", y = "PeripheralRT", add = 'reg.line', conf.int = TRUE,
           cor.coef = TRUE, cor.method = 'pearson') + 
-  facet_grid(cols = vars(side), rows = vars(diagnosis))
-# touch offset plot
-ggscatter(corrData, x = "pAE", y = "offsetRT", add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, cor.method = 'pearson') + 
-  facet_grid(cols = vars(side), rows = vars(diagnosis))
+  facet_grid(cols = vars(DOM), rows = vars(GRP)) +
+  labs(x = 'Reaching error (mm)', y = 'Reaction time (ms)')
+
+
+
