@@ -22,9 +22,11 @@ anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radi
 setwd(anaPath)
 
 res <- read.csv('all_radial-reaching_compiled.csv')
-## find outliers and remove ##
+## find outliers and remove 
 xclude <- read.csv('radial-reaching_outliers.csv')
 res <- res[!(res$PPT %in% xclude$PPT), ]
+# removing outer target
+res <- res[res$POSITION != 400 & res$POSITION != -400 ,]
 
 ##### DIRECTIONAL ERROR: PMI #####
 dir_medians <- aggregate(LANDx ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS, 
@@ -66,7 +68,8 @@ ggsave('radial-dirPMI.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, path = anaPath)
 
 ## ANOVA ##
-dPMIanova <- dPMIdata[dPMIdata$PPT != 212 & dPMIdata$PPT != 407 ,] #removing participants where we only have 1 data-point
+dPMIanova <- dPMIdata[dPMIdata$PPT != 212 & 
+                        dPMIdata$PPT != 310 ,] #removing participants where we only have 1 data-point
 
 # FULL ANOVA ON FILTERED DATA
 DPMI_ANOVA <- ezANOVA(
@@ -86,93 +89,179 @@ DPMI_ANOVA$`Sphericity Corrections`
 aovDPMI <- aovEffectSize(ezObj = DPMI_ANOVA, effectSize = "pes")
 aovDispTable(aovDPMI)
 
+##### DIRECTIONAL ERROR: ECCENTRICITY #####
+# adding eccentricity as a function of side to medians
+dir_medians$ECC <- dir_medians$POSITION
+#making left side negative
+dir_medians$POSITION <- abs(dir_medians$ECC)
+dir_medians$ECC <- factor(dir_medians$ECC)
+dir_medians$POSITION <- factor(dir_medians$POSITION)
 
+## plotting data frame
+av_ecc <- summarySE(dir_medians, measurevar = 'LANDx', 
+                    groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
+av_ecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
+# plot 
+ggplot(av_ecc, aes(x = ECC, y = LANDx, group = DIAGNOSIS, colour = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(width = .4)) +
+  geom_errorbar(aes(ymin=LANDx-ci, ymax=LANDx+ci), 
+                width=.4, position = position_dodge(width = .4)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
+  geom_hline(yintercept = 0) + 
+  labs(title= 'Radial reaching', x = 'Eccentricity (mm)', y = 'Directional error (mm)') +
+  facet_grid(~VIEW) + theme_classic() +
+  theme(legend.position = 'bottom',
+        legend.title = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 12)
+  )
 
+ggsave('Radial-dAE-ECC.png', plot = last_plot(), device = NULL, dpi = 300, 
+       scale = 1, path = anaPath)
 
-#response time
-res_rt_posmean <- aggregate(RT ~ POSITION*VIEW*SIDE*PPT*GRP, mean, data = res)
-res_rt_means <- aggregate(RT ~ VIEW*SIDE*PPT*GRP, mean, data = res)
+## ANOVA ##
+# remove participants with unbalanced data
+dECCanova <- dir_medians[dir_medians$PPT != 212 & 
+                           dir_medians$PPT != 310 &
+                           dir_medians$PPT != 101
+                         ,]
 
-res_rt_means$VIEW <- factor(res_rt_means$VIEW) #changing so only 2 levels recorded
-res_rt_means$SIDE <- factor(res_rt_means$SIDE, levels = c('LEFT', 'RIGHT'))
-levels(res_rt_means$SIDE) <- c('Left', 'Right')
-levels(res_rt_means$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
-levels(res_rt_means$VIEW) <- c('Free', 'Peripheral')
-res_rt_means$PPT <- substr(res_rt_means$PPT, 4, 6)
+# FULL ANOVA ON ECCENTRICITY DATA
+DECC_ANOVA <- ezANOVA(
+  data = dECCanova
+  , dv = .(LANDx)
+  , wid = .(PPT)
+  , within = .(VIEW, SIDE, POSITION)
+  , between = .(DIAGNOSIS)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
 
-#movement time
-res_mt_posmean <- aggregate(MT ~ POSITION*VIEW*SIDE*PPT*GRP, mean, data = res)
-res_mt_means <- aggregate(MT ~ VIEW*SIDE*PPT*GRP, mean, data = res)
+DECC_ANOVA$ANOVA
+DECC_ANOVA$`Mauchly's Test for Sphericity`
+DECC_ANOVA$`Sphericity Corrections`
+aovDECC <- aovEffectSize(ezObj = DECC_ANOVA, effectSize = "pes")
+aovDispTable(aovDECC)
 
-res_mt_means$VIEW <- factor(res_mt_means$VIEW) #changing so only 2 levels recorded
-res_mt_means$SIDE <- factor(res_mt_means$SIDE, levels = c('LEFT', 'RIGHT'))
-levels(res_mt_means$SIDE) <- c('Left', 'Right')
-levels(res_mt_means$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
-levels(res_mt_means$VIEW) <- c('Free', 'Peripheral')
-res_mt_means$PPT <- substr(res_mt_means$PPT, 4, 6)
+###### MOVEMENT TIME #######
+MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * POSITION * SITE * GRP * DIAGNOSIS, 
+                        median, data = res)
+MT_means <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
+                      mean, data = MT_medians)
+# average across side
+MTav <- aggregate(MT ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
+                  mean, data = MT_medians)
+## plotting :)
+# both sides
+ggplot(MT_means, aes(x = DOM, y = MT, colour = SITE, group = DIAGNOSIS)) +
+  geom_point(shape = 1, size = 2) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
+  facet_grid(cols = vars(VIEW), rows = vars(DIAGNOSIS)) + ylim(0, 1100) +
+  labs(title = 'Radial reaching', x = 'Side', 
+       y = 'Reach duration (ms)', element_text(size = 12)) +
+  theme_bw() + theme(legend.position = 'none', 
+                     text = element_text(size = 10),
+                     strip.text.x = element_text(size = 10)) 
 
-# plotting movement time
-# per target position (eccentricity)
-ggplot(res_mt_posmean, aes(x = POSITION, y = MT, colour = GRP), position = position_dodge(.2)) + 
-  geom_point(shape = 1, size = 1.5, stroke = .8) +
-  facet_grid(cols = vars(VIEW), rows = vars(GRP)) +
-  scale_colour_manual(values = c('grey40', 'grey40')) +
+# average across sides
+MTav$DIAGNOSIS <- factor(MTav$DIAGNOSIS, levels = c('HC','MCI','AD'))
+ggplot(MTav, aes(x = VIEW, y = MT, colour = SITE, group = PPT)) +
+  geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
+  geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
+            position = position_dodge(width = .3)) +
   stat_summary(aes(y = MT, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 2, group = 1) +
-  ylim(400,1100) + labs(title = 'Radial reaching', x = 'Target position (mm)', y = 'Movement time (ms)', 
-                    element_text(size = 12)) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) -> MTPosplot
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  facet_wrap(~DIAGNOSIS) + 
+  labs(title = 'Radial reaching', x = '', 
+       y = 'Reach duration (ms)', element_text(size = 12)) +
+  theme_classic() + theme(legend.position = 'bottom', 
+                          text = element_text(size = 10),
+                          strip.text.x = element_text(size = 10)
+  ) 
 
-ggsave('MT_position.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('radial-MT.png', plot = last_plot(),  device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-# all target positions - by side
-ggplot(res_mt_means, aes(x = VIEW, y = MT, colour = GRP), position = position_dodge(.2)) + 
-  geom_point(shape = 1, size = 1.5, stroke = .8) +
-  facet_grid(cols = vars(SIDE), rows = vars(GRP)) +
-  geom_line(aes(group = PPT), alpha = .5, size = .5) +
-  scale_colour_manual(values = c('black', 'grey40')) +
-  ylim(400,1100) + labs(title = 'Radial reaching', x = 'View', y = 'Movement time (ms)', 
-                        element_text(size = 12)) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) -> MTplot
+# by eccentricity
+MT_medians$ECC <- MT_medians$POSITION
+#making left side negative
+MT_medians$POSITION <- abs(MT_medians$ECC)
+MT_medians$ECC <- factor(MT_medians$ECC)
+MT_medians$POSITION <- factor(MT_medians$POSITION)
 
-ggsave('MT_side.png', plot = last_plot(), device = NULL, dpi = 300, 
+# summary data
+MTecc <- summarySE(MT_medians, measurevar = 'MT', 
+                   groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
+MTecc$DIAGNOSIS <- factor(MTecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = VIEW)) +
+  geom_point(size = 3, position = position_dodge(width = .4)) +
+  geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
+                width=.4, position = position_dodge(width = .4)) + 
+  geom_line(aes(group = VIEW), size = 0.7, position = position_dodge(width = .4)) +
+  labs(title = 'Radial reaching',
+       x = 'Eccentricity (°)', y = 'Movement time (ms)') +
+  facet_grid(~DIAGNOSIS) + theme_classic() +
+  theme(legend.position = 'bottom',
+        legend.title = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 12)
+  )
+
+ggsave('radial-MTecc.png', plot = last_plot(),  device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
+## ANOVA ## 
+MTanova <- MT_means[MT_means$PPT != 212 & MT_means$PPT != 310 ,]
 
-# plot for everything
-res_mt_meansall <- aggregate(MT~VIEW*PPT*GRP, mean, data = res_mt_means)
+# FULL ANOVA ON MOVEMENT TIME DATA
+MT_ANOVA <- ezANOVA(
+  data = MTanova
+  , dv = .(MT)
+  , wid = .(PPT)
+  , within = .(VIEW, DOM)
+  , between = .(DIAGNOSIS)
+  , between_covariates = .(SITE)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
 
-ggplot(res_mt_meansall, aes(x = VIEW, y = MT, colour = GRP), position = position_dodge(.2)) + 
-  geom_point(shape = 1, size = 1.5, stroke = .8) +
-  facet_wrap(~GRP) +
-  geom_line(aes(group = PPT), alpha = .5, size = .5) +
-  scale_colour_manual(values = c('black', 'grey40')) +
-  ylim(400,1000) + labs(title = 'Radial reaching', x = 'Viewing condition', y = 'Movement time (ms)', 
-                        element_text(size = 12)) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) -> MTplot
+MT_ANOVA$ANOVA
+MT_ANOVA$`Mauchly's Test for Sphericity`
+MT_ANOVA$`Sphericity Corrections`
+aovMT <- aovEffectSize(ezObj = MT_ANOVA, effectSize = "pes")
+aovDispTable(aovMT)
 
-ggsave('MT.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+# FULL ANOVA ON MOVEMENT TIME DATA BY ECCENTRICITY
+MTECCanova <- MT_medians[MT_medians$PPT != 212 & 
+                           MT_medians$PPT != 310 &
+                           MT_medians$PPT != 315 &
+                           MT_medians$PPT != 302 ,]
 
-# plotting reaction time
-# per target position (eccentricity)
-ggplot(res_rt_posmean, aes(x = POSITION, y = RT, colour = GRP), position = position_dodge(.2)) + 
-  geom_point(shape = 1, size = 1.5, stroke = .8) +
-  facet_grid(cols = vars(VIEW), rows = vars(GRP)) +
-  scale_colour_manual(values = c('grey40', 'grey40')) +
-  stat_summary(aes(y = RT, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 2, group = 1) +
-  ylim(0,1000) + labs(title = 'Radial reaching', x = 'Target position (mm)', y = 'Reaction time (ms)', 
-                        element_text(size = 12)) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) -> RTPosplot
+MTECCanova$POSITION <- factor(MTECCanova$POSITION)
+MTECC_ANOVA <- ezANOVA(
+  data = MTECCanova
+  , dv = .(MT)
+  , wid = .(PPT)
+  , within = .(VIEW, DOM, POSITION)
+  , between = .(DIAGNOSIS)
+  , between_covariates = .(SITE)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
 
-ggsave('RT_position.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+MTECC_ANOVA$ANOVA
+MTECC_ANOVA$`Mauchly's Test for Sphericity`
+MTECC_ANOVA$`Sphericity Corrections`
+aovMTECC <- aovEffectSize(ezObj = MTECC_ANOVA, effectSize = "pes")
+aovDispTable(aovMTECC)
+
+
 
 # all target positions - by side
 ggplot(res_rt_means, aes(x = VIEW, y = RT, colour = GRP), position = position_dodge(.2)) + 
