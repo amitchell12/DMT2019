@@ -5,11 +5,11 @@ library(ggpubr)
 library(Rmisc)
 
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on mac desktop
-anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching/'
-dataPath <- '/Users/Alex/Documents/DMT/data/'
+#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching/'
+#dataPath <- '/Users/Alex/Documents/DMT/data/'
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
 #anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
@@ -79,7 +79,7 @@ res$LANDy <- res$my - res$caly
 
 # counting eye-move and removing eye-move + void
 nEye_move <- aggregate(res$EYE_MOVE == '1', by=list(subject_nr = res$PPT), FUN=sum)
-nVoid <- aggregate(res$EYE_MOVE == '1', by=list(subject_nr = res$PPT), FUN=sum)
+nVoid <- aggregate(res$EYE_MOVE == '-1', by=list(subject_nr = res$PPT), FUN=sum)
 # removing
 res <- res[res$EYE_MOVE == 0, c(1:6,9:10,12:13,17:20)]
 
