@@ -4,8 +4,8 @@
 % noise (will have v small values I assume if noise)
 
 close all; clear;
-trialPlot=1; %% will do trial by trial plots of speed X time, will be much slower. Set to 0 to not do it and 1 to do it.
-trajPlot=1;%% will do trial by trial plots of x by y, will be much slower. Set to 0 to not do it and 1 to do it.
+trialPlot=0; %% will do trial by trial plots of speed X time, will be much slower. Set to 0 to not do it and 1 to do it.
+trajPlot=0;%% will do trial by trial plots of x by y, will be much slower. Set to 0 to not do it and 1 to do it.
 sampleThreshold=5; %% some subjects e.g. 213 have only one sample for a given trial - cut trials with < 5 
 %(will appear in lower left at zero,zero in end point accuracy plot)
 
@@ -15,8 +15,8 @@ sampleThreshold=5; %% some subjects e.g. 213 have only one sample for a given tr
 [FileName2,PathName2,FilterIndex2] = uigetfile('.csv', '***Pick the other file***'); % user load second filename
 
 % read ipad csv files
-[NUM,TXT,RAW]=xlsread([PathName '\' FileName]); % breaks it into numeric, text and raw data
-[NUM2,TXT2,RAW2]=xlsread([PathName2 '\' FileName2]);
+[NUM,TXT,RAW]=xlsread([PathName FileName]); % breaks it into numeric, text and raw data
+[NUM2,TXT2,RAW2]=xlsread([PathName2 FileName2]);
 fp=find(NUM2(:,5)==1); %% 2nd trial labelled 1 taken as onset of main trials
 reactionTime=NUM2(fp(2):end,6); %% already explicit for main trials 
 subject_code=num2str(NUM(1,1));
