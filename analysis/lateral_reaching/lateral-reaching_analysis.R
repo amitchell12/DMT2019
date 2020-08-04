@@ -12,15 +12,8 @@ library(ez)
 library(psychReport)
 
 #set working directory to where data is
-#on mac
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-# on desktop mac
-anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
-dataPath <- '/Users/Alex/Documents/DMT/data'
-#on pc
-#dataPath <- 'S:/groups/DMT/data'
-#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+dataPath <- 'S:/groups/DMT/data'
+anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(anaPath)
 
 # load data file
@@ -62,13 +55,13 @@ res_means <- aggregate(AEmed ~ PPT * DOM * SIDE * VIEW * SITE * GRP * DIAGNOSIS 
 res_means <- res_means[order(res_means$PPT), ] 
 colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
 # save data
-write.csv(res_medians, 'lateral-reaching_medians.csv', row.names = FALSE)
-write.csv(res_means, 'lateral-reaching_means.csv', row.names = FALSE)
+write.csv(res_medians, 'lateral-medians_all.csv', row.names = FALSE)
+write.csv(res_means, 'lateral-means_all.csv', row.names = FALSE)
 
 # to calculate PMI need to cast by task....
 PMIdata <- dcast(res_means, PPT+GRP+SITE+DOM+SIDE+DIAGNOSIS+AGE+ED ~ VIEW) #different data-frame
 PMIdata$PMI <- PMIdata$Peripheral - PMIdata$Free
-write.csv(PMIdata, 'lateral-reaching_PMI.csv', row.names = FALSE)
+write.csv(PMIdata, 'lateralPMI_all.csv', row.names = FALSE)
 
 # summary
 meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'DOM'),
@@ -130,6 +123,44 @@ ggsave('AD_ecc.png', plot = last_plot(), device = NULL, dpi = 300,
 # PMI collapsed across side
 PMIav <- aggregate(PMI ~ PPT * SITE * DIAGNOSIS * AGE * ED, mean, data = PMIdata)
 PMIav <- PMIav[order(PMIav$PPT), ]
+
+### tests for age & education ###
+# plot age
+ggplot(res, aes(x = DIAGNOSIS, y = AGE, group = PPT)) +
+  geom_point(position = position_dodge(.2))
+# plot education
+ggplot(res, aes(x = DIAGNOSIS, y = ED, group = PPT)) +
+  geom_point(position = position_dodge(.2))
+
+# create necessary data-frames for ANOVA
+age <- aggregate(AGE ~ PPT*DIAGNOSIS, mean, data = res)
+res$ED <- as.numeric(as.character(res$ED))
+education <- aggregate(ED ~ PPT*DIAGNOSIS, mean, data = res)
+demo_test <- merge(age, education, by = c('PPT', 'DIAGNOSIS'))
+
+# ANOVAS
+AGE_ANOVA <- ezANOVA(
+  data = demo_test
+  , dv = .(AGE)
+  , wid = .(PPT)
+  , between = .(DIAGNOSIS)
+  , type = 3
+)
+
+print(AGE_ANOVA)
+
+# ANOVAS
+ED_ANOVA <- ezANOVA(
+  data = demo_test
+  , dv = .(ED)
+  , wid = .(PPT)
+  , between = .(DIAGNOSIS)
+  , type = 3
+)
+
+print(ED_ANOVA)
+
+## neither age nor education signficantly different between groups, hurrah
 
 ######## step 3: outlier removal, filtered PMI #########
 controlData <- PMIdata[PMIdata$PPT < 200, ]
@@ -241,7 +272,7 @@ tdfilt_results$DEFICIT <- as.numeric(tdfilt_results$DEFICIT)
 tdfilt_results$BL <- as.numeric(tdfilt_results$BL)
 
 #save
-write.csv(tdfilt_results, 'lateral-reaching_case-control.csv', row.names = FALSE)
+write.csv(tdfilt_results, 'lateral_case-control_filtered.csv', row.names = FALSE)
 
 ## plotting p-values
 ggplot(tdfilt_results, aes(x = DOM, y = PVALUE, group = PPT, colour = DIAGNOSIS)) +
@@ -360,7 +391,7 @@ aovECC <- aovEffectSize(ezObj = ECC_ANOVA, effectSize = "pes")
 aovDispTable(aovECC)
 
 
-######## step 4: single case stats, all controls (no outliers) #########
+######## step 4: analysis with all controls (no outliers) #########
 # correlate PMI with possible co-variates, age + education
 agecov <- cor.test(PMIdata$AGE, PMIdata$PMI, method = 'pearson')
 ggscatter(PMIdata, x = "AGE", y = "PMI", 
