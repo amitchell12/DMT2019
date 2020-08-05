@@ -4,16 +4,16 @@
 
 ##### file info #####
 # on pc
-#fitPath <- ("S:/groups/DMT/analysis/TVA/fits/") # Enter path to data
-#anaPath <- "S:/groups/DMT/analysis/TVA/"
+fitPath <- ("S:/groups/DMT/analysis/TVA/all/") # Enter path to data
+anaPath <- "S:/groups/DMT/analysis/TVA/"
 # on mac
-fitPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/fits/" # Enter path to data
-anaPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/"
-dataPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/"
-latPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/"
+#fitPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/fits/" # Enter path to data
+#anaPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/"
+#dataPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/"
+#latPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/"
 # on desktop mac
-#fitPath <- "/Users/Alex/Documents/DMT/analysis/TVA/fits/" # Enter path to data
-#anaPath <- "/Users/Alex/Documents/DMT/analysis/TVA/"
+#fitPath <- "/Users/Alex/Documents/DMT/analysis/TVA/" # Enter path to data
+#anaPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
 #dataPath <- "/Users/Alex/Documents/DMT/data/"
 
 # Enter directory to save converted files to
