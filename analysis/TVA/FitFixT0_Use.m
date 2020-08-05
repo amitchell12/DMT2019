@@ -1,10 +1,17 @@
+%% TVA analysis code for fixed t0 %%
+% Signe Vangkilde - send to AG Mitchell on 03.08.20
+
 clear;
+
+dataDir = 'S:\groups\DMT\data\TVA\fixedt0';
+anaDir = 'S:\groups\DMT\analysis\TVA\all';
+cd(dataDir)
 
 filename = dir('*.dat');
 
 for i=1:size(filename,1)
-    %tvadata{i} = tvaloader(filename{i},'STD', [5 6]);
-    tvadata{i} = tvaloader(filename(i).name,'STD');
+    tvadata{i} = tvaloader(filename(i).name,'STD', [6 7]);
+    %tvadata{i} = tvaloader(filename(i).name,'STD');
 end
 
 parpool
@@ -20,10 +27,12 @@ parfor i=1:size(filename,1)
 end
 close
 
+cd(anaDir)
 for i=1:size(filename,1)
     if(i==1) tvalpr('OutputFixedt0.txt','',tvadata{i},tvamodel{i},theta{i},theta_fix{i}); end
     tvalpr('OutputFixedt0.txt',filename(i).name,tvadata{i},tvamodel{i},theta{i},theta_fix{i});
 end
 
-
+% endnng parallel pool
+delete(gcp('nocreate'))
 

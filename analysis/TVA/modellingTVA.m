@@ -25,12 +25,12 @@ for i = 1:length(files)
     
     % load data
     % need to include the 'STD' [5 6] for masked conditions
-    tvadata = tvaloader(files(i).name, 'STD', [6 7]);
+    tvadata{i} = tvaloader(files(i).name, 'STD', [6 7]);
     % tva report on data
     %leave open to view
     
     %% Fitting model
-    [theta, tvamodel, tvadata, df] = tvafit(tvadata, [], 'FREE');
+    [theta{i}, tvamodel{i}, tvadata{i}, df{i}] = tvafit(tvadata, [], 'FREE');
     %see the fitted values
     tvareport(tvadata, tvamodel, theta);
     
@@ -56,10 +56,17 @@ for i = 1:length(files)
 %     xlim([0 250]); ylim([0 4]);
     
     %% Saving individual data
-    cd([anaDir filesep 'fits'])
-    save fit theta tvamodel tvadata
-    datafilename = sprintf('%s_%s_fits.txt', participantID, filename);
-    tvaexport(datafilename, 'DIR', 'fit.mat');
+    %cd([anaDir filesep 'fits'])
+    
+    %datafilename = sprintf('%s_%s_fits.txt', participantID, filename);
+    %tvaexport(datafilename, 'DIR', 'fit.mat');
+end
+
+cd(anaDir)
+for i=1:length(files)
+    if(i==1) tvalpr('Output.txt','',tvadata{i},tvamodel{i},theta{i}); 
+    end
+    tvalpr('Output.txt',filename(i).name,tvadata{i},tvamodel{i},theta{i});
 end
 
 %% Exporting
