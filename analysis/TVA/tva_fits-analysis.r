@@ -47,25 +47,15 @@ for (i in 1:length(txt_filelist)) {
 }
 
 ##### extracting key data #####
-# create data-frame
-tva_values <- read.csv(
-  text = 'SUB,ECC,K,C,t0,MU,t1,t2,t3,t4,t5,t6,t7,SPD'
-  )
-tva_filelist <- dir(fitPath, recursive = TRUE, full.names = FALSE, pattern = '.csv')
+output1 <- read.csv('Output.csv') #data where t0 not fixed
+output2 <- read.csv('OutputFixedt0.csv') #data where t0 was fixed (<0 initially)
+# bind
+output <- rbind(output1,output2)
 
-### will need to edit this to match output files
-# key values from .csv files - ALL COND FIRST
-for (file in tva_filelist){
-  if (isTRUE(str_sub(basename(file), -10, -10)=='r')){
-    tmp <- read.csv(file)[, c(2,15,10,13,28:34,19)]
-    tmp$ECC <- 'all'
-    tmp$SUB <- substr(basename(file), 8, 10)
-    tmp <- tmp[, c(14,13,1:12)]
-    tva_values <- rbind(tva_values, tmp)
-  }
-  
-}
-
+# extract important values from data-set
+tva_values <- output[, c(1,2,10,11,15,16,13,28:34,19)]
+# labelling
+tva_values$SUB <- factor(substr(tva_values$ID, 8, 10))
 tva_values$GRP <- factor(substr(tva_values$SUB, 1, 1))
 tva_values$SITE <- factor(substr(tva_values$SUB, 1, 1))
 #Norwich control data = 3, convert to 1 for same group
@@ -79,6 +69,7 @@ for (i in 1:length(tva_values$GRP)){
     tva_values$GRP[i] = 2
   }
 }
+# same for site, UOE= 1, UEA = 2
 for (i in 1:length(tva_values$SITE)){
   if (isTRUE(tva_values$SITE[i] == '2')){
     tva_values$SITE[i] = 1
@@ -91,12 +82,11 @@ for (i in 1:length(tva_values$SITE)){
   }
 }
 
-
+#factors!
 tva_values$GRP <- factor(tva_values$GRP)
 tva_values$SITE <- factor(tva_values$SITE)
 levels(tva_values$GRP) <- c('Control', 'Patient')
 levels(tva_values$SITE) <- c('UOE', 'UEA')
-tva_values$SUB <- factor(tva_values$SUB)
 
 # adding demographic info to this data-frame
 setwd(dataPath) 
@@ -116,17 +106,16 @@ tva_values <- merge(demo, tva_values, by = 'SUB')
 Ngroup <- count(tva_values, vars = 'diagnosis')
 SPD <- count(tva_values, vars = 'SPD')
 
-# remove data with SPD > 0
+# filter
+# remove data with SPD > 0 (poorly fitted)
 tva_values <- tva_values[tva_values$SPD == 0 ,]
-tva_values$lowT0 <- tva_values$t0 < -1
-lowTO <- count(tva_values, vars = 'lowT0')
-# removing data with t0 > 0 (for this data-set, otherwise C is incorrectly fitted)
-tva_values <- tva_values[tva_values$t0 > -1 ,]
-tva_values <- tva_values[, c(1:21)] #removing t0 true/false column
-# re-count N per group without SPD > 0 (poorly fitted data) and t0 > 0 (cannot use)
+# re-count N per group without SPD > 0 (poorly fitted data)
 Ngroup_filt <- count(tva_values, vars = 'diagnosis')
 
-##### adding processing speed to seperate DF #####
+## reorganise data-frame
+tva_values <- tva_values[, c(1:6,22:23,8:20)]
+tva_values <- tva_values[order(tva_values$SUB) ,]
+
 # adding mu to ExpDurc6 and c7 (unmasked conditions)
 tva_values$ExpDurC6 <- tva_values$ExpDurC6 + tva_values$mu
 tva_values$ExpDurC7 <- tva_values$ExpDurC7 + tva_values$mu
@@ -134,11 +123,12 @@ tva_values$ExpDurC7 <- tva_values$ExpDurC7 + tva_values$mu
 setwd(anaPath)
 write.csv(tva_values, 'tva_values.csv', row.names = FALSE)
 
+##### DATA-FRAME FOR FITTING ######
 # creating data-frame so can have predicted and actual values for each condition
 # melting so have information by condition
 tva_dat <- melt(
   tva_values, 
-  id.vars = c('ECC','SUB','diagnosis','SITE', 'K','C','t0','mu'), 
+  id.vars = c('SUB','diagnosis','SITE', 'K','C','t0','mu'), 
   measure.vars = c('ExpDurC1','ExpDurC2','ExpDurC3', 'ExpDurC4', 'ExpDurC5', 'ExpDurC6', 'ExpDurC7'))
 #sort new melted data frame
 tva_dat <- tva_dat[order(tva_dat$SUB) ,]
@@ -154,23 +144,18 @@ ttmp <- data.frame(MS=numeric(),
                    SUB=factor(),
                    COND=factor(),
                  stringsAsFactors=FALSE) 
+##hmm think about a different way to do this from output file?
 
+## NEED TO FIGURE OUT HOW TO GET THE MS AND PS VALUES FOR EACH PP - could just do it above
 setwd(fitPath)
-for (file in tva_filelist){
-  if (isTRUE(str_sub(basename(file), -10, -10)=='r')){
-    MS <- t(read.csv(file)[, c(81:87)])
-    pMS <- t(read.csv(file)[, c(88:94)])
-    row.names(MS) <- NULL
-    row.names(pMS) <- NULL
-    tmp <- as.data.frame(MS)
-    tmp$pMS <- pMS
-    tmp$SUB <- substr(basename(file), 8, 10)
-    tmp$COND <- matrix(1:7, nrow = 7, ncol = 1)
-    ttmp <- rbind(ttmp,tmp)
+row_x = 1
+for (i in length(output$ID)){
+    MS[row_x ,] <- t(output[c(i), c(81:87)])
+    PMS[row_x ,] <- t(output[c(i), c(88:94)])
     
-  }
-  
+    row_x <- row_x + 7
 }
+  
 
 # merging the two data-frames by SUB and COND
 tva_dat <- merge(tva_dat, ttmp, by = c('SUB','COND'), all.y = TRUE)
