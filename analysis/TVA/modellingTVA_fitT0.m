@@ -21,9 +21,9 @@ for i=1:size(filename,1)
     [theta{i},theta_fix{i}] = tvafixer(theta{i},[],u0,tvamodel{i});
     theta_fix{i}(u0)=0;
     tvareport(tvadata{i},tvamodel{i},theta{i},theta_fix{i});
-    %[theta{i},tvamodel{i},change{i}] = tvashave(theta{i},tvamodel{i},tvadata{i},theta_fix{i},[0.5 100 0.01]);
-    %[theta{i},tvamodel{i},change{i}] = tvashave(theta{i},tvamodel{i},tvadata{i},theta_fix{i},[0.1  1000 0.01]);
-    %[theta{i},tvamodel{i},change{i}] = tvashave(theta{i},tvamodel{i},tvadata{i},theta_fix{i},[0.02 1000 0.01]);
+    [theta{i},tvamodel{i},change{i}] = tvashave(theta{i},tvamodel{i},tvadata{i},theta_fix{i},[0.5 100 0.01]);
+    [theta{i},tvamodel{i},change{i}] = tvashave(theta{i},tvamodel{i},tvadata{i},theta_fix{i},[0.1  1000 0.01]);
+    [theta{i},tvamodel{i},change{i}] = tvashave(theta{i},tvamodel{i},tvadata{i},theta_fix{i},[0.02 1000 0.01]);
 end
 %close
 
