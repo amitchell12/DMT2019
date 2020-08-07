@@ -65,7 +65,7 @@ cd(anaDir)
 for i=1:length(files)
     if(i==1) tvalpr('Output.txt','',tvadata{i},tvamodel{i},theta{i}); 
     end
-    tvalpr('Output.txt',filename(i).name,tvadata{i},tvamodel{i},theta{i});
+    tvalpr('Output.txt',files(i).name,tvadata{i},tvamodel{i},theta{i});
 end
 
 %% Exporting

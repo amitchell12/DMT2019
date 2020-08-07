@@ -4,7 +4,7 @@
 clear;
 
 dataDir = 'S:\groups\DMT\data\TVA\fixedt0';
-anaDir = 'S:\groups\DMT\analysis\TVA\all';
+anaDir = 'S:\groups\DMT\analysis\TVA\all\';
 cd(dataDir)
 
 filename = dir('*.dat');
