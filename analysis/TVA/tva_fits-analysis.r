@@ -2,23 +2,6 @@
 ## ANALYSIS OF TVA FITS DATA MODELLED IN MATLAB ##
 ## AG.Mitchell 06.12.2019 ##
 
-##### file info #####
-# on pc
-fitPath <- ("S:/groups/DMT/analysis/TVA/all/") # Enter path to data
-anaPath <- "S:/groups/DMT/analysis/TVA/"
-# on mac
-#fitPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/fits/" # Enter path to data
-#anaPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/"
-#dataPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/"
-#latPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/"
-# on desktop mac
-#fitPath <- "/Users/Alex/Documents/DMT/analysis/TVA/" # Enter path to data
-#anaPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
-#dataPath <- "/Users/Alex/Documents/DMT/data/"
-
-# Enter directory to save converted files to
-setwd(fitPath)
-
 ##### functions #####
 library(stringr)
 library(ggplot2)
@@ -29,6 +12,23 @@ library(plyr)
 library(ez)
 library(psychReport)
 library(ggpubr)
+
+##### file info #####
+# on pc
+#fitPath <- ("S:/groups/DMT/analysis/TVA/all/") # Enter path to data
+#anaPath <- "S:/groups/DMT/analysis/TVA/"
+# on mac
+#fitPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/fits/" # Enter path to data
+#anaPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/"
+#dataPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/"
+#latPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/"
+# on desktop mac
+fitPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/" # Enter path to data
+anaPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
+dataPath <- "/Users/Alex/Documents/DMT/data/"
+
+# Enter directory to save converted files to
+setwd(fitPath)
 
 # list all files in working directory
 txt_filelist <- list.files(fitPath, ".txt")
@@ -45,7 +45,7 @@ for (i in 1:length(txt_filelist)) {
     quote = FALSE,
     sep=",")
 }
- 
+
 ##### extracting key data #####
 # create data-frame
 tva_values <- read.csv(
@@ -53,6 +53,7 @@ tva_values <- read.csv(
   )
 tva_filelist <- dir(fitPath, recursive = TRUE, full.names = FALSE, pattern = '.csv')
 
+### will need to edit this to match output files
 # key values from .csv files - ALL COND FIRST
 for (file in tva_filelist){
   if (isTRUE(str_sub(basename(file), -10, -10)=='r')){
