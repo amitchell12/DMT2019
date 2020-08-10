@@ -5,26 +5,26 @@ library(reshape2)
 library(ggpubr)
 
 ##### correlations #####
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/task-correlations' #mac
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/task-correlations' #mac
 #anaPath <- 'S:/groups/DMT/analysis/task-correlations' #pc
-anaPath <- "/Users/Alex/Documents/DMT/analysis/task-correlations/"
+#anaPath <- "/Users/Alex/Documents/DMT/analysis/task-correlations/"
 # loading lateral reaching data
-#latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
 #latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
-latPath <- "/Users/Alex/Documents/DMT/analysis/lateral_reaching/"
+#latPath <- "/Users/Alex/Documents/DMT/analysis/lateral_reaching/"
 setwd(latPath)
 latData <- read.csv('lateralPMI-filtered.csv')
 latData_dir <- read.csv('lateral-reaching_dirPMI.csv')
 # loading radial reaching data
-#radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
 #radPath <- 'S:/groups/DMT/analysis/radial_reaching'
-radPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
+#radPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
 setwd(radPath)
 radData <- read.csv('radialPMI-filtered.csv')
 radData_dir <- read.csv('radial-reaching_dirPMI.csv')
 # TVA path
-#TVApath <- radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA'
-TVApath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
+TVApath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/all/'
+#TVApath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
 setwd(TVApath)
 TVAData <- read.csv('tva_values.csv')
 
@@ -103,11 +103,12 @@ ggsave('LAT-k_side.png', plot = last_plot(), device = NULL, dpi = 300,
 
 # collapsed across side
 KLAT <- aggregate(LAT_PMI ~ K * PPT * GRP, mean, data = corr_allDat)
-ggscatter(KLAT, x = 'LAT_PMI', y = 'K', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +
+ggscatter(KLAT, x = 'LAT_PMI', y = 'K', color = 'grey50', 
+          add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
+          cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') + 
   facet_wrap(~GRP) + 
-  ylab('vSTM') + xlab('Lateral reaching PMI (deg)') +
-  theme(text = element_text(size = 10))
+  ylab('vSTM (# items)') + xlab('Lateral reaching error (deg)') +
+  theme(text = element_text(size = 6)) + theme_classic() 
 
 ggsave('LAT-k_grp.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)

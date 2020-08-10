@@ -272,6 +272,46 @@ ggsave('example_tvafits.png', plot = last_plot(), device = NULL, dpi = 300,
 
 
 ##### plotting outcome vars #####
+tva_values$diagnosis <- factor(tva_values$diagnosis, levels = c('HC', 'MCI', 'AD'))
+# processing speed
+ggplot(tva_values, aes(x = diagnosis, y = C)) + 
+  geom_jitter(aes(colour = diagnosis),
+              position = position_jitter(0.2), size = 2) + 
+  scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
+  scale_shape_manual(values = c(16,1,1)) +
+  stat_summary(aes(y = C, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
+  labs(title = 'Processing capacity (C)', x = '', y = 'C (item/s)') +
+  theme_classic() + 
+  theme(legend.position = 'none', 
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 10),
+        title = element_text(size = 10)) -> C
+
+#VSTM
+ggplot(tva_values, aes(x = diagnosis, y = K)) + 
+  geom_jitter(aes(colour = diagnosis),
+              position = position_jitter(0.2), size = 2) + 
+  scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
+  scale_shape_manual(values = c(16,1,1)) +
+  stat_summary(aes(y = K, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
+  labs(title = 'vSTM (k)', x = '', y = 'No. of items') +
+  theme_classic() + 
+  theme(legend.position = 'none', 
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 10),
+        title = element_text(size = 10)) -> K
+
+plotTVA <- ggarrange(C, K,
+                    ncol=2, nrow=1
+)
+
+plotTVA
+
+ggsave('TVA-groups.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 8, height = 4, path = anaPath)
+
 # loading case-controls to identify individuals with reaching deficit
 ## lateral reaching ## 
 setwd(latPath)
@@ -330,11 +370,11 @@ ggplot(tva_RADvalues, aes(x = diagnosis, y = C)) +
         axis.title = element_text(size = 10),
         title = element_text(size = 10)) -> RADC
 
-plotC <- ggarrange(LATC, RADC,
+plotC1 <- ggarrange(LATC, RADC,
                  ncol=2, nrow=1
                  )
 
-plotC
+plotC1
 
 ggsave('processing-speed.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 8, height = 4, path = anaPath)
