@@ -345,7 +345,7 @@ ggplot(tva_LATvalues, aes(x = diagnosis, y = K)) +
               position = position_jitter(0.2), size = 2) + 
   scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
   scale_shape_manual(values = c(16,1,1)) +
-  stat_summary(aes(y = C, group = 1), fun.y = mean, colour = "black", 
+  stat_summary(aes(y = K, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
   labs(title = 'vSTM (k) w Lateral', x = '', y = 'No. of items') +
   theme_classic() + 
@@ -359,7 +359,7 @@ ggplot(tva_RADvalues, aes(x = diagnosis, y = K)) +
               position = position_jitter(0.2), size = 2) + 
   scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
   scale_shape_manual(values = c(16,1,1)) +
-  stat_summary(aes(y = C, group = 1), fun.y = mean, colour = "black", 
+  stat_summary(aes(y = K, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
   labs(title = 'vSTM (k) w Radial', x = '', y = '') +
   theme_classic() + 
