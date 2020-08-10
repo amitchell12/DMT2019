@@ -14,10 +14,10 @@ library(psychReport)
 
 ###### GETTING DATA ######
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #desktop mac
-anaPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
+#anaPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
 #anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
@@ -371,7 +371,7 @@ testav <- merge(Periphav, NMTPSav, by = c('PPT', 'GRP'), all = TRUE)
 # plot correlation
 ggscatter(test, x = 'Peripheral', y = 'NMTPS_Free', add = 'reg.line', conf.int = TRUE,
           cor.coef = TRUE, cor.method = 'pearson') + 
-  facet_grid(cols = vars(SIDE), rows = vars(GRP)) + 
+  facet_grid(cols = vars(DOM), rows = vars(GRP)) + 
   ylab('Normalised MTAPS (free)') + xlab('Peripheral reaching error (deg)')
 
 # plot correlation - averaged across sides

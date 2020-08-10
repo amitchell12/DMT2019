@@ -9,8 +9,8 @@ library(singcar)
 
 #on mac
 anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 
 # on desktop mac
 #anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
@@ -23,7 +23,7 @@ UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movem
 setwd(anaPath) #for Edinburgh data 
 resUOE <- read.csv('radial-reaching_compiled.csv')
 setwd(UEAPath) #for Norwich data
-resUEA <- read.csv('radial-reaching_compiled.csv') 
+resUEA <- read.csv('radial-reaching_compiledUEA.csv') 
 
 ##### DATA ORGANISE #####
 # UOE data, getting rid of 'deg' values - just use mm

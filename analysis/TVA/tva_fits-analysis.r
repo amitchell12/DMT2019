@@ -18,15 +18,15 @@ library(ggpubr)
 #fitPath <- ("S:/groups/DMT/analysis/TVA/all/") # Enter path to data
 #anaPath <- "S:/groups/DMT/analysis/TVA/"
 # on mac
-#fitPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/fits/" # Enter path to data
-#anaPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/"
-#dataPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/"
-#latPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/"
+fitPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/all/" # Enter path to dat
+anaPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/all/"
+dataPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/"
+latPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/"
 # on desktop mac
-fitPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/" # Enter path to data
-anaPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
-dataPath <- "/Users/Alex/Documents/DMT/data/"
-latPath <- "/Users/Alex/Documents/DMT/analysis/lateral_reaching/" 
+#fitPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/" # Enter path to data
+#anaPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
+#dataPath <- "/Users/Alex/Documents/DMT/data/"
+#latPath <- "/Users/Alex/Documents/DMT/analysis/lateral_reaching/" 
 
 # Enter directory to save converted files to
 setwd(fitPath)
@@ -97,6 +97,7 @@ patient_demos <- read.csv('patient_demographics.csv')
 ACEscores <- patient_demos[ ,c(1, 8:13)]
 #isolating patient demographic information to bind with control
 patient_demos <- patient_demos[, c(1:6)]
+control_demos <- control_demos[, c(1:6)]
 demo <- rbind(control_demos, patient_demos)
 names(demo)[1] <- 'SUB'
 
