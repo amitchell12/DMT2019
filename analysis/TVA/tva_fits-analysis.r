@@ -17,16 +17,20 @@ library(ggpubr)
 # on pc
 #fitPath <- ("S:/groups/DMT/analysis/TVA/all/") # Enter path to data
 #anaPath <- "S:/groups/DMT/analysis/TVA/"
+#latPath <- "S:/groups/DMT/analysis/lateral_reaching/"
+#radPath <- "S:/groups/DMT/analysis/radial_reaching/"
 # on mac
 fitPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/all/" # Enter path to dat
 anaPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/all/"
 dataPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/"
 latPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/"
+radPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching/"
 # on desktop mac
 #fitPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/" # Enter path to data
 #anaPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
 #dataPath <- "/Users/Alex/Documents/DMT/data/"
 #latPath <- "/Users/Alex/Documents/DMT/analysis/lateral_reaching/" 
+#radPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
 
 # Enter directory to save converted files to
 setwd(fitPath)
@@ -241,7 +245,7 @@ ggscatter(tvaACE, x = 'ACEmemory', y = 'K', add = 'reg.line', conf.int = TRUE,
   theme(text = element_text(size = 10))
 
 
-######### PLOTTING ##########
+######### PLOTTING FITS ##########
 # plotting predicted duration for each participant
 # plot one for example control, MCI and AD - for presentation
 
@@ -269,54 +273,109 @@ ggsave('example_tvafits.png', plot = last_plot(), device = NULL, dpi = 300,
 
 ##### plotting outcome vars #####
 # loading case-controls to identify individuals with reaching deficit
+## lateral reaching ## 
 setwd(latPath)
-case_control <- read.csv('lateral-reaching_case-control.csv')
-case_control <- aggregate(DEFICIT ~ PPT*DIAGNOSIS, sum, data = case_control)
-names(case_control)[1] <- 'SUB'
-names(case_control)[2] <- 'diagnosis'
+LATcase_control <- read.csv('lateral_case-control_filtered.csv')
+LATcase_control <- aggregate(DEFICIT ~ PPT*DIAGNOSIS, sum, data = LATcase_control)
+names(LATcase_control)[1] <- 'SUB'
+names(LATcase_control)[2] <- 'diagnosis'
 
+## radial reaching ##
+setwd(radPath)
+RADcase_control <- read.csv('radial-reaching_case-control.csv')
+RADcase_control <- aggregate(DEFICIT ~ PPT*DIAGNOSIS, sum, data = RADcase_control)
+names(RADcase_control)[1] <- 'SUB'
+names(RADcase_control)[2] <- 'diagnosis'
+
+# add in information from radial and lateral deficits into tva data-set
 tva_controls <- tva_values[tva_values$diagnosis == 'HC' ,]
 tva_controls$DEFICIT <- 0
-tva_cases <- merge(tva_values, case_control, by = c('SUB','diagnosis'))
-tva_values <- rbind(tva_controls, tva_cases)
-
-tva_values$diagnosis <- factor(tva_values$diagnosis, levels = c('HC', 'MCI', 'AD'))
-tva_values$DEFICIT <- factor(tva_values$DEFICIT)
+tva_LATcases <- merge(tva_values, LATcase_control, by = c('SUB','diagnosis'))
+tva_RADcases <- merge(tva_values, RADcase_control, by = c('SUB','diagnosis'))
+# merge into two seperate data-frames (for now)
+tva_LATvalues <- rbind(tva_controls, tva_LATcases)
+tva_RADvalues <- rbind(tva_controls, tva_RADcases)
+# factor
+tva_LATvalues$diagnosis <- factor(tva_LATvalues$diagnosis, levels = c('HC', 'MCI', 'AD'))
+tva_LATvalues$DEFICIT <- factor(tva_LATvalues$DEFICIT)
+tva_RADvalues$diagnosis <- factor(tva_RADvalues$diagnosis, levels = c('HC', 'MCI', 'AD'))
+tva_RADvalues$DEFICIT <- factor(tva_RADvalues$DEFICIT)
 
 # processing speed
-ggplot(tva_values, aes(x = diagnosis, y = C)) + 
+ggplot(tva_LATvalues, aes(x = diagnosis, y = C)) + 
   geom_jitter(aes(colour = diagnosis, shape = DEFICIT),
               position = position_jitter(0.2), size = 2) + 
   scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
   scale_shape_manual(values = c(16,1,1)) +
   stat_summary(aes(y = C, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
-  labs(title = 'Processing capacity (C)', x = '', y = 'C (item/s)') +
+  labs(title = 'Processing capacity (C) w Lateral', x = '', y = 'C (item/s)') +
   theme_classic() + 
   theme(legend.position = 'none', 
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 10),
-        title = element_text(size = 10))
+        title = element_text(size = 10)) -> LATC
 
-ggsave('processing-speed.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 4, height = 4.5, path = anaPath)
-
-# vSTM
-ggplot(tva_values, aes(x = diagnosis, y = K)) + 
-  geom_jitter(aes(colour = diagnosis, shape = DEFICIT), 
-              position = position_jitter(0.2),  size = 3) + 
-  stat_summary(aes(y = K, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
+ggplot(tva_RADvalues, aes(x = diagnosis, y = C)) + 
+  geom_jitter(aes(colour = diagnosis, shape = DEFICIT),
+              position = position_jitter(0.2), size = 2) + 
   scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
   scale_shape_manual(values = c(16,1,1)) +
-  labs(title = 'Visual STM (k)', x = '', y = 'K (# items)') +
-  theme_classic() + theme(legend.position = 'none', 
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 10),
-                          title = element_text(size = 10))
+  stat_summary(aes(y = C, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
+  labs(title = 'Processing capacity (C) w Radial', x = '', y = '') +
+  theme_classic() + 
+  theme(legend.position = 'none', 
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 10),
+        title = element_text(size = 10)) -> RADC
+
+plotC <- ggarrange(LATC, RADC,
+                 ncol=2, nrow=1
+                 )
+
+plotC
+
+ggsave('processing-speed.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 8, height = 4, path = anaPath)
+
+# vSTM
+ggplot(tva_LATvalues, aes(x = diagnosis, y = K)) + 
+  geom_jitter(aes(colour = diagnosis, shape = DEFICIT),
+              position = position_jitter(0.2), size = 2) + 
+  scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
+  scale_shape_manual(values = c(16,1,1)) +
+  stat_summary(aes(y = C, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
+  labs(title = 'vSTM (k) w Lateral', x = '', y = 'No. of items') +
+  theme_classic() + 
+  theme(legend.position = 'none', 
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 10),
+        title = element_text(size = 10)) -> LATK
+
+ggplot(tva_RADvalues, aes(x = diagnosis, y = K)) + 
+  geom_jitter(aes(colour = diagnosis, shape = DEFICIT),
+              position = position_jitter(0.2), size = 2) + 
+  scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
+  scale_shape_manual(values = c(16,1,1)) +
+  stat_summary(aes(y = C, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
+  labs(title = 'vSTM (k) w Radial', x = '', y = '') +
+  theme_classic() + 
+  theme(legend.position = 'none', 
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 10),
+        title = element_text(size = 10)) -> RADK
+
+plotK <- ggarrange(LATK, RADK,
+                   ncol=2, nrow=1
+)
+
+plotK
 
 ggsave('vSTM.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 4, height = 4.5, path = anaPath)
+       width = 8, height = 4, path = anaPath)
 
 # t0
 ggplot(tva_values, aes(x = diagnosis, y = t0)) + 
