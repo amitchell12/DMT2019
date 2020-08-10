@@ -53,7 +53,7 @@ output2 <- read.csv('OutputFixedt0.csv') #data where t0 was fixed (<0 initially)
 output <- rbind(output1,output2)
 
 # extract important values from data-set
-tva_values <- output[, c(1,2,10,11,15,16,13,28:34,19)]
+tva_values <- output[, c(1,2,10,11,15,16,13,28:34,81:94,19)]
 # labelling
 tva_values$SUB <- factor(substr(tva_values$ID, 8, 10))
 tva_values$GRP <- factor(substr(tva_values$SUB, 1, 1))
@@ -113,7 +113,7 @@ tva_values <- tva_values[tva_values$SPD == 0 ,]
 Ngroup_filt <- count(tva_values, vars = 'diagnosis')
 
 ## reorganise data-frame
-tva_values <- tva_values[, c(1:6,22:23,8:20)]
+tva_values <- tva_values[, c(1:6,36:37,8:34)]
 tva_values <- tva_values[order(tva_values$SUB) ,]
 
 # adding mu to ExpDurc6 and c7 (unmasked conditions)
@@ -126,43 +126,41 @@ write.csv(tva_values, 'tva_values.csv', row.names = FALSE)
 ##### DATA-FRAME FOR FITTING ######
 # creating data-frame so can have predicted and actual values for each condition
 # melting so have information by condition
+# first melt by letter duration
 tva_dat <- melt(
   tva_values, 
   id.vars = c('SUB','diagnosis','SITE', 'K','C','t0','mu'), 
   measure.vars = c('ExpDurC1','ExpDurC2','ExpDurC3', 'ExpDurC4', 'ExpDurC5', 'ExpDurC6', 'ExpDurC7'))
-#sort new melted data frame
-tva_dat <- tva_dat[order(tva_dat$SUB) ,]
 #ranaming conditions (1-7) and columns, before adding other columns of value
 colnames(tva_dat)[colnames(tva_dat)=="variable"] <- "COND"
 tva_dat$COND <- factor(substr(tva_dat$COND, 8, 8))
 colnames(tva_dat)[colnames(tva_dat)=="value"] <- "DUR"
 
-## other important variables (predicted k) - compile into variable and add to data-frame
-#empty t-tmp data-frame
-ttmp <- data.frame(MS=numeric(),
-                   pMS=numeric(), 
-                   SUB=factor(),
-                   COND=factor(),
-                 stringsAsFactors=FALSE) 
-##hmm think about a different way to do this from output file?
+# then melt by mean score
+tva_MS <- melt(
+  tva_values, 
+  id.vars = c('SUB','diagnosis'), 
+  measure.vars = c('MeanScoreC1','MeanScoreC2','MeanScoreC3', 'MeanScoreC4', 
+                   'MeanScoreC5', 'MeanScoreC6', 'MeanScoreC7'))
+#ranaming conditions (1-7) and columns, before adding other columns of value
+colnames(tva_MS)[colnames(tva_MS)=="variable"] <- "COND"
+tva_MS$COND <- factor(substr(tva_MS$COND, 11, 11))
+colnames(tva_MS)[colnames(tva_MS)=="value"] <- "MS"
 
-## NEED TO FIGURE OUT HOW TO GET THE MS AND PS VALUES FOR EACH PP - could just do it above
-setwd(fitPath)
-row_x = 1
-for (i in length(output$ID)){
-    MS[row_x ,] <- t(output[c(i), c(81:87)])
-    PMS[row_x ,] <- t(output[c(i), c(88:94)])
-    
-    row_x <- row_x + 7
-}
-  
+# melt by pred mean score
+tva_PMS <- melt(
+  tva_values, 
+  id.vars = c('SUB','diagnosis'), 
+  measure.vars = c('PredMeanScoreC1','PredMeanScoreC2','PredMeanScoreC3', 'PredMeanScoreC4', 
+                   'PredMeanScoreC5', 'PredMeanScoreC6', 'PredMeanScoreC7'))
+#ranaming conditions (1-7) and columns, before adding other columns of value
+colnames(tva_PMS)[colnames(tva_PMS)=="variable"] <- "COND"
+tva_PMS$COND <- factor(substr(tva_PMS$COND, 15, 15))
+colnames(tva_PMS)[colnames(tva_PMS)=="value"] <- "PredMS"
 
-# merging the two data-frames by SUB and COND
-tva_dat <- merge(tva_dat, ttmp, by = c('SUB','COND'), all.y = TRUE)
-# renaming V1 (which is actually mean score)
-colnames(tva_dat)[colnames(tva_dat)=='V1'] <- 'MS'
-# order by group (diagnosis)
-tva_dat <- tva_dat[order(tva_dat$diagnosis) ,]
+## finally: merge them all into one data frame with 7 conds per PP
+tva_dat <- merge(tva_dat, tva_MS, by = c('SUB', 'COND', 'diagnosis'))
+tva_dat <- merge(tva_dat, tva_PMS, by = c('SUB', 'COND', 'diagnosis'))
 
 #save tva-values
 setwd(anaPath)
