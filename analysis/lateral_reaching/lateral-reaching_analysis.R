@@ -544,6 +544,3 @@ ggscatter(PMIACE, x = 'ACEall', y = 'PMI', add = 'reg.line', conf.int = TRUE,
           cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +
   ylab('PMI (deg)') + xlab('ACE score (%)') +
   theme(text = element_text(size = 10))
-
-
-

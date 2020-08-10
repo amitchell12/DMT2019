@@ -5,26 +5,26 @@ library(reshape2)
 library(ggpubr)
 
 ##### correlations #####
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/task-correlations' #mac
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/task-correlations' #mac
 #anaPath <- 'S:/groups/DMT/analysis/task-correlations' #pc
-#anaPath <- "/Users/Alex/Documents/DMT/analysis/task-correlations/"
+anaPath <- "/Users/Alex/Documents/DMT/analysis/task-correlations/"
 # loading lateral reaching data
 #latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
 #latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 latPath <- "/Users/Alex/Documents/DMT/analysis/lateral_reaching/"
 setwd(latPath)
-latData <- read.csv('lateral-reaching_PMI.csv')
-latData_dir <- read.csv('lateral-reaching_dPMI.csv')
+latData <- read.csv('lateralPMI-filtered.csv')
+latData_dir <- read.csv('lateral-reaching_dirPMI.csv')
 # loading radial reaching data
 #radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
 #radPath <- 'S:/groups/DMT/analysis/radial_reaching'
 radPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
 setwd(radPath)
-radData <- read.csv('radial-reaching_PMI.csv')
-radData_dir <- read.csv('radial-reaching_dPMI.csv')
+radData <- read.csv('radialPMI-filtered.csv')
+radData_dir <- read.csv('radial-reaching_dirPMI.csv')
 # TVA path
 #TVApath <- radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA'
-TVApath <- "/Users/Alex/Documents/DMT/analysis/TVA/"
+TVApath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
 setwd(TVApath)
 TVAData <- read.csv('tva_values.csv')
 
@@ -84,14 +84,11 @@ names(TVAData)[1] <- 'PPT'
 names(TVAData)[6] <- 'DIAGNOSIS'
 # merge with allDat
 allDat <- merge(allDat, TVAData, by = c('PPT', 'GRP', 'DIAGNOSIS'), all = TRUE)
-allDat <- allDat[c(1:14, 20:30)]
+corr_allDat <- na.omit(allDat)
 
 setwd(anaPath)
-write.csv(allDat, 'all-task_results.csv', row.names = FALSE)
+write.csv(corr_allDat, 'all-task_correlate.csv', row.names = FALSE)
 
-# removing NA values for plotting
-allDat <- allDat[c(1:11, 15:25)]
-corr_allDat <- na.omit(allDat)
 
 ##### TVA lateral reaching
 ### correlate K and lateral reaching
