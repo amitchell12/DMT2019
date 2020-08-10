@@ -26,6 +26,7 @@ library(ggpubr)
 fitPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/" # Enter path to data
 anaPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
 dataPath <- "/Users/Alex/Documents/DMT/data/"
+latPath <- "/Users/Alex/Documents/DMT/analysis/lateral_reaching/" 
 
 # Enter directory to save converted files to
 setwd(fitPath)
@@ -175,9 +176,17 @@ C_ANOVA <- ezANOVA(
   , dv = .(C)
   , wid = .(SUB)
   , between = .(diagnosis)
-  , type = 3
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
 )
-print(C_ANOVA)
+
+C_ANOVA$ANOVA
+C_ANOVA$`Mauchly's Test for Sphericity`
+C_ANOVA$`Sphericity Corrections`
+aovC <- aovEffectSize(ezObj = C_ANOVA, effectSize = "pes")
+aovDispTable(aovC)
+
 # pairwise t-test to identify group differences
 Cttest <- pairwise.t.test(tva_values$C, tva_values$diagnosis, p.adj = 'bonf')
 print(Cttest)
@@ -188,9 +197,17 @@ K_ANOVA <- ezANOVA(
   , dv = .(K)
   , wid = .(SUB)
   , between = .(diagnosis)
-  , type = 3
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
 )
-print(K_ANOVA)
+
+K_ANOVA$ANOVA
+K_ANOVA$`Mauchly's Test for Sphericity`
+K_ANOVA$`Sphericity Corrections`
+aovK <- aovEffectSize(ezObj = K_ANOVA, effectSize = "pes")
+aovDispTable(aovK)
+
 # pairwise t-test to identify group differences
 Kttest <- pairwise.t.test(tva_values$K, tva_values$diagnosis, p.adj = 'bonf')
 print(Kttest)
@@ -205,7 +222,7 @@ ggscatter(tvaACE, x = 'ACEall', y = 'C', add = 'reg.line', conf.int = TRUE,
           cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +
   ylab('Items/s (C)') + xlab('ACE score (%)') +
   theme(text = element_text(size = 10))
-#ACE memory score
+#ACE attention score
 ggscatter(tvaACE, x = 'ACEattention', y = 'C', add = 'reg.line', conf.int = TRUE,
           cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +
   ylab('Items/s (C)') + xlab('ACE score (%)') +
@@ -235,11 +252,11 @@ tvafits_AD <- tva_dat[tva_dat$SUB == '408',]
 # changing levels for plot
 ggplot() + 
   geom_point(data = tvafits_HC, aes(x = DUR, y = MS), size = 4, colour = 'grey50') + 
-  geom_line(data = tvafits_HC, aes(x = DUR, y = pMS), size = 2, colour = 'grey50') + 
+  geom_line(data = tvafits_HC, aes(x = DUR, y = PredMS), size = 2, colour = 'grey50') + 
   geom_point(data = tvafits_MCI, aes(x = DUR, y = MS), size = 4, colour = 'goldenrod2') + 
-  geom_line(data = tvafits_MCI, aes(x = DUR, y = pMS), size = 2, colour = 'goldenrod2') + 
+  geom_line(data = tvafits_MCI, aes(x = DUR, y = PredMS), size = 2, colour = 'goldenrod2') + 
   geom_point(data = tvafits_AD, aes(x = DUR, y = MS), size = 4, colour = 'dodgerblue3') + 
-  geom_line(data = tvafits_AD, aes(x = DUR, y = pMS), size = 2, colour = 'dodgerblue3') + 
+  geom_line(data = tvafits_AD, aes(x = DUR, y = PredMS), size = 2, colour = 'dodgerblue3') + 
   labs(x = 'Perceived Duration (ms)', y = 'V-STM') +
   theme_classic() +
   theme(legend.position = 'none', axis.text = element_text(size = 20),
@@ -268,47 +285,50 @@ tva_values$DEFICIT <- factor(tva_values$DEFICIT)
 # processing speed
 ggplot(tva_values, aes(x = diagnosis, y = C)) + 
   geom_jitter(aes(colour = diagnosis, shape = DEFICIT),
-              position = position_jitter(0.2), size = 5) + 
+              position = position_jitter(0.2), size = 2) + 
   scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
   scale_shape_manual(values = c(16,1,1)) +
   stat_summary(aes(y = C, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 2.5, size = 5, group = 1) +
+               geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
   labs(title = 'Processing capacity (C)', x = '', y = 'C (item/s)') +
   theme_classic() + 
   theme(legend.position = 'none', 
-        axis.text = element_text(size = 20),
-        axis.title = element_text(size = 22),
-        title = element_text(size = 20))
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 10),
+        title = element_text(size = 10))
 
 ggsave('processing-speed.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 5, height = 6, path = anaPath)
+       width = 4, height = 4.5, path = anaPath)
 
 # vSTM
 ggplot(tva_values, aes(x = diagnosis, y = K)) + 
   geom_jitter(aes(colour = diagnosis, shape = DEFICIT), 
-              position = position_jitter(0.2),  size = 5) + 
+              position = position_jitter(0.2),  size = 3) + 
   stat_summary(aes(y = K, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 2.5, size = 5, group = 1) +
+               geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
   scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
   scale_shape_manual(values = c(16,1,1)) +
   labs(title = 'Visual STM (k)', x = '', y = 'K (# items)') +
-  theme_classic() + theme(legend.position = '', 
-                          axis.text = element_text(size = 20),
-                          axis.title = element_text(size = 22),
-                          title = element_text(size = 20))
+  theme_classic() + theme(legend.position = 'none', 
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 10),
+                          title = element_text(size = 10))
 
 ggsave('vSTM.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 5, height = 6, path = anaPath)
+       width = 4, height = 4.5, path = anaPath)
 
 # t0
 ggplot(tva_values, aes(x = diagnosis, y = t0)) + 
-  geom_jitter(aes(colour = diagnosis), position = position_jitter(0.1)) + 
+  geom_jitter(aes(colour = diagnosis, shape = DEFICIT), 
+              position = position_jitter(0.2),  size = 3) + 
   stat_summary(aes(y = t0, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  labs(title = 'Perceptual threshold (t0)', x = 'Group', y = 't0 (ms)', 
-       element_text(size = 10)) +
-  theme_bw() + theme(legend.position = 'bottom', text = element_text(size = 10))
-
-ggsave('perceptual-thresh.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
+               geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
+  scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
+  scale_shape_manual(values = c(16,1,1)) +
+  labs(title = 'Perceptual Threshold', x = '', y = 'Speed (ms)') +
+  theme_classic() + theme(legend.position = 'none', 
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 10),
+                          title = element_text(size = 10))
+ggsave('T0.png', plot = last_plot(), device = NULL, dpi = 300, 
+         width = 4, height = 4.5, path = anaPath)
