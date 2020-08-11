@@ -173,6 +173,15 @@ setwd(anaPath)
 write.csv(tva_dat, 'tva_fits.csv', row.names = FALSE)
 
 ######### DATA ANALYSIS #########
+## summary stats ## 
+meanC <- summarySE(data = tva_values, measurevar = 'C',
+                   groupvars = 'diagnosis', na.rm = TRUE)
+meanK <- summarySE(data = tva_values, measurevar = 'K',
+                   groupvars = 'diagnosis', na.rm = TRUE)
+setwd(anaPath)
+write.csv(meanC, 'TVA-Cmeans.csv', row.names = FALSE)
+write.csv(meanK, 'TVA-Kmeans.csv', row.names = FALSE)
+
 # run ANOVAs on processing speed & vSTM
 # processing speed
 tva_values$SUB <- factor(tva_values$SUB)

@@ -286,6 +286,11 @@ write.csv(res_mediansF, 'radial-medians_filtered.csv', row.names = FALSE)
 write.csv(res_meansF, 'radial-means_filtered.csv', row.names = FALSE)
 write.csv(res_medians_allF, 'radial-medians-all_filtered.csv', row.names = FALSE)
 
+meanPMI_side <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'DOM'),
+                          na.rm = TRUE)
+meanPMI_all <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
+                         na.rm = TRUE)
+
 ######## CASE CONTROL ANALYSIS ########
 # create data-frames (controls and patients) with key information
 td_summary <- summarySE(data = PMIfilt, measurevar = 'PMI', 
