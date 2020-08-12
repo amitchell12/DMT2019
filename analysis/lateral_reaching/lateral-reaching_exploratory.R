@@ -194,15 +194,30 @@ MTav <- aggregate(MT ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
 
 ## plotting :)
 # both sides
-ggplot(MT_means, aes(x = DOM, y = MT, colour = DIAGNOSIS, group = DIAGNOSIS)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(VIEW), rows = vars(DIAGNOSIS)) + ylim(0, 1000) +
-  labs(title = 'Reach Duration', x = 'Side', 
-       y = 'Reach duration (ms)', element_text(size = 12)) +
-  theme_bw() + theme(legend.position = 'none', 
-                     text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) 
+MTsummary <- summarySE(MT_means, measurevar = 'MT', 
+                       groupvar = c('DIAGNOSIS','VIEW','DOM'), na.rm = TRUE)
+MTsummary$DIAGNOSIS <- factor(MTsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
+MTsummary$DOM <- factor(MTsummary$DOM, labels = c('Non-dominant','Dominant'))
+
+ggplot(MTsummary, aes(x = VIEW, y = MT, colour = DIAGNOSIS, group = DIAGNOSIS,
+                      shape = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(width = .3)) +
+  geom_line(aes(group = DIAGNOSIS), size = 0.5, alpha = .5,
+            position = position_dodge(width = .3)) +
+  geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
+                width=.4, position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  facet_grid(~DOM) + ylim(300,900) +
+  labs(x = 'Side', y = 'Movement time (ms)', element_text(size = 12)) +
+  theme_classic() + theme(legend.position = 'bottom', 
+                          legend.title = element_blank(),
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12)
+                     ) 
+
+ggsave('LATMTmean_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 4, height = 5, path = anaPath)
 
 # average across sides
 MTav$DIAGNOSIS <- factor(MTav$DIAGNOSIS, levels = c('HC','MCI','AD'))
@@ -210,18 +225,19 @@ ggplot(MTav, aes(x = VIEW, y = MT, colour = DIAGNOSIS, group = PPT)) +
   geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
             position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('grey50','grey50','grey50')) +
   stat_summary(aes(y = MT, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   facet_wrap(~DIAGNOSIS) + 
-  labs(title = 'Lateral reaching', x = '', 
-       y = 'Reach duration (ms)', element_text(size = 12)) +
+  labs(x = '', y = 'Movement time (ms)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'none', 
-                     text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)
+                     axis.text = element_text(size = 10),
+                     axis.title = element_text(size = 12),
+                     strip.text = element_text(size = 12)
                      ) 
 
-ggsave('lateral-MT.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+ggsave('LATMTav_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 6, height = 4, path = anaPath)
 
 # by eccentricity
 MT_medians$ECC <- dir_medians$POSITION
@@ -235,14 +251,14 @@ MTecc <- summarySE(MT_medians, measurevar = 'MT',
                     groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
 MTecc$DIAGNOSIS <- factor(MTecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = VIEW)) +
-  geom_point(size = 3, position = position_dodge(width = .4)) +
+ggplot(MTecc, aes(x = ECC, y = MT, group = VIEW, colour = VIEW)) +
+  geom_point(size = 3, position = position_dodge(width = .3)) +
   geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
-                width=.4, position = position_dodge(width = .4)) + 
-  geom_line(aes(group = VIEW), size = 0.7, position = position_dodge(width = .4)) +
-  labs(title = 'Lateral reaching',
-       x = 'Eccentricity (°)', y = 'Movement time (ms)') +
-  facet_grid(DIAGNOSIS) + theme_classic() +
+                width=.4, position = position_dodge(width = .3)) + 
+  geom_line(aes(group = VIEW), size = 0.7, position = position_dodge(width = .3)) +
+  labs(x = 'Eccentricity (°)', y = 'Movement time (ms)') +
+  scale_color_manual(values = c('black','grey50')) +
+  facet_wrap(~DIAGNOSIS) + theme_classic() +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
@@ -250,8 +266,8 @@ ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = VIEW)) +
         strip.text = element_text(size = 12)
   )
 
-ggsave('lateral-MTecc.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+ggsave('LATMTecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 7.5, height = 5, path = anaPath)
 
 
 ## ANOVA ## 
