@@ -15,11 +15,11 @@ library(psychReport)
 #dataPath <- 'S:/groups/DMT/data'
 #anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 # on mac (desktop)
-#dataPath <- '/Users/Alex/Documents/DMT/data/'
-#anaPath <- '/Users/Alex/Documents/DMT/analysis//lateral_reaching/'
+dataPath <- '/Users/Alex/Documents/DMT/data/'
+anaPath <- '/Users/Alex/Documents/DMT/analysis//lateral_reaching/'
 # on mac (laptop)
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/'
 setwd(anaPath)
 
 # load data file
@@ -372,9 +372,37 @@ AV_ANOVA$`Sphericity Corrections`
 aovPMIAV <- aovEffectSize(ezObj = AV_ANOVA, effectSize = "pes")
 aovDispTable(aovPMIAV)
 
+### ANOVA BY VIEW ###
+# mean AE instead of PMI
+# summary table
+AEsummary <- summarySE(res_meansF, measurevar = 'AEmean', 
+                       groupvar = c('DIAGNOSIS', 'DOM', 'VIEW'), na.rm = TRUE)
+AEanova <- res_meansF[res_meansF$PPT != 212 & res_meansF$PPT != 407 ,]
+
+AE_ANOVA <- ezANOVA(
+  data = AEanova
+  , dv = .(AEmean)
+  , wid = .(PPT)
+  , within = .(DOM, VIEW)
+  , between = .(DIAGNOSIS)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+AE_ANOVA$ANOVA
+AE_ANOVA$`Mauchly's Test for Sphericity`
+AE_ANOVA$`Sphericity Corrections`
+aovAE <- aovEffectSize(ezObj = AE_ANOVA, effectSize = "pes")
+aovDispTable(aovAE)
+
 ### ANOVA BY ECCENTRICITY ###
-ECCanova <- res_mediansF[res_mediansF$PPT != 212 ,]
-ECCanova <- ECCanova[ECCanova$PPT != 407 ,]
+# median AE
+# summary table
+ECCsummary <- summarySE(res_mediansF, measurevar = 'AEmed', 
+                        groupvar = c('DIAGNOSIS', 'DOM', 'VIEW', 'POSITION'), na.rm = TRUE)
+  
+ECCanova <- res_mediansF[res_mediansF$PPT != 212 & es_mediansF$PPT != 407 ,]
 ECCanova <- ECCanova[, c(1:9,11)]
 ## create 'eccentricity' variable where left are -ve and right are +ve
 ECCanova$POSITION <- factor(ECCanova$POSITION)
@@ -396,8 +424,166 @@ ECC_ANOVA$`Sphericity Corrections`
 aovECC <- aovEffectSize(ezObj = ECC_ANOVA, effectSize = "pes")
 aovDispTable(aovECC)
 
+###### PLOTTING ######
+## PLOT 1: median eccentricity ##
+dom_meds <- res_mediansF[res_mediansF$DOM == 'D' ,]
+ndom_meds <- res_mediansF[res_mediansF$DOM == 'ND' ,]
 
-######## step 4: analysis with all controls (no outliers) #########
+## Non-dominant
+# make plot data-frame
+plot_NDecc <- summarySE(ndom_meds, measurevar = 'AEmed', 
+                        groupvar = c('DIAGNOSIS','POSITION','VIEW'), na.rm = TRUE)
+plot_NDecc$POSITION <- factor(plot_NDecc$POSITION)
+plot_NDecc$DIAGNOSIS <- factor(plot_NDecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+
+# plot
+ggplot(plot_NDecc, aes(x = POSITION, y = AEmed, shape = DIAGNOSIS, colour = DIAGNOSIS,
+                       group= DIAGNOSIS)) +
+  geom_point(size = 4, position = position_dodge(width = .3)) + 
+  geom_errorbar(aes(ymin=AEmed-ci, ymax=AEmed+ci), 
+                width=.4, position = position_dodge(width = .3)) +
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
+  scale_shape_manual(values = c(1, 16, 16)) + ylim(0,30) +
+  scale_color_manual(values = c('black','grey60','grey20')) +
+  labs(title = 'Non-dominant', x = '', y = 'Lateral reaching error (mm)') + 
+  facet_wrap(~VIEW) +
+  theme_classic() + theme(legend.position = 'none', 
+                          legend.title = element_blank(),
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12)
+  ) -> NDecc
+
+## Dominant
+# make plot data-frame
+plot_Decc <- summarySE(dom_meds, measurevar = 'AEmed', 
+                       groupvar = c('DIAGNOSIS','POSITION','VIEW'), na.rm = TRUE)
+plot_Decc$POSITION <- factor(plot_Decc$POSITION)
+plot_Decc$DIAGNOSIS <- factor(plot_Decc$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+
+# plot
+ggplot(plot_Decc, aes(x = POSITION, y = AEmed, shape = DIAGNOSIS, colour = DIAGNOSIS,
+                      group= DIAGNOSIS)) +
+  geom_point(size = 4, position = position_dodge(width = .3)) + 
+  geom_errorbar(aes(ymin=AEmed-ci, ymax=AEmed+ci), 
+                width=.4, position = position_dodge(width = .3)) +
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
+  scale_shape_manual(values = c(1, 16, 16)) + ylim(0,30) +
+  scale_color_manual(values = c('black','grey60','grey20')) +
+  labs(title = 'Dominant', x = 'Eccentricity (°)', y = 'Lateral reaching error (mm)') + 
+  facet_wrap(~VIEW) +
+  theme_classic() + theme(legend.position = 'none', 
+                          legend.title = element_blank(),
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12)
+  ) -> Decc
+
+
+ecc <- ggarrange(NDecc, Decc,
+                 ncol=1, nrow=2,
+                 common.legend = TRUE, 
+                 legend = 'bottom')
+ecc
+
+ggsave('LATeccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 5, height = 8, path = anaPath)
+
+## PLOT 2: meanAE ##
+# levels
+AEsummary$DIAGNOSIS <- factor(AEsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
+ggplot(AEsummary, aes(x = DOM, y = AEmean, colour = VIEW,
+                      group = DIAGNOSIS)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = VIEW), size = 0.7) +
+  geom_errorbar(aes(ymin=AEmean-ci, ymax=AEmean+ci), 
+                width=.3) +
+  scale_color_manual(values = c('black','grey60')) +
+  labs(x = 'Side', y = 'Lateral reaching error (mm)') + 
+  facet_wrap(~DIAGNOSIS) +
+  theme_classic() + theme(legend.position = 'bottom', 
+                       legend.title = element_blank(),
+                       axis.text = element_text(size = 10),
+                       axis.title = element_text(size = 12),
+                       strip.text = element_text(size = 12))
+
+ggsave('LATmean-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 4.5, height = 6, path = anaPath)
+
+## PLOT 3: PMI ##
+# make control data-frame
+control_PMI <- subset(PMIfilt, PMIfilt$DIAGNOSIS == 'HC')
+control_PMI$TSTAT <- 0
+control_PMI$PVALUE <- 1
+control_PMI$DEFICIT <- 0
+control_PMI$BL <- 0
+# get deficit data for patients
+plot_PMI <- merge(PMIfilt, tdfilt_results, by = c('PPT','DOM','DIAGNOSIS'))
+# include only relevant info
+plot_PMI$PMI <- plot_PMI$PMI.x
+plot_PMI <- plot_PMI[, c(1:10,13:14,22:24)]
+
+# make plot data frame
+plot_PMI <- rbind(control_PMI, plot_PMI)
+
+plot_PMI$DOM <- factor(plot_PMI$DOM, levels = c('ND', 'D'))
+plot_PMI$DIAGNOSIS <- factor(plot_PMI$DIAGNOSIS, levels = c('HC','MCI','AD'))
+plot_PMI$PPT <- factor(plot_PMI$PPT)
+# make column where deficit and BL cases are combined
+# 1 = no deficit, 2 = borderline deficit, 3 = deficit
+plot_PMI$DEFICITS <- as.numeric(plot_PMI$DEFICIT) + as.numeric(plot_PMI$BL)
+plot_PMI$DEFICITS <- factor(plot_PMI$DEFICITS)
+
+ggplot(plot_PMI, aes(x = DOM, y = PMI, colour = DIAGNOSIS, group = PPT, shape = DEFICITS)) + 
+  geom_line(aes(group = PPT), alpha = .7, size = 0.7, position = position_dodge(.2)) +
+  geom_point(size = 2.5, position = position_dodge(.2)) +
+  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  scale_color_manual(values = c('grey45','grey45','grey45')) +
+  scale_shape_manual(values = c(1,18,16)) +
+  facet_wrap(~DIAGNOSIS) +
+  labs(x = 'Side', y = 'Lateral PMI (mm)') +
+  theme_classic() + theme(legend.position = 'none', 
+                          axis.title = element_text(size = 12),
+                          axis.text = element_text(size = 10),
+                          strip.text = element_text(size = 10) 
+  ) -> pPMI
+pPMI
+
+## PLOT 4: average PMI across sides - combine with PLOT 2
+PMIav_plot <- aggregate(PMI ~ PPT*DIAGNOSIS*AGE*ED*SITE, mean, data = plot_PMI)
+PMIav_plot <- PMIav_plot[order(PMIav_plot$PPT),]
+plot_PMI$DEFICITS <- as.numeric(plot_PMI$DEFICITS)
+deficit <- aggregate(DEFICITS ~ PPT*DIAGNOSIS, max, data = plot_PMI)
+deficit <- deficit[order(deficit$PPT),]
+PMIav_plot$DEFICITS <- factor(deficit$DEFICITS)
+
+ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = DIAGNOSIS, group = PPT, shape = DEFICITS)) + 
+  geom_point(size = 2.5, position = position_dodge(.2)) +
+  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  scale_color_manual(values = c('grey45','grey45','grey45')) +
+  scale_shape_manual(values = c(1,18,16)) +
+  labs(x = 'Diagnosis', y = '') +
+  theme_classic() + theme(legend.position = 'none', 
+                          axis.title = element_text(size = 12),
+                          axis.text = element_text(size = 10),
+                          strip.text = element_text(size = 10) 
+  ) -> avPMI
+avPMI
+
+PMIfig <- ggarrange(pPMI, avPMI,
+                    ncol=2, nrow=1,
+                    widths = c(1.5,1),
+                    labels = c('a','b'),
+                    hjust = -1)
+PMIfig
+ggsave('LATPMI-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 8, height = 4, path = anaPath)
+
+######## step 5: analysis with all controls (no outliers) #########
 # correlate PMI with possible co-variates, age + education
 agecov <- cor.test(PMIdata$AGE, PMIdata$PMI, method = 'pearson')
 ggscatter(PMIdata, x = "AGE", y = "PMI", 
