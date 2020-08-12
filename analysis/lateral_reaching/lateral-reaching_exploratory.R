@@ -510,3 +510,6 @@ ggscatter(PMIACE, x = 'ACEall', y = 'PMI',
           cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') +
   ylab('PMI (deg)') + xlab('ACE score (%)') +
   theme(text = element_text(size = 10))
+
+ggsave('LATPMI-ACEcorr_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 5, height = 5, path = anaPath)
