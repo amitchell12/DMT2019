@@ -310,6 +310,10 @@ MTECC_ANOVA$`Sphericity Corrections`
 aovMTECC <- aovEffectSize(ezObj = MTECC_ANOVA, effectSize = "pes")
 aovDispTable(aovMTECC)
 
+#pair-wise t-test
+MTttest <- pairwise.t.test(MT_medians$MT, MT_medians$DIAGNOSIS, p.adj = 'bonf')
+print(MTttest)
+
 ###### REACTION TIME ######
 RT_medians <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * POSITION * SITE * GRP * DIAGNOSIS, 
                         median, data = res)
@@ -424,8 +428,8 @@ aovDispTable(aovRTECC)
 # load PMI data
 PMIdata <- read.csv('lateralPMI-filtered.csv')
 # cast MT and RT
-MT <- dcast(MT_means, PPT+DIAGNOSIS+SITE+DOM ~ VIEW)
-RT <- dcast(RT_means, PPT+DIAGNOSIS+SITE+DOM ~ VIEW)
+MT <- dcast(MT_means, PPT+DIAGNOSIS+DOM+SITE ~ VIEW)
+RT <- dcast(RT_means, PPT+DIAGNOSIS+DOM+SITE ~ VIEW)
 #renaming for mergings
 colnames(MT)[colnames(MT) == 'Free'] <- 'FreeMT' 
 colnames(MT)[colnames(MT) == 'Peripheral'] <- 'PeripheralMT' 
@@ -438,16 +442,27 @@ corrData <- merge(PMIdata, MT, by = c('PPT','DIAGNOSIS','SITE','DOM'))
 corrData <- merge(corrData, RT, by = c('PPT','DIAGNOSIS','SITE','DOM'))
 
 ## correlate peripheral PMI w peripheral MT
-ggscatter(corrData, x = "Peripheral", y = "PeripheralMT", add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, cor.method = 'spearman') + 
-  facet_grid(cols = vars(DOM), rows = vars(GRP)) +
-  labs(x = 'Reaching error (mm)', y = 'Movement time (ms)')
+ggscatter(corrData, x = "Peripheral", y = "PeripheralMT", colour = 'grey50',
+          add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
+          cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman')+ 
+  facet_grid(cols = vars(GRP), rows = vars(DOM)) +
+  labs(x = 'PMI (mm)', y = 'Peripheral movement time (ms)') +
+  theme_classic() + 
+  theme(text = element_text(size = 10)
+        )
+
+ggsave('LATMT-PMI_corr_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 5, height = 5, path = anaPath)
 
 ## correlate peripheral PMI w peripheral RT
-ggscatter(corrData, x = "Peripheral", y = "PeripheralRT", add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, cor.method = 'pearson') + 
-  facet_grid(cols = vars(DOM), rows = vars(GRP)) +
-  labs(x = 'Reaching error (mm)', y = 'Reaction time (ms)')
+ggscatter(corrData, x = "Peripheral", y = "PeripheralRT", colour = 'grey50',
+          add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
+          cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman')+ 
+  facet_grid(cols = vars(GRP), rows = vars(DOM)) +
+  labs(x = 'PMI (mm)', y = 'Peripheral reaction time (ms)') +
+  theme_classic() + 
+  theme(text = element_text(size = 10)
+        )
 
 ##### CORRELATE ACE #####
 setwd(dataPath)
@@ -456,9 +471,8 @@ patient_demos <- read.csv('patient_demographics.csv')
 ACEscores <- patient_demos[ ,c(1, 8:13)]
 names(ACEscores)[1] <- 'PPT'
 setwd(anaPath)
-PMIfilt <- read.csv('lateralPMI-filtered.csv')
 # merging ACE with PMI
-PMIACE <- merge(PMIfilt, ACEscores, by = 'PPT')
+PMIACE <- merge(PMIdata, ACEscores, by = 'PPT')
 PMIACE$ACEall <- as.numeric(as.character(PMIACE$ACEall))
 PMIACE$ACEvisuospatial <- as.numeric(as.character(PMIACE$ACEvisuospatial))
 
