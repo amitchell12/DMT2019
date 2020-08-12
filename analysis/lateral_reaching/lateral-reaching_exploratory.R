@@ -208,7 +208,7 @@ ggplot(MTsummary, aes(x = VIEW, y = MT, colour = DIAGNOSIS, group = DIAGNOSIS,
                 width=.4, position = position_dodge(width = .3)) +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~DOM) + ylim(300,900) +
-  labs(x = 'Side', y = 'Movement time (ms)', element_text(size = 12)) +
+  labs(x = '', y = 'Movement time (ms)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'bottom', 
                           legend.title = element_blank(),
                           axis.text = element_text(size = 10),
@@ -325,15 +325,30 @@ RTav <- aggregate(RT ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
 
 ## plotting :)
 # both sides
-ggplot(RT_means, aes(x = DOM, y = RT, colour = DIAGNOSIS, group = DIAGNOSIS)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(VIEW), rows = vars(DIAGNOSIS)) + ylim(0, 1000) +
-  labs(title = 'Reach Duration', x = 'Side', 
-       y = 'Reaction time (ms)', element_text(size = 12)) +
-  theme_bw() + theme(legend.position = 'none', 
-                     text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) 
+RTsummary <- summarySE(RT_means, measurevar = 'RT', 
+                       groupvar = c('DIAGNOSIS','VIEW','DOM'), na.rm = TRUE)
+RTsummary$DIAGNOSIS <- factor(RTsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
+RTsummary$DOM <- factor(RTsummary$DOM, labels = c('Non-dominant','Dominant'))
+
+ggplot(RTsummary, aes(x = VIEW, y = RT, colour = DIAGNOSIS, group = DIAGNOSIS,
+                      shape = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(width = .3)) +
+  geom_line(aes(group = DIAGNOSIS), size = 0.5, alpha = .5,
+            position = position_dodge(width = .3)) +
+  geom_errorbar(aes(ymin=RT-ci, ymax=RT+ci), 
+                width=.4, position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  facet_grid(~DOM) + #ylim(300,900) +
+  labs(x = 'Side', y = 'Reaction time (ms)', element_text(size = 12)) +
+  theme_classic() + theme(legend.position = 'bottom', 
+                          legend.title = element_blank(),
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12)
+  ) 
+
+ggsave('LATRTmean_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 4, height = 5, path = anaPath)
 
 # average across sides
 RTav$DIAGNOSIS <- factor(RTav$DIAGNOSIS, levels = c('HC','MCI','AD'))
@@ -341,18 +356,19 @@ ggplot(RTav, aes(x = VIEW, y = RT, colour = DIAGNOSIS, group = PPT)) +
   geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
             position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('grey50','grey50','grey50')) +
   stat_summary(aes(y = RT, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   facet_wrap(~DIAGNOSIS) + 
-  labs(title = 'Lateral reaching', x = '', 
-       y = 'Reach duration (ms)', element_text(size = 12)) +
+  labs(x = '', y = 'Movement time (ms)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'none', 
-                          text = element_text(size = 10),
-                          strip.text.x = element_text(size = 10)
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12)
   ) 
 
-ggsave('lateral-RT.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+ggsave('LATRTav_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 6, height = 4, path = anaPath)
 
 # by eccentricity
 RT_medians$ECC <- dir_medians$POSITION
@@ -366,13 +382,14 @@ RTecc <- summarySE(RT_medians, measurevar = 'RT',
                    groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
 RTecc$DIAGNOSIS <- factor(RTecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(RTecc, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = VIEW)) +
+ggplot(RTecc, aes(x = ECC, y = RT, group = VIEW, colour = VIEW)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=RT-ci, ymax=RT+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = VIEW), size = 0.7, position = position_dodge(width = .4)) +
   labs(title = 'Lateral reaching',
        x = 'Eccentricity (°)', y = 'Reaction time (ms)') +
+  scale_color_manual(values = c('black','grey50')) +
   facet_grid(~DIAGNOSIS) + theme_classic() +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
@@ -381,8 +398,8 @@ ggplot(RTecc, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = VIEW)) +
         strip.text = element_text(size = 12)
   )
 
-ggsave('lateral-RTecc.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+ggsave('LATRTecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+        width = 7.5, height = 5, path = anaPath)
 
 ## ANOVA ## 
 RTanova <- RT_means[RT_means$PPT != 212 & RT_means$PPT != 407 ,]
@@ -464,6 +481,9 @@ ggscatter(corrData, x = "Peripheral", y = "PeripheralRT", colour = 'grey50',
   theme(text = element_text(size = 10)
         )
 
+ggsave('LATRT-PMI_corr_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 5, height = 5, path = anaPath)
+
 ##### CORRELATE ACE #####
 setwd(dataPath)
 patient_demos <- read.csv('patient_demographics.csv')
@@ -485,7 +505,8 @@ ggscatter(PMIACE, x = 'ACEall', y = 'PMI', add = 'reg.line', conf.int = TRUE,
 
 # average PMI
 PMIACE <- aggregate(PMI ~ PPT+DIAGNOSIS+ACEall, mean, data = PMIACE)
-ggscatter(PMIACE, x = 'ACEall', y = 'PMI', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +
+ggscatter(PMIACE, x = 'ACEall', y = 'PMI', 
+          add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
+          cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') +
   ylab('PMI (deg)') + xlab('ACE score (%)') +
   theme(text = element_text(size = 10))
