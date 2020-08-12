@@ -41,7 +41,7 @@ res$DIAGNOSIS <- factor(res$DIAGNOSIS)
 xclude <- read.csv('lateraloutliers.csv')
 res <- res[!(res$PPT %in% xclude$PPT), ]
 
-###### DIRECTIONAL ERROR: PMI ######
+###### DIRECTIONAL ERROR: median, means, PMI ######
 dir_medians <- aggregate(xerr_mm ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS, 
                          median, data = res)
 colnames(dir_medians)[colnames(dir_medians)=='xerr_mm'] <- 'xerr_med' #change name to be more logical
@@ -54,30 +54,52 @@ dPMIdata <- dcast(dir_means, PPT+SIDE+DIAGNOSIS+SITE ~ VIEW) #different data-fra
 dPMIdata$PMI <- dPMIdata$Peripheral - dPMIdata$Free
 write.csv(dPMIdata, 'lateral-reaching_dirPMI.csv', row.names = FALSE)
 
-# plotting this
-ggplot(dir_means, aes(x = VIEW, y = xerr_mean, colour = DIAGNOSIS)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(SIDE), rows = vars(DIAGNOSIS)) + 
-  labs(title = 'Lateral reaching',
-       x = '', y = 'Directional error (mm)', element_text(size = 12)) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8)) 
-
+## DIRECTIONAL ERROR PLOTS ##
 # dPMI plot 
-ggplot(dPMIdata, aes(x = SIDE, y = PMI, colour = DIAGNOSIS)) + 
-  geom_point(shape = 1, size = 1.5, stroke = .8) +
-  geom_line(aes(group = PPT), alpha = .5, size = .5) +
+dPMIdata$DIAGNOSIS <- factor(dPMIdata$DIAGNOSIS, levels = c('HC','MCI','AD'))
+ggplot(dPMIdata, aes(x = SIDE, y = PMI, group = PPT, colour = DIAGNOSIS)) + 
+  geom_point(shape = 1, size = 2, stroke = .8, position = position_dodge(width = .2)) +
+  geom_line(aes(group = PPT), alpha = .5, size = .5, 
+            position = position_dodge(width = .2)) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
-  labs(title = 'Lateral Reaching', x = 'Side', y = 'dPMI (mm)', 
-                    element_text(size = 12)) +
+               geom = 'point', shape = 3, stroke = 1, size = 3.5, group = 1) +
+  scale_color_manual(values = c('grey50','grey50','grey50')) +
+  labs(x = 'Side', y = 'x-axis PMI (mm)', 
+       element_text(size = 12)) +
   facet_wrap(~DIAGNOSIS) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10))
+  theme_classic() + theme(legend.position = 'none', 
+                          axis.title = element_text(size = 12),
+                          axis.text = element_text(size = 10),
+                          strip.text = element_text(size = 10) 
+                     )
 
-ggsave('dPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+ggsave('LATdPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 5, height = 6, path = anaPath)
+
+# mean error plot
+# summary data first
+Err_summary <- summarySE(dir_means, measurevar = 'xerr_mean', 
+                         groupvar = c('DIAGNOSIS', 'SIDE', 'VIEW'), na.rm = TRUE)
+Err_summary$DIAGNOSIS <- factor(Err_summary$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(Err_summary, aes(x = SIDE, y = xerr_mean, colour = DIAGNOSIS, shape = DIAGNOSIS,
+                        group = DIAGNOSIS)) +
+  geom_point(size = 4, position = position_dodge(width = .3)) +
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
+  geom_errorbar(aes(ymin=xerr_mean-ci, ymax=xerr_mean+ci), 
+                width=.3, position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(x = 'Side', y = 'Lateral reaching error (x-axis, mm)') + 
+  facet_wrap(~VIEW) +
+  theme_classic() + theme(legend.position = 'bottom', 
+                          legend.title = element_blank(),
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12))
+  
+ggsave('LATxerr_means_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 5, height = 6, path = anaPath)
+
 
 ## summary dPMI
 mean_dPMI <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
@@ -85,8 +107,8 @@ mean_dPMI <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', '
 mean_dPMI_all <- summarySE(dPMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'SIDE'),
                            na.rm = TRUE)
 
-## ANOVA ##
-dPMIanova <- dPMIdata[dPMIdata$PPT != 212 & dPMIdata$PPT != 310,] #removing participants where we only have 1 data-point
+## DIRECTIONAL ERROR ANOVAS ##
+dPMIanova <- dPMIdata[dPMIdata$PPT != 212 & dPMIdata$PPT != 407,] #removing participants where we only have 1 data-point
 
 # FULL ANOVA ON FILTERED DATA
 DPMI_ANOVA <- ezANOVA(
@@ -106,7 +128,7 @@ DPMI_ANOVA$`Sphericity Corrections`
 aovDPMI <- aovEffectSize(ezObj = DPMI_ANOVA, effectSize = "pes")
 aovDispTable(aovDPMI)
 
-##### DIRECTIONAL ERROR: ECCENTRICITY #####
+## DIRECTIONAL ERROR: ECCENTRICITY ##
 # adding eccentricity as a function of side to medians
 dir_medians$ECC <- dir_medians$POSITION
 #making left side negative
@@ -119,13 +141,15 @@ av_ecc <- summarySE(dir_medians, measurevar = 'xerr_med',
                               groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
 av_ecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 # plot 
-ggplot(av_ecc, aes(x = ECC, y = xerr_med, group = DIAGNOSIS, colour = DIAGNOSIS)) +
+ggplot(av_ecc, aes(x = ECC, y = xerr_med, group = DIAGNOSIS, colour = DIAGNOSIS, 
+                   shape = DIAGNOSIS)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=xerr_med-ci, ymax=xerr_med+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
   geom_hline(yintercept = 0) + ylim(-25,25) +
-  labs(title= 'Lateral reaching', x = 'Eccentricity (°)', y = 'Directional error (mm)') +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(x = 'Eccentricity (°)', y = 'Lateral reaching error (x-axis, mm)') +
   facet_grid(~VIEW) + theme_classic() +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
@@ -134,8 +158,8 @@ ggplot(av_ecc, aes(x = ECC, y = xerr_med, group = DIAGNOSIS, colour = DIAGNOSIS)
         strip.text = element_text(size = 12)
         )
 
-ggsave('Lateral-dAE-ECC.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+ggsave('LATxerr_ECC_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 6, height = 5, path = anaPath)
 
 ## ANOVA ##
 dECCanova <- dir_medians[dir_medians$PPT != 212 & dir_medians$PPT != 407 ,]
