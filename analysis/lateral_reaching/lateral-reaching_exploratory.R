@@ -12,10 +12,10 @@ library(psychReport)
 
 ###### GETTING DATA #######
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
 # on desktop mac
-#anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
-#dataPath <- '/Users/Alex/Documents/DMT/data'
+anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
+dataPath <- '/Users/Alex/Documents/DMT/data'
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
 #anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
@@ -409,5 +409,29 @@ ggscatter(corrData, x = "Peripheral", y = "PeripheralRT", add = 'reg.line', conf
   facet_grid(cols = vars(DOM), rows = vars(GRP)) +
   labs(x = 'Reaching error (mm)', y = 'Reaction time (ms)')
 
+##### CORRELATE ACE #####
+setwd(dataPath)
+patient_demos <- read.csv('patient_demographics.csv')
+#extracting ACE data into seperate data-frame
+ACEscores <- patient_demos[ ,c(1, 8:13)]
+names(ACEscores)[1] <- 'PPT'
+setwd(anaPath)
+PMIfilt <- read.csv('lateralPMI-filtered.csv')
+# merging ACE with PMI
+PMIACE <- merge(PMIfilt, ACEscores, by = 'PPT')
+PMIACE$ACEall <- as.numeric(as.character(PMIACE$ACEall))
+PMIACE$ACEvisuospatial <- as.numeric(as.character(PMIACE$ACEvisuospatial))
 
+## aaaand correlate :)
+ggscatter(PMIACE, x = 'ACEall', y = 'PMI', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +
+  ylab('PMI (deg)') + xlab('ACE score (%)') +
+  facet_wrap(~DOM) +
+  theme(text = element_text(size = 10))
 
+# average PMI
+PMIACE <- aggregate(PMI ~ PPT+DIAGNOSIS+ACEall, mean, data = PMIACE)
+ggscatter(PMIACE, x = 'ACEall', y = 'PMI', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +
+  ylab('PMI (deg)') + xlab('ACE score (%)') +
+  theme(text = element_text(size = 10))
