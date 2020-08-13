@@ -251,14 +251,15 @@ MTecc <- summarySE(MT_medians, measurevar = 'MT',
                     groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
 MTecc$DIAGNOSIS <- factor(MTecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(MTecc, aes(x = ECC, y = MT, group = VIEW, colour = VIEW)) +
-  geom_point(size = 3, position = position_dodge(width = .3)) +
+ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
+                  shape = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
-                width=.4, position = position_dodge(width = .3)) + 
-  geom_line(aes(group = VIEW), size = 0.7, position = position_dodge(width = .3)) +
+                width=.4, position = position_dodge(width = .4)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
   labs(x = 'Eccentricity (°)', y = 'Movement time (ms)') +
-  scale_color_manual(values = c('black','grey50')) +
-  facet_wrap(~DIAGNOSIS) + theme_classic() +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  facet_wrap(~VIEW) + theme_classic() +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
@@ -382,15 +383,15 @@ RTecc <- summarySE(RT_medians, measurevar = 'RT',
                    groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
 RTecc$DIAGNOSIS <- factor(RTecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(RTecc, aes(x = ECC, y = RT, group = VIEW, colour = VIEW)) +
+ggplot(RTecc, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
+                  shape = DIAGNOSIS)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=RT-ci, ymax=RT+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
-  geom_line(aes(group = VIEW), size = 0.7, position = position_dodge(width = .4)) +
-  labs(title = 'Lateral reaching',
-       x = 'Eccentricity (°)', y = 'Reaction time (ms)') +
-  scale_color_manual(values = c('black','grey50')) +
-  facet_grid(~DIAGNOSIS) + theme_classic() +
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
+  labs(x = 'Eccentricity (°)', y = 'Reaction time (ms)') +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  facet_grid(~VIEW) + theme_classic() +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
