@@ -8,14 +8,14 @@ library(psychReport)
 library(singcar)
 
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 
 # on desktop mac
-#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
-#dataPath <- '/Users/Alex/Documents/DMT/data'
-#UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
+anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
+dataPath <- '/Users/Alex/Documents/DMT/data'
+UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
 
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
@@ -119,6 +119,7 @@ print(SITE_ANOVA)
 ggplot(siteANOVA, aes(x = VIEW, y = AEmean, colour = DIAGNOSIS)) +
   geom_point(size =2, position = position_dodge(.3)) +
   facet_wrap(~SITE)
+
 ggsave('site_comparison.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
@@ -501,3 +502,31 @@ ECC_ANOVA$`Mauchly's Test for Sphericity`
 ECC_ANOVA$`Sphericity Corrections`
 aovECC <- aovEffectSize(ezObj = ECC_ANOVA, effectSize = "pes")
 aovDispTable(aovECC)
+
+##### PLOTTING #####
+## PLOT 1: eccentricity ##
+ECCsummary <- summarySE(res_medians_allF, measurevar = 'AE', 
+                        groupvar = c('DIAGNOSIS', 'DOM', 'VIEW', 'ECC'), na.rm = TRUE)
+ECCsummary$DIAGNOSIS <- factor(ECCsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(ECCsummary, aes(x = ECC, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS, 
+                   shape = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(width = .4)) +
+  geom_errorbar(aes(ymin=AE-ci, ymax=AE+ci), 
+                width=.4, position = position_dodge(width = .4)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(x = 'Eccentricity (°)', y = 'Lateral reaching error (mm)') +
+  facet_grid(~VIEW) + theme_classic() +
+  theme(legend.position = 'bottom',
+        legend.title = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 12)
+  )
+
+## PLOT 2: mean AE
+AEsummary <- summarySE(res_meansF, measurevar = 'AEmean', 
+                       groupvar = c('DIAGNOSIS', 'DOM', 'VIEW'), na.rm = TRUE)
+## PLOT 3: PMI ##
+
