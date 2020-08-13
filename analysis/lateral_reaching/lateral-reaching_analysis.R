@@ -426,70 +426,37 @@ aovDispTable(aovECC)
 
 ###### PLOTTING ######
 ## PLOT 1: median eccentricity ##
-dom_meds <- res_mediansF[res_mediansF$DOM == 'D' ,]
-ndom_meds <- res_mediansF[res_mediansF$DOM == 'ND' ,]
+res_mediansF$ECC <- as.numeric(as.character(res_mediansF$POSITION))
+#making left side negative
+index <- res_mediansF$SIDE == 'left'
+res_mediansF$ECC[index] <- -(res_mediansF$ECC[index])
+res_mediansF$ECC <- factor(res_mediansF$ECC)
 
 ## Non-dominant
 # make plot data-frame
-plot_NDecc <- summarySE(ndom_meds, measurevar = 'AEmed', 
-                        groupvar = c('DIAGNOSIS','POSITION','VIEW'), na.rm = TRUE)
-plot_NDecc$POSITION <- factor(plot_NDecc$POSITION)
-plot_NDecc$DIAGNOSIS <- factor(plot_NDecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
+av_ecc <- summarySE(res_mediansF, measurevar = 'AEmed', 
+                    groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
+av_ecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-
-# plot
-ggplot(plot_NDecc, aes(x = POSITION, y = AEmed, shape = DIAGNOSIS, colour = DIAGNOSIS,
-                       group= DIAGNOSIS)) +
-  geom_point(size = 4, position = position_dodge(width = .3)) + 
+# plot 
+ggplot(av_ecc, aes(x = ECC, y = AEmed, group = DIAGNOSIS, colour = DIAGNOSIS, 
+                   shape = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=AEmed-ci, ymax=AEmed+ci), 
-                width=.4, position = position_dodge(width = .3)) +
-  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
-  scale_shape_manual(values = c(1, 16, 16)) + ylim(0,30) +
-  scale_color_manual(values = c('black','grey60','grey20')) +
-  labs(title = 'Non-dominant', x = '', y = 'Lateral reaching error (mm)') + 
-  facet_wrap(~VIEW) +
-  theme_classic() + theme(legend.position = 'none', 
-                          legend.title = element_blank(),
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 12),
-                          strip.text = element_text(size = 12)
-  ) -> NDecc
-
-## Dominant
-# make plot data-frame
-plot_Decc <- summarySE(dom_meds, measurevar = 'AEmed', 
-                       groupvar = c('DIAGNOSIS','POSITION','VIEW'), na.rm = TRUE)
-plot_Decc$POSITION <- factor(plot_Decc$POSITION)
-plot_Decc$DIAGNOSIS <- factor(plot_Decc$DIAGNOSIS, levels = c('HC','MCI','AD'))
-
-
-# plot
-ggplot(plot_Decc, aes(x = POSITION, y = AEmed, shape = DIAGNOSIS, colour = DIAGNOSIS,
-                      group= DIAGNOSIS)) +
-  geom_point(size = 4, position = position_dodge(width = .3)) + 
-  geom_errorbar(aes(ymin=AEmed-ci, ymax=AEmed+ci), 
-                width=.4, position = position_dodge(width = .3)) +
-  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
-  scale_shape_manual(values = c(1, 16, 16)) + ylim(0,30) +
-  scale_color_manual(values = c('black','grey60','grey20')) +
-  labs(title = 'Dominant', x = 'Eccentricity (°)', y = 'Lateral reaching error (mm)') + 
-  facet_wrap(~VIEW) +
-  theme_classic() + theme(legend.position = 'none', 
-                          legend.title = element_blank(),
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 12),
-                          strip.text = element_text(size = 12)
-  ) -> Decc
-
-
-ecc <- ggarrange(NDecc, Decc,
-                 ncol=1, nrow=2,
-                 common.legend = TRUE, 
-                 legend = 'bottom')
-ecc
+                width=.4, position = position_dodge(width = .4)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(x = 'Eccentricity (°)', y = 'Lateral reaching error (mm)') +
+  facet_grid(~VIEW) + theme_classic() +
+  theme(legend.position = 'bottom',
+        legend.title = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 12)
+  )
 
 ggsave('LATeccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 5, height = 8, path = anaPath)
+       width = 6, height = 5, path = anaPath)
 
 ## PLOT 2: meanAE ##
 # levels
