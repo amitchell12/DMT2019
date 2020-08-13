@@ -402,7 +402,7 @@ aovDispTable(aovAE)
 ECCsummary <- summarySE(res_mediansF, measurevar = 'AEmed', 
                         groupvar = c('DIAGNOSIS', 'DOM', 'VIEW', 'POSITION'), na.rm = TRUE)
   
-ECCanova <- res_mediansF[res_mediansF$PPT != 212 & es_mediansF$PPT != 407 ,]
+ECCanova <- res_mediansF[res_mediansF$PPT != 212 & res_mediansF$PPT != 407 ,]
 ECCanova <- ECCanova[, c(1:9,11)]
 ## create 'eccentricity' variable where left are -ve and right are +ve
 ECCanova$POSITION <- factor(ECCanova$POSITION)
