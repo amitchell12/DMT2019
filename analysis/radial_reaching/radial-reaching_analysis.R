@@ -460,7 +460,7 @@ FILT_ANOVA <- ezANOVA(
   , dv = .(PMI)
   , wid = .(PPT)
   , within = .(DOM)
-  , between = .(GRP)
+  , between = .(DIAGNOSIS)
   , between_covariates = .(SITE)
   , type = 3,
   return_aov = TRUE,
@@ -472,6 +472,10 @@ FILT_ANOVA$`Mauchly's Test for Sphericity`
 FILT_ANOVA$`Sphericity Corrections`
 aovPMI <- aovEffectSize(ezObj = FILT_ANOVA, effectSize = "pes")
 aovDispTable(aovPMI)
+
+#pair-wise t-test
+PMIttest <- pairwise.t.test(PMIanova$PMI, PMIanova$DIAGNOSIS, p.adj = 'bonf')
+print(PMIttest)
 
 ### ANOVA BY ECCENTRICITY ###
 # converting factor back to numeric keeping values
@@ -490,7 +494,7 @@ ECC_ANOVA <- ezANOVA(
   , dv = .(AE)
   , wid = .(PPT)
   , within = .(DOM, VIEW, ECC)
-  , between = .(GRP)
+  , between = .(DIAGNOSIS)
   , between_covariates = .(SITE)
   , type = 3,
   return_aov = TRUE,
@@ -503,20 +507,24 @@ ECC_ANOVA$`Sphericity Corrections`
 aovECC <- aovEffectSize(ezObj = ECC_ANOVA, effectSize = "pes")
 aovDispTable(aovECC)
 
+#pair-wise t-test
+ECCttest <- pairwise.t.test(ECCanova$AE, ECCanova$DIAGNOSIS, p.adj = 'bonf')
+print(ECCttest)
+
 ##### PLOTTING #####
 ## PLOT 1: eccentricity ##
 ECCsummary <- summarySE(res_medians_allF, measurevar = 'AE', 
-                        groupvar = c('DIAGNOSIS', 'DOM', 'VIEW', 'ECC'), na.rm = TRUE)
+                        groupvar = c('DIAGNOSIS', 'SIDE', 'VIEW', 'POSITION'), na.rm = TRUE)
 ECCsummary$DIAGNOSIS <- factor(ECCsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(ECCsummary, aes(x = ECC, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS, 
+ggplot(ECCsummary, aes(x = POSITION, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS, 
                    shape = DIAGNOSIS)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=AE-ci, ymax=AE+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
   scale_color_manual(values = c('black','grey30','grey60')) +
-  labs(x = 'Eccentricity (°)', y = 'Lateral reaching error (mm)') +
+  labs(x = 'Eccentricity (mm)', y = 'Radial reaching error (mm)') +
   facet_grid(~VIEW) + theme_classic() +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
@@ -525,8 +533,101 @@ ggplot(ECCsummary, aes(x = ECC, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS,
         strip.text = element_text(size = 12)
   )
 
+ggsave('RADeccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 7, height = 5, path = anaPath)
+
 ## PLOT 2: mean AE
 AEsummary <- summarySE(res_meansF, measurevar = 'AEmean', 
                        groupvar = c('DIAGNOSIS', 'DOM', 'VIEW'), na.rm = TRUE)
+
+AEsummary$DIAGNOSIS <- factor(AEsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(AEsummary, aes(x = DOM, y = AEmean, colour = VIEW, group = DIAGNOSIS)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = VIEW), size = 0.7) +
+  geom_errorbar(aes(ymin=AEmean-ci, ymax=AEmean+ci), 
+                width=.3) +
+  scale_color_manual(values = c('black','grey60')) +
+  labs(x = 'Side', y = 'Radial reaching error (mm)') + 
+  facet_wrap(~DIAGNOSIS) +
+  theme_classic() + theme(legend.position = 'bottom', 
+                          legend.title = element_blank(),
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12))
+
+ggsave('RADmean-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 4.5, height = 6, path = anaPath)
+
 ## PLOT 3: PMI ##
+## PLOT 3: PMI ##
+# make control data-frame
+control_PMI <- subset(PMIfilt, PMIfilt$DIAGNOSIS == 'HC')
+control_PMI$TSTAT <- 0
+control_PMI$PVALUE <- 1
+control_PMI$DEFICIT <- 0
+control_PMI$BL <- 0
+# get deficit data for patients
+plot_PMI <- merge(PMIfilt, td_results, by = c('PPT','DOM','DIAGNOSIS','SITE'))
+# include only relevant info
+plot_PMI$PMI <- plot_PMI$PMI.x
+plot_PMI <- plot_PMI[, c(1:10,24,13,14,22,23)]
+
+# make plot data frame
+plot_PMI <- rbind(control_PMI, plot_PMI)
+
+plot_PMI$DOM <- factor(plot_PMI$DOM, levels = c('ND', 'D'))
+plot_PMI$DIAGNOSIS <- factor(plot_PMI$DIAGNOSIS, levels = c('HC','MCI','AD'))
+plot_PMI$PPT <- factor(plot_PMI$PPT)
+# make column where deficit and BL cases are combined
+# 1 = no deficit, 2 = borderline deficit, 3 = deficit
+plot_PMI$DEFICITS <- as.numeric(plot_PMI$DEFICIT) + as.numeric(plot_PMI$BL)
+plot_PMI$DEFICITS <- factor(plot_PMI$DEFICITS)
+
+ggplot(plot_PMI, aes(x = DOM, y = PMI, colour = DIAGNOSIS, group = PPT, shape = DEFICITS)) + 
+  geom_line(aes(group = PPT), alpha = .7, size = 0.7, position = position_dodge(.2)) +
+  geom_point(size = 2.5, position = position_dodge(.2)) +
+  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  scale_color_manual(values = c('grey45','grey45','grey45')) +
+  scale_shape_manual(values = c(1,18,16)) +
+  facet_wrap(~DIAGNOSIS) +
+  labs(x = 'Side', y = 'Lateral PMI (mm)') +
+  theme_classic() + theme(legend.position = 'none', 
+                          axis.title = element_text(size = 12),
+                          axis.text = element_text(size = 10),
+                          strip.text = element_text(size = 10) 
+  ) -> pPMI
+pPMI
+
+## PLOT 4: average PMI across sides - combine with PLOT 2
+PMIav_plot <- aggregate(PMI ~ PPT*DIAGNOSIS*AGE*ED*SITE, mean, data = plot_PMI)
+PMIav_plot <- PMIav_plot[order(PMIav_plot$PPT),]
+plot_PMI$DEFICITS <- as.numeric(plot_PMI$DEFICITS)
+deficit <- aggregate(DEFICITS ~ PPT*DIAGNOSIS, max, data = plot_PMI)
+deficit <- deficit[order(deficit$PPT),]
+PMIav_plot$DEFICITS <- factor(deficit$DEFICITS)
+
+ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = DIAGNOSIS, group = PPT, shape = DEFICITS)) + 
+  geom_point(size = 2.5, position = position_dodge(.2)) +
+  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  scale_color_manual(values = c('grey45','grey45','grey45')) +
+  scale_shape_manual(values = c(1,18,16)) +
+  labs(x = 'Diagnosis', y = '') +
+  theme_classic() + theme(legend.position = 'none', 
+                          axis.title = element_text(size = 12),
+                          axis.text = element_text(size = 10),
+                          strip.text = element_text(size = 10) 
+  ) -> avPMI
+avPMI
+
+PMIfig <- ggarrange(pPMI, avPMI,
+                    ncol=2, nrow=1,
+                    widths = c(1.5,1),
+                    labels = c('a','b'),
+                    hjust = -1)
+PMIfig
+ggsave('RADPMI-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 8, height = 4, path = anaPath)
 
