@@ -279,8 +279,8 @@ aovDispTable(aovDECC_all)
 
 
 ###### MOVEMENT TIME #######
-MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * POSITION * SITE * GRP * DIAGNOSIS, 
-                        median, data = res)
+MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
+                        median, data = res2)
 MT_means <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
                       mean, data = MT_medians)
 # average across side
@@ -288,15 +288,30 @@ MTav <- aggregate(MT ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
                   mean, data = MT_medians)
 ## plotting :)
 # both sides
-ggplot(MT_means, aes(x = DOM, y = MT, colour = SITE, group = DIAGNOSIS)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(VIEW), rows = vars(DIAGNOSIS)) + ylim(0, 1100) +
-  labs(title = 'Radial reaching', x = 'Side', 
-       y = 'Reach duration (ms)', element_text(size = 12)) +
-  theme_bw() + theme(legend.position = 'none', 
-                     text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) 
+MTsummary <- summarySE(MT_means, measurevar = 'MT', 
+                       groupvar = c('DIAGNOSIS','VIEW','DOM'), na.rm = TRUE)
+MTsummary$DIAGNOSIS <- factor(MTsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
+MTsummary$DOM <- factor(MTsummary$DOM, labels = c('Non-dominant','Dominant'))
+
+ggplot(MTsummary, aes(x = VIEW, y = MT, colour = DIAGNOSIS, group = DIAGNOSIS,
+                      shape = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(width = .3)) +
+  geom_line(aes(group = DIAGNOSIS), size = 0.5, alpha = .5,
+            position = position_dodge(width = .3)) +
+  geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
+                width=.4, position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  facet_grid(~DOM) + ylim(500,800) +
+  labs(x = '', y = 'Movement time (ms)', element_text(size = 12)) +
+  theme_classic() + theme(legend.position = 'bottom', 
+                          legend.title = element_blank(),
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12)
+  ) 
+
+ggsave('RADMTmean_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 4, height = 5, path = anaPath)
 
 # average across sides
 MTav$DIAGNOSIS <- factor(MTav$DIAGNOSIS, levels = c('HC','MCI','AD'))
@@ -304,39 +319,37 @@ ggplot(MTav, aes(x = VIEW, y = MT, colour = SITE, group = PPT)) +
   geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
             position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('dodgerblue3','grey50')) +
   stat_summary(aes(y = MT, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   facet_wrap(~DIAGNOSIS) + 
-  labs(title = 'Radial reaching', x = '', 
-       y = 'Reach duration (ms)', element_text(size = 12)) +
+  labs(x = '', y = 'Movement time (ms)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'bottom', 
-                          text = element_text(size = 10),
-                          strip.text.x = element_text(size = 10)
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12)
   ) 
 
-ggsave('radial-MT.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+ggsave('RADMTav_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 6, height = 4, path = anaPath)
 
 # by eccentricity
-MT_medians$ECC <- MT_medians$POSITION
-#making left side negative
-MT_medians$POSITION <- abs(MT_medians$ECC)
-MT_medians$ECC <- factor(MT_medians$ECC)
 MT_medians$POSITION <- factor(MT_medians$POSITION)
 
 # summary data
 MTecc <- summarySE(MT_medians, measurevar = 'MT', 
-                   groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE','SITE'), na.rm = TRUE)
+                   groupvar = c('DIAGNOSIS','POSITION','VIEW'), na.rm = TRUE)
 MTecc$DIAGNOSIS <- factor(MTecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = VIEW)) +
+ggplot(MTecc, aes(x = POSITION, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
+                   shape = DIAGNOSIS)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
-  geom_line(aes(group = VIEW), size = 0.7, position = position_dodge(width = .4)) +
-  labs(title = 'Radial reaching',
-       x = 'Eccentricity (°)', y = 'Movement time (ms)') +
-  facet_grid(SITE~DIAGNOSIS) + theme_classic() +
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
+  labs(x = 'Eccentricity (°)', y = 'Movement time (ms)') +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  facet_wrap(~VIEW) + theme_classic() + ylim(500,900) +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
@@ -344,8 +357,8 @@ ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = VIEW)) +
         strip.text = element_text(size = 12)
   )
 
-ggsave('radial-MTecc.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+ggsave('RADMTecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 7.5, height = 5, path = anaPath)
 
 ## ANOVA ## 
 MTanova <- MT_means[MT_means$PPT != 212 & MT_means$PPT != 310 ,]
@@ -374,13 +387,14 @@ MTECCanova <- MT_medians[MT_medians$PPT != 212 &
                            MT_medians$PPT != 310 &
                            MT_medians$PPT != 315 &
                            MT_medians$PPT != 302 ,]
+MTECCanova$ECC <- factor(MTECCanova$ECC)
 
 MTECCanova$POSITION <- factor(MTECCanova$POSITION)
 MTECC_ANOVA <- ezANOVA(
   data = MTECCanova
   , dv = .(MT)
   , wid = .(PPT)
-  , within = .(VIEW, DOM, POSITION)
+  , within = .(VIEW, DOM, ECC)
   , between = .(DIAGNOSIS)
   , between_covariates = .(SITE)
   , type = 3,
@@ -393,6 +407,10 @@ MTECC_ANOVA$`Mauchly's Test for Sphericity`
 MTECC_ANOVA$`Sphericity Corrections`
 aovMTECC <- aovEffectSize(ezObj = MTECC_ANOVA, effectSize = "pes")
 aovDispTable(aovMTECC)
+
+#pair-wise t-test
+MTttest <- pairwise.t.test(MT_medians$MT, MT_medians$DIAGNOSIS, p.adj = 'bonf')
+print(MTttest)
 
 ###### REACTION TIME ######
 RT_medians <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * POSITION * SITE * GRP * DIAGNOSIS, 
