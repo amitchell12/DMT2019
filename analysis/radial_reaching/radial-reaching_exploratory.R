@@ -413,8 +413,8 @@ MTttest <- pairwise.t.test(MT_medians$MT, MT_medians$DIAGNOSIS, p.adj = 'bonf')
 print(MTttest)
 
 ###### REACTION TIME ######
-RT_medians <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * POSITION * SITE * GRP * DIAGNOSIS, 
-                        median, data = res)
+RT_medians <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
+                        median, data = res2)
 RT_means <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
                       mean, data = RT_medians)
 # average across side
@@ -423,15 +423,30 @@ RTav <- aggregate(RT ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
 
 ## plotting :)
 # both sides
-ggplot(RT_means, aes(x = DOM, y = RT, colour = DIAGNOSIS, group = DIAGNOSIS)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(VIEW), rows = vars(DIAGNOSIS)) + ylim(0, 1000) +
-  labs(title = 'Radial reaching', x = 'Side', 
-       y = 'Reaction time (ms)', element_text(size = 12)) +
-  theme_bw() + theme(legend.position = 'none', 
-                     text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) 
+RTsummary <- summarySE(RT_means, measurevar = 'RT', 
+                       groupvar = c('DIAGNOSIS','VIEW','DOM'), na.rm = TRUE)
+RTsummary$DIAGNOSIS <- factor(RTsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
+RTsummary$DOM <- factor(RTsummary$DOM, labels = c('Non-dominant','Dominant'))
+
+ggplot(RTsummary, aes(x = VIEW, y = RT, colour = DIAGNOSIS, group = DIAGNOSIS,
+                      shape = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(width = .3)) +
+  geom_line(aes(group = DIAGNOSIS), size = 0.5, alpha = .5,
+            position = position_dodge(width = .3)) +
+  geom_errorbar(aes(ymin=RT-ci, ymax=RT+ci), 
+                width=.4, position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  facet_grid(~DOM) + #ylim(300,900) +
+  labs(x = 'Side', y = 'Reaction time (ms)', element_text(size = 12)) +
+  theme_classic() + theme(legend.position = 'bottom', 
+                          legend.title = element_blank(),
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12)
+  ) 
+
+ggsave('RADRTmean_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 4, height = 5, path = anaPath)
 
 # average across sides
 RTav$DIAGNOSIS <- factor(RTav$DIAGNOSIS, levels = c('HC','MCI','AD'))
@@ -439,39 +454,37 @@ ggplot(RTav, aes(x = VIEW, y = RT, colour = SITE, group = PPT)) +
   geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
             position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('dodgerblue3','grey50')) +
   stat_summary(aes(y = RT, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   facet_wrap(~DIAGNOSIS) + 
-  labs(title = 'Radial reaching', x = '', 
-       y = 'Reach duration (ms)', element_text(size = 12)) +
+  labs(x = '', y = 'Movement time (ms)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'bottom', 
-                          text = element_text(size = 10),
-                          strip.text.x = element_text(size = 10)
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12)
   ) 
 
-ggsave('radial-RT.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+ggsave('RADRTav_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 6, height = 4, path = anaPath)
 
 # by eccentricity
-RT_medians$ECC <- RT_medians$POSITION
-#making left side negative
-RT_medians$POSITION <- abs(RT_medians$ECC)
-RT_medians$ECC <- factor(RT_medians$ECC)
 RT_medians$POSITION <- factor(RT_medians$POSITION)
 
 # summary data
 RTecc <- summarySE(RT_medians, measurevar = 'RT', 
-                   groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE','SITE'), na.rm = TRUE)
+                   groupvar = c('DIAGNOSIS','POSITION','VIEW','SIDE'), na.rm = TRUE)
 RTecc$DIAGNOSIS <- factor(RTecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(RTecc, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = VIEW)) +
+ggplot(RTecc, aes(x = POSITION, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
+                 shape = DIAGNOSIS)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=RT-ci, ymax=RT+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
-  geom_line(aes(group = VIEW), size = 0.7, position = position_dodge(width = .4)) +
-  labs(title = 'Radial reaching',
-       x = 'Eccentricity (°)', y = 'Reaction time (ms)') +
-  facet_wrap(SITE ~ DIAGNOSIS) + theme_classic() +
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
+  labs(x = 'Eccentricity (°)', y = 'Reaction time (ms)') +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  facet_grid(~VIEW) + theme_classic() +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
@@ -479,8 +492,48 @@ ggplot(RTecc, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = VIEW)) +
         strip.text = element_text(size = 12)
   )
 
-ggsave('radial-RTecc.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+
+ggsave('RADRTecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 7.5, height = 5, path = anaPath)
+
+## ANOVA ##
+# FULL ANOVA ON REACTION TIME DATA BY ECCENTRICITY
+RTECCanova <- RT_medians[RT_medians$PPT != 212 & 
+                           RT_medians$PPT != 310 &
+                           RT_medians$PPT != 315 &
+                           RT_medians$PPT != 302 ,]
+RTECCanova$ECC <- factor(RTECCanova$ECC)
+
+RTECC_ANOVA <- ezANOVA(
+  data = RTECCanova
+  , dv = .(RT)
+  , wid = .(PPT)
+  , within = .(VIEW, DOM, ECC)
+  , between = .(DIAGNOSIS)
+  , between_covariates = .(SITE)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+RTECC_ANOVA$ANOVA
+RTECC_ANOVA$`Mauchly's Test for Sphericity`
+RTECC_ANOVA$`Sphericity Corrections`
+aovRTECC <- aovEffectSize(ezObj = RTECC_ANOVA, effectSize = "pes")
+aovDispTable(aovRTECC)
+
+#pair-wise t-test
+RTttest <- pairwise.t.test(RT_medians$RT, RT_medians$DIAGNOSIS, p.adj = 'bonf')
+print(RTttest)
+
+##### PEAK SPEED #####
+PS_medians <- aggregate(PS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
+                        median, data = res2)
+PS_means <- aggregate(PS ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
+                      mean, data = PS_medians)
+# average across side
+PSav <- aggregate(PS ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
+                  mean, data = PS_medians)
 
 ###### normalised movement time after peak speed
 res$NMTPS <- (res$MT - res$TPS)/res$MT
