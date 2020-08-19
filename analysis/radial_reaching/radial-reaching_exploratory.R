@@ -14,10 +14,11 @@ library(psychReport)
 
 ###### GETTING DATA ######
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #desktop mac
-#anaPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
+anaPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
+dataPath <- '/Users/Alex/Documents/DMT/data'
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
 #anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
@@ -27,22 +28,130 @@ res <- read.csv('all_radial-reaching_compiled.csv')
 ## find outliers and remove 
 xclude <- read.csv('radial-reaching_outliers.csv')
 res <- res[!(res$PPT %in% xclude$PPT), ]
-# removing outer target
-res <- res[res$POSITION != 400 & res$POSITION != -400 ,]
+res$ECC <- abs(res$POSITION) #adding eccentricity = absolute target position
+# data-frame with only 2 target locations (middle 2)
+res2 <- res[res$ECC != 100 & res$ECC != 400 ,]
 
-##### DIRECTIONAL ERROR: PMI #####
-dir_medians <- aggregate(LANDx ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS, 
+##### DIRECTIONAL ERROR: median, means, PMI #####
+## 2 MID TARG LOCS ##
+dir_medians <- aggregate(LANDx ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS * ECC, 
+                         median, data = res2)
+dir_means <- aggregate(LANDx ~ PPT* VIEW * SIDE * SITE * GRP * DIAGNOSIS, 
+                           mean, data = dir_medians)
+# casting by task
+dPMI <- dcast(dir_means, PPT+DIAGNOSIS+GRP+SIDE+SITE ~ VIEW)
+dPMI$PMI <- dPMI$Peripheral - dPMI$Free
+write.csv(dPMI, 'radial-reaching_dirPMI.csv', row.names = FALSE)
+
+### PLOTTING ###
+# PMI
+dPMI$DIAGNOSIS <- factor(dPMI$DIAGNOSIS, levels = c('HC','MCI','AD'))
+ggplot(dPMI, aes(x = SIDE, y = PMI, group = PPT, colour = SITE)) + 
+  geom_point(shape = 1, size = 2, stroke = .8, position = position_dodge(width = .2)) +
+  geom_line(aes(group = PPT), alpha = .5, size = .5, 
+            position = position_dodge(width = .2)) +
+  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 3.5, group = 1) +
+  scale_color_manual(values = c('dodgerblue3','grey50')) +
+  labs(title = 'Mid target locs', x = 'Side', y = 'x-axis PMI (mm)', 
+       element_text(size = 12)) +
+  facet_wrap(~DIAGNOSIS) +
+  theme_classic() + theme(legend.position = 'bottom', 
+                          axis.title = element_text(size = 12),
+                          axis.text = element_text(size = 10),
+                          strip.text = element_text(size = 10) 
+  )
+
+ggsave('RADdPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 5, height = 6, path = anaPath)
+
+# Absolute error
+## plotting data frame
+Err_summary <- summarySE(dir_means, measurevar = 'LANDx', 
+                         groupvar = c('DIAGNOSIS', 'SIDE', 'VIEW'), na.rm = TRUE)
+Err_summary$DIAGNOSIS <- factor(Err_summary$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(Err_summary, aes(x = SIDE, y = LANDx, colour = DIAGNOSIS, shape = DIAGNOSIS,
+                        group = DIAGNOSIS)) +
+  geom_point(size = 4, position = position_dodge(width = .3)) +
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
+  geom_errorbar(aes(ymin=LANDx-ci, ymax=LANDx+ci), 
+                width=.3, position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(title = 'Mid target locs', 
+       x = 'Side', y = 'Radial reaching error (x-axis, mm)') + 
+  facet_wrap(~VIEW) +
+  theme_classic() + theme(legend.position = 'bottom', 
+                          legend.title = element_blank(),
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12))
+
+ggsave('RADxerr_means_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 5, height = 6, path = anaPath)
+
+### ANOVA ###
+# PMI
+dPMIanova <- dPMI[dPMI$PPT != 212 & dPMI$PPT != 310 
+                  & dPMI$PPT != 407,] #removing participants where we only have 1 data-point
+
+# FULL ANOVA ON FILTERED DATA
+DPMI_ANOVA <- ezANOVA(
+  data = dPMIanova
+  , dv = .(PMI)
+  , wid = .(PPT)
+  , within = .(SIDE)
+  , between = .(DIAGNOSIS)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+DPMI_ANOVA$ANOVA
+DPMI_ANOVA$`Mauchly's Test for Sphericity`
+DPMI_ANOVA$`Sphericity Corrections`
+aovDPMI <- aovEffectSize(ezObj = DPMI_ANOVA, effectSize = "pes")
+aovDispTable(aovDPMI)
+
+# Reaching error
+## ANOVA ##
+dECCanova <- dir_medians[dir_medians$PPT != 212 & dir_medians$PPT != 310
+                         & dir_medians$PPT != 407 ,]
+dECCanova$ECC <- factor(dECCanova$ECC)
+
+# FULL ANOVA ON ECCENTRICITY DATA
+DECC_ANOVA <- ezANOVA(
+  data = dECCanova
+  , dv = .(LANDx)
+  , wid = .(PPT)
+  , within = .(VIEW, SIDE, ECC)
+  , between = .(DIAGNOSIS)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+DECC_ANOVA$ANOVA
+DECC_ANOVA$`Mauchly's Test for Sphericity`
+DECC_ANOVA$`Sphericity Corrections`
+aovDECC <- aovEffectSize(ezObj = DECC_ANOVA, effectSize = "pes")
+aovDispTable(aovDECC)
+
+
+## ALL TARG LOCS ##
+dir_medians_all <- aggregate(LANDx ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS * ECC, 
                          median, data = res)
 # remove outlier in P101
-dir_medians <- dir_medians[!(dir_medians$PPT == '101' & dir_medians$LANDx > 50) ,]
+dir_medians_all <- dir_medians_all[!(dir_medians_all$PPT == '101' & dir_medians_all$LANDx > 50) ,]
 
-dir_means <- aggregate(LANDx ~ PPT* VIEW * SIDE * SITE * GRP * DIAGNOSIS, 
-                       mean, data = dir_medians)
+dir_means_all <- aggregate(LANDx ~ PPT* VIEW * SIDE * SITE * GRP * DIAGNOSIS, 
+                       mean, data = dir_medians_all)
 
 # casting by task
-dPMIdata <- dcast(dir_means, PPT+DIAGNOSIS+GRP+SIDE+SITE ~ VIEW)
-dPMIdata$PMI <- dPMIdata$Peripheral - dPMIdata$Free
-write.csv(dPMIdata, 'radial-reaching_dirPMI.csv', row.names = FALSE)
+dPMIall <- dcast(dir_means_all, PPT+DIAGNOSIS+GRP+SIDE+SITE ~ VIEW)
+dPMIall$PMI <- dPMIall$Peripheral - dPMIall$Free
+write.csv(dPMIall, 'radial-reaching_dirPMI_all.csv', row.names = FALSE)
+
 
 # plotting this
 ggplot(dir_means, aes(x = VIEW, y = LANDx, colour = DIAGNOSIS)) +
