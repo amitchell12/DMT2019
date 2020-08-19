@@ -102,6 +102,7 @@ DPMI_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(SIDE)
   , between = .(DIAGNOSIS)
+  , between_covariates = .(SITE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -114,7 +115,6 @@ aovDPMI <- aovEffectSize(ezObj = DPMI_ANOVA, effectSize = "pes")
 aovDispTable(aovDPMI)
 
 # Reaching error
-## ANOVA ##
 dECCanova <- dir_medians[dir_medians$PPT != 212 & dir_medians$PPT != 310
                          & dir_medians$PPT != 407 ,]
 dECCanova$ECC <- factor(dECCanova$ECC)
@@ -126,6 +126,7 @@ DECC_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(VIEW, SIDE, ECC)
   , between = .(DIAGNOSIS)
+  , between_covariates = .(SITE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -141,6 +142,8 @@ aovDispTable(aovDECC)
 ## ALL TARG LOCS ##
 dir_medians_all <- aggregate(LANDx ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS * ECC, 
                          median, data = res)
+dir_medians_all$PPT <- factor(dir_medians_all$PPT)
+
 # remove outlier in P101
 dir_medians_all <- dir_medians_all[!(dir_medians_all$PPT == '101' & dir_medians_all$LANDx > 50) ,]
 
@@ -152,74 +155,69 @@ dPMIall <- dcast(dir_means_all, PPT+DIAGNOSIS+GRP+SIDE+SITE ~ VIEW)
 dPMIall$PMI <- dPMIall$Peripheral - dPMIall$Free
 write.csv(dPMIall, 'radial-reaching_dirPMI_all.csv', row.names = FALSE)
 
-
-# plotting this
-ggplot(dir_means, aes(x = VIEW, y = LANDx, colour = DIAGNOSIS)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(SIDE), rows = vars(DIAGNOSIS)) + 
-  labs(title = 'Radial reaching',
-       x = '', y = 'Directional error (mm)', element_text(size = 12)) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 8)) 
-
-# dPMI plot 
-ggplot(dPMIdata, aes(x = SIDE, y = PMI, colour = DIAGNOSIS)) + 
-  geom_point(shape = 1, size = 1.5, stroke = .8) +
-  geom_line(aes(group = PPT), alpha = .5, size = .5) +
+### PLOTTING ###
+# PMI
+dPMIall$DIAGNOSIS <- factor(dPMIall$DIAGNOSIS, levels = c('HC','MCI','AD'))
+ggplot(dPMIall, aes(x = SIDE, y = PMI, group = PPT, colour = SITE)) + 
+  geom_point(shape = 1, size = 2, stroke = .8, position = position_dodge(width = .2)) +
+  geom_line(aes(group = PPT), alpha = .5, size = .5, 
+            position = position_dodge(width = .2)) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 3, group = 1) +
-  labs(title = 'Radial Reaching', x = 'Side', y = 'dPMI (mm)', 
+               geom = 'point', shape = 3, stroke = 1, size = 3.5, group = 1) +
+  scale_color_manual(values = c('dodgerblue3','grey50')) +
+  labs(title = 'All target locs', x = 'Side', y = 'x-axis PMI (mm)', 
        element_text(size = 12)) +
   facet_wrap(~DIAGNOSIS) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10))
+  theme_classic() + theme(legend.position = 'bottom', 
+                          axis.title = element_text(size = 12),
+                          axis.text = element_text(size = 10),
+                          strip.text = element_text(size = 10) 
+  )
 
-ggsave('radial-dirPMI.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+ggsave('RADdPMI_all_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 5, height = 6, path = anaPath)
 
-## ANOVA ##
-dPMIanova <- dPMIdata[dPMIdata$PPT != 212 & 
-                        dPMIdata$PPT != 310 ,] #removing participants where we only have 1 data-point
-
-# FULL ANOVA ON FILTERED DATA
-DPMI_ANOVA <- ezANOVA(
-  data = dPMIanova
-  , dv = .(PMI)
-  , wid = .(PPT)
-  , within = .(SIDE)
-  , between = .(DIAGNOSIS)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-DPMI_ANOVA$ANOVA
-DPMI_ANOVA$`Mauchly's Test for Sphericity`
-DPMI_ANOVA$`Sphericity Corrections`
-aovDPMI <- aovEffectSize(ezObj = DPMI_ANOVA, effectSize = "pes")
-aovDispTable(aovDPMI)
-
-##### DIRECTIONAL ERROR: ECCENTRICITY #####
-# adding eccentricity as a function of side to medians
-dir_medians$ECC <- dir_medians$POSITION
-#making left side negative
-dir_medians$POSITION <- abs(dir_medians$ECC)
-dir_medians$ECC <- factor(dir_medians$ECC)
-dir_medians$POSITION <- factor(dir_medians$POSITION)
-
+# Mean absolute error
 ## plotting data frame
-av_ecc <- summarySE(dir_medians, measurevar = 'LANDx', 
-                    groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
+Err_summary_all <- summarySE(dir_means_all, measurevar = 'LANDx', 
+                         groupvar = c('DIAGNOSIS', 'SIDE', 'VIEW'), na.rm = TRUE)
+Err_summary_all$DIAGNOSIS <- factor(Err_summary_all$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(Err_summary_all, aes(x = SIDE, y = LANDx, colour = DIAGNOSIS, shape = DIAGNOSIS,
+                        group = DIAGNOSIS)) +
+  geom_point(size = 4, position = position_dodge(width = .3)) +
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
+  geom_errorbar(aes(ymin=LANDx-ci, ymax=LANDx+ci), 
+                width=.3, position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(title = 'All target locs', 
+       x = 'Side', y = 'Radial reaching error (x-axis, mm)') + 
+  facet_wrap(~VIEW) +
+  theme_classic() + theme(legend.position = 'bottom', 
+                          legend.title = element_blank(),
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12))
+
+ggsave('RADxerr_allmeans_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 5, height = 6, path = anaPath)
+
+# Median absolute error
+av_ecc <- summarySE(dir_medians_all, measurevar = 'LANDx', 
+                    groupvar = c('DIAGNOSIS','POSITION','VIEW','SIDE'), na.rm = TRUE)
 av_ecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
+av_ecc$POSITION <- factor(av_ecc$POSITION)
+
 # plot 
-ggplot(av_ecc, aes(x = ECC, y = LANDx, group = DIAGNOSIS, colour = DIAGNOSIS)) +
+ggplot(av_ecc, aes(x = POSITION, y = LANDx, group = DIAGNOSIS, colour = DIAGNOSIS, 
+                   shape = DIAGNOSIS)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=LANDx-ci, ymax=LANDx+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
   geom_hline(yintercept = 0) + 
-  labs(title= 'Radial reaching', x = 'Eccentricity (mm)', y = 'Directional error (mm)') +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(x = 'Eccentricity (mm)', y = 'Radial reaching error (x-axis, mm)') +
   facet_grid(~VIEW) + theme_classic() +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
@@ -228,33 +226,57 @@ ggplot(av_ecc, aes(x = ECC, y = LANDx, group = DIAGNOSIS, colour = DIAGNOSIS)) +
         strip.text = element_text(size = 12)
   )
 
-ggsave('Radial-dAE-ECC.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+ggsave('RADxerr_ECC_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 6, height = 5, path = anaPath)
 
-## ANOVA ##
-# remove participants with unbalanced data
-dECCanova <- dir_medians[dir_medians$PPT != 212 & 
-                           dir_medians$PPT != 310 &
-                           dir_medians$PPT != 101
-                         ,]
+### ANOVA ###
+# PMI
+dPMIanova_all <- dPMIall[dPMIall$PPT != 212 & dPMIall$PPT != 310 
+                  & dPMIall$PPT != 407,] #removing participants where we only have 1 data-point
 
-# FULL ANOVA ON ECCENTRICITY DATA
-DECC_ANOVA <- ezANOVA(
-  data = dECCanova
-  , dv = .(LANDx)
+# FULL ANOVA ON FILTERED DATA
+ALLDPMI_ANOVA <- ezANOVA(
+  data = dPMIanova_all
+  , dv = .(PMI)
   , wid = .(PPT)
-  , within = .(VIEW, SIDE, POSITION)
+  , within = .(SIDE)
   , between = .(DIAGNOSIS)
+  , between_covariates = .(SITE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
 )
 
-DECC_ANOVA$ANOVA
-DECC_ANOVA$`Mauchly's Test for Sphericity`
-DECC_ANOVA$`Sphericity Corrections`
-aovDECC <- aovEffectSize(ezObj = DECC_ANOVA, effectSize = "pes")
-aovDispTable(aovDECC)
+ALLDPMI_ANOVA$ANOVA
+ALLDPMI_ANOVA$`Mauchly's Test for Sphericity`
+ALLDPMI_ANOVA$`Sphericity Corrections`
+aovDPMI_all <- aovEffectSize(ezObj = ALLDPMI_ANOVA, effectSize = "pes")
+aovDispTable(aovDPMI_all)
+
+# Reaching error
+dECCanova_all <- dir_medians_all[dir_medians_all$PPT != 101 & dir_medians_all$PPT != 212 & 
+                                   dir_medians_all$PPT != 310 & dir_medians_all$PPT != 403 ,]
+dECCanova_all$ECC <- factor(dECCanova_all$ECC)
+
+# FULL ANOVA ON ECCENTRICITY DATA
+ALLDECC_ANOVA <- ezANOVA(
+  data = dECCanova_all
+  , dv = .(LANDx)
+  , wid = .(PPT)
+  , within = .(VIEW, SIDE, ECC)
+  , between = .(DIAGNOSIS)
+  , between_covariates = .(SITE)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+ALLDECC_ANOVA$ANOVA
+ALLDECC_ANOVA$`Mauchly's Test for Sphericity`
+ALLDECC_ANOVA$`Sphericity Corrections`
+aovDECC_all <- aovEffectSize(ezObj = ALLDECC_ANOVA, effectSize = "pes")
+aovDispTable(aovDECC_all)
+
 
 ###### MOVEMENT TIME #######
 MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * POSITION * SITE * GRP * DIAGNOSIS, 
