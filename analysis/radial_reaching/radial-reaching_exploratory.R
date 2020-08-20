@@ -1006,7 +1006,7 @@ PAXav <- aggregate(PAX ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
 ## plotting :)
 # both sides
 PAXsummary <- summarySE(PAX_medians, measurevar = 'PAX', 
-                          groupvar = c('DIAGNOSIS','VIEW','DOM'), na.rm = TRUE)
+                          groupvar = c('DIAGNOSIS','VIEW','DOM','SITE'), na.rm = TRUE)
 PAXsummary$DIAGNOSIS <- factor(PAXsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
 PAXsummary$DOM <- factor(PAXsummary$DOM, labels = c('Non-dominant','Dominant'))
 
@@ -1018,8 +1018,8 @@ ggplot(PAXsummary, aes(x = VIEW, y = PAX, colour = DIAGNOSIS, group = DIAGNOSIS,
   geom_errorbar(aes(ymin=PAX-ci, ymax=PAX+ci), 
                 width=.4, position = position_dodge(width = .3)) +
   scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~DOM) + 
-  labs(x = 'Side', y = 'Normalised time after peak velocity', element_text(size = 12)) +
+  facet_grid(~DOM*SITE) + 
+  labs(x = 'Side', y = 'Peak acceleration (mm/s2)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'bottom', 
                           legend.title = element_blank(),
                           axis.text = element_text(size = 10),
@@ -1027,7 +1027,7 @@ ggplot(PAXsummary, aes(x = VIEW, y = PAX, colour = DIAGNOSIS, group = DIAGNOSIS,
                           strip.text = element_text(size = 12)
   ) 
 
-ggsave('RADnTAPSmean_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('RADPAXmean_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 4, height = 5, path = anaPath)
 
 
