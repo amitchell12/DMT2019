@@ -4,7 +4,8 @@ library(reshape2)
 library(ggpubr)
 library(Rmisc)
 
-dataPath <- getwd()
+dataPath <- '/Users/Alex/Documents/DMT/norwich_movement_data'
+setwd(dataPath)
 
 files <- list.files(path=dataPath, pattern = "*.TRJ", full.names = TRUE, recursive = TRUE)
 idfiles <- list.files(path=dataPath, pattern = "*.csv", full.names = TRUE, recursive = TRUE)

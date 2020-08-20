@@ -27,9 +27,9 @@ resUEA <- read.csv('radial-reaching_compiled.csv')
 
 ##### DATA ORGANISE #####
 # UOE data, getting rid of 'deg' values - just use mm
-resUOE <- resUOE[, c(1:7,14,15,8:13,16:19,22,24,25)]
+resUOE <- resUOE[, c(1:7,16,17,8:15,18:21,24,26,27)]
 # UEA data getting rid of not needed values
-resUEA <- resUEA[, c(1:9,15:18,21,22,24:30)]
+resUEA <- resUEA[, c(1:9,15:22,24:30)]
 resUEA <- resUEA[resUEA$PPT != '311' ,]
 # change group labelling in UEA (3 = control, 4 = patient) to match UOE (1 = control, 2 = patient)
 resUEA$GRP <- factor(resUEA$GRP, labels = c('1','2'))
@@ -67,7 +67,7 @@ res$HAND <- factor(res$HAND, labels = c('Left','Right'))
 res$DOM <- as.numeric(res$SIDE == res$HAND) #1 = dominant, 0 = non-dominant
 res$DOM <- factor(res$DOM, labels= c('ND','D'))
 # change order so important var up-front
-res <- res[, c(1,6,21:23,2:5,7:20)]
+res <- res[, c(1,6,23:25,2:5,7:22)]
 # save Edinburgh & UEA compiled data
 setwd(anaPath)
 write.csv(res, 'all_radial-reaching_compiled.csv', row.names = FALSE)
@@ -101,7 +101,7 @@ meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
 ##### ANOVA - differences between sites #####
 siteANOVA <- na.omit(res_means)
 siteANOVA <- siteANOVA[siteANOVA$PPT != 212 ,]
-siteANOVA <- siteANOVA[siteANOVA$PPT != 310 , c(1:7,10)]
+siteANOVA <- siteANOVA[siteANOVA$PPT != 310 , c(1:7,9)]
 siteANOVA <- aggregate(AEmean ~ PPT+VIEW+DOM+DIAGNOSIS+SITE, mean, data = siteANOVA)
 
 SITE_ANOVA <- ezANOVA(
@@ -191,12 +191,12 @@ ggscatter(PMIdata, x = "AGE", y = "PMI",
           xlab = "Age", ylab = "PMI (mm)")
 
 # correlate PMI with years of education
-PMIdata$ED <- as.numeric(PMIdata$ED)
-edcov <- cor.test(PMIdata$ED, PMIdata$PMI, method = 'pearson')
-ggscatter(PMIdata, x = "ED", y = "PMI", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "spearman",
-          xlab = "Years of Education", ylab = "PMI (mm)")
+#PMIdata$ED <- as.numeric(PMIdata$ED)
+#edcov <- cor.test(PMIdata$ED, PMIdata$PMI, method = 'pearson')
+#ggscatter(PMIdata, x = "ED", y = "PMI", 
+ #         add = "reg.line", conf.int = TRUE, 
+#          cor.coef = TRUE, cor.method = "spearman",
+#          xlab = "Years of Education", ylab = "PMI (mm)")
 
 ######## OUTLIER REMOVAL, filtered PMI #########
 # two different sites and set-ups, use data from control group in each site to remove outliers
@@ -482,8 +482,8 @@ tmp <- as.numeric(levels(res_mediansF$POSITION))[res_mediansF$POSITION]
 res_mediansF$ECC <- abs(tmp)
 
 # removing participants with incomplete data-sets
-ECCanova <- ECCanova[ECCanova$PPT != 212
-                     & ECCanova$PPT != 310,]
+ECCanova <- res_mediansF[res_mediansF$PPT != 212
+                     & res_mediansF$PPT != 310,]
 ECCanova$ECC <- factor(ECCanova$ECC)
 
 ECC_ANOVA <- ezANOVA(

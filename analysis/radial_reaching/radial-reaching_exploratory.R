@@ -882,7 +882,7 @@ NTAPS_medians <- NTAPS_medians[NTAPS_medians$PPT != 310 & NTAPS_medians$PPT != 3
 NTAPS_means <- aggregate(NTAPS ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
                       mean, data = NTAPS_medians)
 # average across side
-NTAPSav <- aggregate(TAPS ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
+NTAPSav <- aggregate(NTAPS ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
                   mean, data = NTAPS_medians)
 
 ## plotting :)

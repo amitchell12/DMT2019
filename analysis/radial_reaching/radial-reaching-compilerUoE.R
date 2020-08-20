@@ -81,7 +81,7 @@ res$LANDy <- res$my - res$caly
 nEye_move <- aggregate(res$EYE_MOVE == '1', by=list(subject_nr = res$PPT), FUN=sum)
 nVoid <- aggregate(res$EYE_MOVE == '-1', by=list(subject_nr = res$PPT), FUN=sum)
 # removing
-res <- res[res$EYE_MOVE == 0, c(1:6,9:10,12:13,17:20)]
+res <- res[res$EYE_MOVE == 0, c(1:10,12:13,17:20)]
 
 
 # plotting to get a look at data
