@@ -784,7 +784,7 @@ ggplot(TAPSsummary, aes(x = VIEW, y = TAPS, colour = DIAGNOSIS, group = DIAGNOSI
   geom_errorbar(aes(ymin=TAPS-ci, ymax=TAPS+ci), 
                 width=.4, position = position_dodge(width = .3)) +
   scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~DOM) + 
+  facet_grid(~DOM) + ylim(300,600) +
   labs(x = 'Side', y = 'Time after peak velocity (ms)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'bottom', 
                           legend.title = element_blank(),
@@ -805,8 +805,8 @@ ggplot(TAPSav, aes(x = VIEW, y = TAPS, colour = SITE, group = PPT)) +
   scale_color_manual(values = c('dodgerblue3','grey50')) +
   stat_summary(aes(y = TAPS, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  facet_wrap(~DIAGNOSIS) + ylim(0.5,0.8) +
-  labs(x = '', y = 'Normalised time after peak velocity', element_text(size = 12)) +
+  facet_wrap(~DIAGNOSIS) + #ylim(0.5,0.8) +
+  labs(x = '', y = 'Time after peak velocity (ms)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'bottom', 
                           axis.text = element_text(size = 10),
                           axis.title = element_text(size = 12),
@@ -830,9 +830,9 @@ ggplot(TAPSecc, aes(x = POSITION, y = TAPS, group = DIAGNOSIS, colour = DIAGNOSI
   geom_errorbar(aes(ymin=TAPS-ci, ymax=TAPS+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = 'Eccentricity (mm)', y = 'Normalised time after peak velocity') +
+  labs(x = 'Eccentricity (mm)', y = 'Time after peak velocity (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~VIEW) + theme_classic() + ylim(0.6,0.8) +
+  facet_grid(~VIEW) + theme_classic() + #ylim(0.6,0.8) +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
