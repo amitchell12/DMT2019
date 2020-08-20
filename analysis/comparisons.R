@@ -5,33 +5,37 @@ library(reshape2)
 library(ggpubr)
 
 ##### correlations #####
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/task-correlations' #mac
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/task-correlations' #mac
 #anaPath <- 'S:/groups/DMT/analysis/task-correlations' #pc
-#anaPath <- "/Users/Alex/Documents/DMT/analysis/task-correlations/"
+anaPath <- "/Users/Alex/Documents/DMT/analysis/task-correlations/"
 # loading lateral reaching data
-latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+#latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
 #latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
-#latPath <- "/Users/Alex/Documents/DMT/analysis/lateral_reaching/"
+latPath <- "/Users/Alex/Documents/DMT/analysis/lateral_reaching/"
 setwd(latPath)
 latData <- read.csv('lateralPMI-filtered.csv')
 latData_dir <- read.csv('lateral-reaching_dirPMI.csv')
 # loading radial reaching data
-radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
 #radPath <- 'S:/groups/DMT/analysis/radial_reaching'
-#radPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
+radPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
 setwd(radPath)
 radData <- read.csv('radialPMI-filtered.csv')
 radData_dir <- read.csv('radial-reaching_dirPMI.csv')
 # TVA path
-TVApath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/all/'
-#TVApath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
+#TVApath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/all/'
+TVApath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
 setwd(TVApath)
 TVAData <- read.csv('tva_values.csv')
 
 # adding extra info necessary to merge
 latData$TASK <- 'Lateral'
 radData$TASK <- 'Radial'
+latData_dir$TASK <- 'Lateral'
+radData_dir$TASK <- 'Radial'
 # changing labels of 'left/right' in rad data so they match lateral
+latData$SIDE <- factor(latData$SIDE, labels = c('Left', 'Right'))
+latData_dir$SIDE <- factor(latData_dir$SIDE, labels = c('Left', 'Right'))
 
 ## not now
 #adding directional PMI into data-frame (along x-axis only)
@@ -39,30 +43,34 @@ radData$TASK <- 'Radial'
 #radData$dPMI <- radData_dir$PMI
 
 ##### PMI data ######
+latData <- latData[, c(1:7,9:12)]
+
 dat_side <- rbind(latData, radData)
-corrDat_side <- dcast(dat_side, PPT+GRP+DOM ~ TASK, value.var = 'PMI')
+corrDat_PMI <- dcast(dat_side, PPT+GRP+DOM ~ TASK, value.var = 'PMI')
 dat <- aggregate(PMI ~ TASK * GRP * PPT, mean, data = dat_side) 
 corrDat <- dcast(dat, PPT+GRP ~ TASK, value.var = 'PMI')
 
-ggscatter(corrDat_side, x = 'Lateral', y = 'Radial', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, cor.method = 'spearman') + 
-  facet_grid(cols = vars(DOM), rows = vars(GRP)) + 
+ggscatter(corrDat_PMI, x = 'Lateral', y = 'Radial', 
+          add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
+          cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') + 
+  facet_wrap(~GRP*DOM) + 
   ylab('Radial reaching PMI (deg)') + xlab('Lateral reaching PMI (deg)')
 
 ggsave('reaching_correlations_spearman.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
 ##### dPMI data ######
-corrDat_dir <- dcast(dat_side, PPT+GRP+SIDE ~ TASK, value.var = 'dPMI')
+datDir <- rbind(latData_dir, radData_dir)
+corrDat_dir <- dcast(dat_side, PPT+GRP+SIDE ~ TASK, value.var = 'PMI')
 
-ggscatter(corrDat_dir, x = 'Lateral', y = 'Radial', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, cor.method = 'spearman') + 
-  facet_grid(cols = vars(SIDE), rows = vars(GRP)) + 
+ggscatter(corrDat_dir, x = 'Lateral', y = 'Radial', 
+          add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
+          cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') + 
+  facet_wrap(~GRP*SIDE)+ 
   ylab('Radial reaching PMI (deg)') + xlab('Lateral reaching PMI (deg)')
 
 ggsave('dir_reaching_correlations_spearman.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
-
 
 
 #file with data organised by participant
@@ -75,7 +83,6 @@ colnames(radData)[which(names(radData) == "Peripheral")] <- "RAD_PER"
 colnames(radData)[which(names(radData) == "PMI")] <- "RAD_PMI"
 #names(radData)[8] <- 'dPMI_rad'
 allDat <- merge(latData, radData, by = c('PPT', 'GRP', 'DOM'), all = TRUE)
-allDat <- allDat[c(1:11, 18:20)]
 colnames(allDat)[which(names(allDat) == "DIAGNOSIS.x")] <- "DIAGNOSIS"
 
 ###### TVA data ######
@@ -168,8 +175,8 @@ ggsave('RAD-C_side.png', plot = last_plot(), device = NULL, dpi = 300,
        scale = 1, path = anaPath)
 
 # collapsed across side
-CRAD <- aggregate(PMI_rad ~ C * PPT * GRP, mean, data = corr_allDat)
-ggscatter(CRAD, x = 'PMI_rad', y = 'C', add = 'reg.line', conf.int = TRUE,
+CRAD <- aggregate(RAD_PMI ~ C * PPT * GRP, mean, data = corr_allDat)
+ggscatter(CRAD, x = 'RAD_PMI', y = 'C', add = 'reg.line', conf.int = TRUE,
           cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +  
   facet_wrap(~GRP) + 
   ylab('Processing speed (items/s)') + xlab('Radial reaching PMI (deg)') +

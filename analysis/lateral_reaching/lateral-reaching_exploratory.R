@@ -50,7 +50,7 @@ dir_means <- aggregate(xerr_med ~ PPT* VIEW * SIDE * SITE * GRP * DIAGNOSIS,
 colnames(dir_means)[colnames(dir_means) == 'xerr_med'] <- 'xerr_mean'
 
 # PMI for directional data (DMI - directional misreaching index)
-dPMIdata <- dcast(dir_means, PPT+SIDE+DIAGNOSIS+SITE ~ VIEW) #different data-frame
+dPMIdata <- dcast(dir_means, PPT+SIDE+DIAGNOSIS+GRP+SITE ~ VIEW) #different data-frame
 dPMIdata$PMI <- dPMIdata$Peripheral - dPMIdata$Free
 write.csv(dPMIdata, 'lateral-reaching_dirPMI.csv', row.names = FALSE)
 

@@ -987,3 +987,35 @@ aovDispTable(aovNTAPSECC)
 #pair-wise t-test
 NTAPSttest <- pairwise.t.test(NTAPS_medians$NTAPS, NTAPS_medians$DIAGNOSIS, p.adj = 'bonf')
 print(NTAPSttest)
+
+##### CORRELATE ACE #####
+setwd(dataPath)
+patient_demos <- read.csv('patient_demographics.csv')
+PMIdata <- read.csv('radialPMI-filtered.csv')
+#extracting ACE data into seperate data-frame
+ACEscores <- patient_demos[ ,c(1, 10:15)]
+names(ACEscores)[1] <- 'PPT'
+setwd(anaPath)
+# merging ACE with PMI
+PMIACE <- merge(PMIdata, ACEscores, by = 'PPT')
+PMIACE$ACEall <- as.numeric(as.character(PMIACE$ACEall))
+PMIACE$ACEvisuospatial <- as.numeric(as.character(PMIACE$ACEvisuospatial))
+
+## aaaand correlate :)
+ggscatter(PMIACE, x = 'ACEall', y = 'PMI', add = 'reg.line', conf.int = TRUE,
+          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +
+  ylab('Radial PMI (deg)') + xlab('ACE score (%)') +
+  facet_wrap(~DOM) +
+  theme(text = element_text(size = 10))
+
+# average PMI
+PMIACE <- aggregate(PMI ~ PPT+DIAGNOSIS+ACEall, mean, data = PMIACE)
+ggscatter(PMIACE, x = 'ACEall', y = 'PMI', 
+          add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
+          cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') +
+  ylab('Radial PMI (deg)') + xlab('ACE score (%)') +
+  theme(text = element_text(size = 10))
+
+ggsave('RADPMI-ACEcorr_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 5, height = 5, path = anaPath)
+

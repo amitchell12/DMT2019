@@ -20,17 +20,17 @@ library(ggpubr)
 #latPath <- "S:/groups/DMT/analysis/lateral_reaching/"
 #radPath <- "S:/groups/DMT/analysis/radial_reaching/"
 # on mac
-fitPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/all/" # Enter path to dat
-anaPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/all/"
-dataPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/"
-latPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/"
-radPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching/"
+#fitPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/all/" # Enter path to dat
+#anaPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/all/"
+#dataPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/"
+#latPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/"
+#radPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching/"
 # on desktop mac
-#fitPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/" # Enter path to data
-#anaPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
-#dataPath <- "/Users/Alex/Documents/DMT/data/"
-#latPath <- "/Users/Alex/Documents/DMT/analysis/lateral_reaching/" 
-#radPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
+fitPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/" # Enter path to data
+anaPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
+dataPath <- "/Users/Alex/Documents/DMT/data/"
+latPath <- "/Users/Alex/Documents/DMT/analysis/lateral_reaching/" 
+radPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
 
 # Enter directory to save converted files to
 setwd(fitPath)
