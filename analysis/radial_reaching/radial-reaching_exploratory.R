@@ -102,7 +102,7 @@ DPMI_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(SIDE)
   , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE)
+  , between_covariates = .(SITE, AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -126,7 +126,7 @@ DECC_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(VIEW, SIDE, ECC)
   , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE)
+  , between_covariates = .(SITE, AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -241,7 +241,7 @@ ALLDPMI_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(SIDE)
   , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE)
+  , between_covariates = .(SITE, AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -265,7 +265,7 @@ ALLDECC_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(VIEW, SIDE, ECC)
   , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE)
+  , between_covariates = .(SITE, AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE

@@ -123,6 +123,24 @@ ggplot(siteANOVA, aes(x = VIEW, y = AEmean, colour = DIAGNOSIS)) +
 ggsave('site_comparison.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
+### tests for age & education ###
+# plot age
+ggplot(res, aes(x = DIAGNOSIS, y = AGE, group = PPT)) +
+  geom_point(position = position_dodge(.2))
+# create necessary data-frames for ANOVA
+age <- aggregate(AGE ~ PPT*DIAGNOSIS, mean, data = res)
+
+# ANOVAS
+AGE_ANOVA <- ezANOVA(
+  data = age
+  , dv = .(AGE)
+  , wid = .(PPT)
+  , between = .(DIAGNOSIS)
+  , type = 3
+)
+
+print(AGE_ANOVA)
+
 # Eccentricity plots
 # creating another data-frame with all position data, for plotting eccentricity info
 res_medians_all <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE, 
@@ -461,7 +479,7 @@ FILT_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(DOM)
   , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE)
+  , between_covariates = .(SITE, AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -492,7 +510,7 @@ ECC_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(DOM, VIEW, ECC)
   , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE)
+  , between_covariates = .(SITE, AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -524,7 +542,7 @@ ALLECC_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(DOM, VIEW, ECC)
   , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE)
+  , between_covariates = .(SITE, AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -557,7 +575,7 @@ ALLFILT_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(DOM)
   , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE)
+  , between_covariates = .(SITE, AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
