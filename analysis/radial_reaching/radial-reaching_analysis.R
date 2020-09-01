@@ -74,8 +74,8 @@ write.csv(res, 'all_radial-reaching_compiled.csv', row.names = FALSE)
 
 # summary data
 # extracting data from furthest two target locs
-res_periph <- subset(res, res$POSITION == -200 | res$POSITION == -300 | 
-                         res$POSITION == 300 | res$POSITION == 200)
+res_periph <- subset(res, res$POSITION == -400 | res$POSITION == -300 | 
+                         res$POSITION == 300 | res$POSITION == 400)
 res_medians <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE, 
                          mean, data = res_periph)
 colnames(res_medians)[colnames(res_medians)=='AE'] <- 'AEmed'
@@ -501,7 +501,8 @@ res_mediansF$ECC <- abs(tmp)
 
 # removing participants with incomplete data-sets
 ECCanova <- res_mediansF[res_mediansF$PPT != 212
-                     & res_mediansF$PPT != 310,]
+                     & res_mediansF$PPT != 310
+                     & res_mediansF$PPT != 403,]
 ECCanova$ECC <- factor(ECCanova$ECC)
 
 ECC_ANOVA <- ezANOVA(
