@@ -168,61 +168,12 @@ print(ED_ANOVA)
 
 ## neither age nor education signficantly different between groups, hurrah
 
-######## step 3: outlier removal, filtered PMI #########
-controlData <- PMIdata[PMIdata$PPT < 200, ]
+#### NOTE: outlier removal stage removed from this analysis - can be found in:
+#### DMT -> analysis -> lateral_reaching -> as-preregistered
 
-# median values for each side
-tmp <- aggregate(PMI ~ SIDE, median, data = controlData)
-names(tmp)[2] <- 'med'
-controlData <- merge(tmp, controlData)
-
-# calculating MAD for each (absolute value)
-controlData$AD <- abs(controlData$PMI - controlData$med)
-tmp <- aggregate(AD ~ SIDE, median, data=controlData)
-names(tmp)[2] <- 'MAD'
-controlData <- merge(controlData, tmp)
-
-# adjusted z-score from these values
-controlData$az <- (controlData$PMI - controlData$med)/(controlData$MAD * 1.4826)
-controlData$z <- scale(controlData$PMI)
-controlData$PPT <- factor(controlData$PPT)
-
-plot_name = 'adjustedZ.png'
-ggplot(controlData, aes(x = GRP, y = az, colour = PPT)) +
-  geom_point(size = 3, position = position_dodge(.1)) +  
-  stat_summary(aes(y = az, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', group = 1) + 
-  labs(x = '', y = 'Adjusted z-score', element_text(size = 13)) +
-  theme_bw() + theme(legend.position = "right", legend.title = element_blank())
-
-ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 5, height = 6.5, path = anaPath)
-
-### outlier removal ###
-# find controls with az > 2.5 - need to remove entire control, not just side
-XCLUDE <- controlData[controlData$az > 2.5, ]
-write.csv(XCLUDE, 'lateraloutliers.csv', row.names = FALSE)
-# creating data-frame with control data removed
-PMIfilt <- PMIdata[!(PMIdata$PPT %in% XCLUDE$PPT), ]
-res_mediansF <- res_medians[!(res_medians$PPT %in% XCLUDE$PPT), ]
-res_meansF <- res_means[!(res_means$PPT %in% XCLUDE$PPT), ]
-# saving filered data
-write.csv(PMIfilt, 'lateralPMI-filtered.csv', row.names = FALSE)
-write.csv(res_mediansF, 'lateral-medians_filtered.csv', row.names = FALSE)
-write.csv(res_meansF, 'lateral-means_filtered.csv', row.names = FALSE)
-
-## averaging PMI data across sides
-meanFPMI <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'DOM'),
-                      na.rm = TRUE)
-meanFPMI_all <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
-                          na.rm = TRUE)
-
-#average across side
-PMIfilt_av <- aggregate(PMI ~ PPT * DIAGNOSIS * SITE, mean, data = PMIfilt)
-
-######## step 3: single case stats, filtered data #########
+######## step 2: single case stats, filtered data #########
 # create data-frames (controls and patients) with key information
-td_summary <- summarySE(data = PMIfilt, measurevar = 'PMI', 
+td_summary <- summarySE(data = PMIdata, measurevar = 'PMI', 
                         groupvars = c('DIAGNOSIS','DOM'), na.rm = TRUE)
 # isolating control data for analysis
 tdfilt_control <- td_summary[td_summary$DIAGNOSIS == 'HC', ]

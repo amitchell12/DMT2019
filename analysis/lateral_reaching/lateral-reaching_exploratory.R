@@ -37,10 +37,6 @@ levels(res$VIEW) <- c('Free', 'Peripheral')
 res$SITE <- factor(res$SITE, labels = c('UOE','UEA'))
 res$DIAGNOSIS <- factor(res$DIAGNOSIS)
 
-## find outliers and remove ##
-xclude <- read.csv('lateraloutliers.csv')
-res <- res[!(res$PPT %in% xclude$PPT), ]
-
 ###### DIRECTIONAL ERROR: median, means, PMI ######
 dir_medians <- aggregate(xerr_mm ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS, 
                          median, data = res)
