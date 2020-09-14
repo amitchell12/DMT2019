@@ -172,13 +172,13 @@ print(ED_ANOVA)
 controlData <- PMIdata[PMIdata$PPT < 200, ]
 
 # median values for each side
-tmp <- aggregate(PMI ~ GRP, median, data = controlData)
+tmp <- aggregate(PMI ~ SIDE, median, data = controlData)
 names(tmp)[2] <- 'med'
 controlData <- merge(tmp, controlData)
 
 # calculating MAD for each (absolute value)
 controlData$AD <- abs(controlData$PMI - controlData$med)
-tmp <- aggregate(AD ~ GRP, median, data=controlData)
+tmp <- aggregate(AD ~ SIDE, median, data=controlData)
 names(tmp)[2] <- 'MAD'
 controlData <- merge(controlData, tmp)
 
