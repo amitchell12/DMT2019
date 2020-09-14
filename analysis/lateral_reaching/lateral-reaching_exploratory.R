@@ -357,7 +357,7 @@ ggplot(RTav, aes(x = VIEW, y = RT, colour = DIAGNOSIS, group = PPT)) +
   stat_summary(aes(y = RT, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   facet_wrap(~DIAGNOSIS) + 
-  labs(x = '', y = 'Movement time (ms)', element_text(size = 12)) +
+  labs(x = '', y = 'Reaction time (ms)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'none', 
                           axis.text = element_text(size = 10),
                           axis.title = element_text(size = 12),
