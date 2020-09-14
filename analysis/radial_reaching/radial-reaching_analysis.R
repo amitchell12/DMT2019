@@ -68,6 +68,18 @@ res$DOM <- as.numeric(res$SIDE == res$HAND) #1 = dominant, 0 = non-dominant
 res$DOM <- factor(res$DOM, labels= c('ND','D'))
 # change order so important var up-front
 res <- res[, c(1,6,23:25,2:5,7:22)]
+
+## removing invalid trials that were not picked up on
+#101 looks like a calib problem -100 left high error (around 100mm on all left -100 trials)
+res <- res[!(res$PPT == '101' & res$LANDx > 90) ,]
+#303 one trial extrememly high error >100mm 
+res <- res[!(res$PPT == '303' & res$LANDx < -100) ,]
+#408 one trial with extremely high error >200mm
+res <- res[!(res$PPT == '408' & res$LANDx > 100) ,]
+#410 one trial extremely high error >150mm
+res <- res[!(res$PPT == '410' & res$LANDx < -150) ,]
+# removes a total of 17 trials
+
 # save Edinburgh & UEA compiled data
 setwd(anaPath)
 write.csv(res, 'all_radial-reaching_compiled.csv', row.names = FALSE)
@@ -77,12 +89,11 @@ write.csv(res, 'all_radial-reaching_compiled.csv', row.names = FALSE)
 res_periph <- subset(res, res$POSITION == -400 | res$POSITION == -300 | 
                          res$POSITION == 300 | res$POSITION == 400)
 res_medians <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE, 
-                         mean, data = res_periph)
+                         median, data = res_periph)
 colnames(res_medians)[colnames(res_medians)=='AE'] <- 'AEmed'
 
 # removing free + peripheral trails at 100mm left for 101, error
 res_medians <- res_medians[order(res_medians$PPT) ,]
-res_medians <- res_medians[!(res_medians$PPT == '101' & res_medians$AEmed > 50) ,]
 
 res_means <- aggregate(AEmed ~ PPT*VIEW*SIDE*DOM*GRP*DIAGNOSIS*SITE*AGE, 
                        mean, data = res_medians)
@@ -144,7 +155,7 @@ print(AGE_ANOVA)
 # Eccentricity plots
 # creating another data-frame with all position data, for plotting eccentricity info
 res_medians_all <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE, 
-                             mean, data = res)
+                             median, data = res)
 # removing free + peripheral trails at 100mm left for 101, error
 res_medians_all <- res_medians_all[order(res_medians_all$PPT) ,]
 res_medians_all <- res_medians_all[!(res_medians_all$PPT == '101' & res_medians_all$AE > 50) ,]
@@ -216,99 +227,9 @@ ggscatter(PMIdata, x = "AGE", y = "PMI",
 #          cor.coef = TRUE, cor.method = "spearman",
 #          xlab = "Years of Education", ylab = "PMI (mm)")
 
-######## OUTLIER REMOVAL, filtered PMI #########
-# two different sites and set-ups, use data from control group in each site to remove outliers
-# need to run same removal for outliers in each site
-## UOE FIRST ##
-controlUOE <- PMIdata[PMIdata$PPT < 200, ]
 
-# median values for each side
-tmp <- aggregate(PMI ~ GRP, median, data = controlUOE)
-names(tmp)[2] <- 'med'
-controlUOE <- merge(tmp, controlUOE)
-
-# calculating MAD for each (absolute value)
-controlUOE$AD <- abs(controlUOE$PMI - controlUOE$med)
-tmp <- aggregate(AD ~ GRP, median, data=controlUOE)
-names(tmp)[2] <- 'MAD'
-controlUOE <- merge(controlUOE, tmp)
-
-# adjusted z-score from these values
-controlUOE$az <- (controlUOE$PMI - controlUOE$med)/(controlUOE$MAD * 1.4826)
-controlUOE$z <- scale(controlUOE$PMI)
-controlUOE$PPT <- factor(controlUOE$PPT)
-
-plot_name = 'adjustedZ_UOE.png'
-ggplot(controlUOE, aes(x = GRP, y = az, colour = PPT)) +
-  geom_point(size = 3, position = position_dodge(.1)) +  
-  stat_summary(aes(y = az, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', group = 1) + 
-  labs(x = '', y = 'Adjusted z-score', element_text(size = 13)) +
-  theme_bw() + theme(legend.position = "right", legend.title = element_blank())
-
-ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 5, height = 6.5, path = anaPath)
-
-# find controls with az > 2.5 - need to remove entire control, not just side
-XCLUDE_UOE <- controlUOE[controlUOE$az > 2.5, ]
-
-## UEA SECOND ##
-controlUEA <- PMIdata[PMIdata$SITE == 'UEA' ,]
-controlUEA <- controlUEA[controlUEA$PPT < 400 ,]
-
-# median values for each side
-tmp <- aggregate(PMI ~ GRP, median, data = controlUEA)
-names(tmp)[2] <- 'med'
-controlUEA <- merge(tmp, controlUEA)
-
-# calculating MAD for each (absolute value)
-controlUEA$AD <- abs(controlUEA$PMI - controlUEA$med)
-tmp <- aggregate(AD ~ GRP, median, data=controlUEA)
-names(tmp)[2] <- 'MAD'
-controlUEA <- merge(controlUEA, tmp)
-
-# adjusted z-score from these values
-controlUEA$az <- (controlUEA$PMI - controlUEA$med)/(controlUEA$MAD * 1.4826)
-controlUEA$z <- scale(controlUEA$PMI)
-controlUEA$PPT <- factor(controlUEA$PPT)
-
-plot_name = 'adjustedZ_UEA.png'
-ggplot(controlUEA, aes(x = GRP, y = az, colour = PPT)) +
-  geom_point(size = 3, position = position_dodge(.1)) +  
-  stat_summary(aes(y = az, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', group = 1) + 
-  labs(x = '', y = 'Adjusted z-score', element_text(size = 13)) +
-  theme_bw() + theme(legend.position = "right", legend.title = element_blank())
-
-ggsave(plot_name, plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 5, height = 6.5, path = anaPath)
-
-# find controls with az > 2.5 - need to remove entire control, not just side
-XCLUDE_UEA <- controlUEA[controlUEA$az > 2.5, ]
-
-### combinging outliers and removing
-setwd(anaPath)
-XCLUDE <- rbind(XCLUDE_UOE,XCLUDE_UEA)
-write.csv(XCLUDE, 'radial-reaching_outliers.csv', row.names = FALSE)
-# creating data-frame with control data removed
-PMIfilt <- PMIdata[!(PMIdata$PPT %in% XCLUDE$PPT), ]
-# get rid of NA values
-PMIfilt <- na.omit(PMIfilt)
-
-res_mediansF <- res_medians[!(res_medians$PPT %in% XCLUDE$PPT), ]
-res_medians_allF <- res_medians_all[!(res_medians_all$PPT %in% XCLUDE$PPT), ]
-res_meansF <- res_means[!(res_means$PPT %in% XCLUDE$PPT), ]
-# saving filered data
-setwd(anaPath)
-write.csv(PMIfilt, 'radialPMI-filtered.csv', row.names = FALSE)
-write.csv(res_mediansF, 'radial-medians_filtered.csv', row.names = FALSE)
-write.csv(res_meansF, 'radial-means_filtered.csv', row.names = FALSE)
-write.csv(res_medians_allF, 'radial-medians-all_filtered.csv', row.names = FALSE)
-
-meanPMI_side <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'DOM'),
-                          na.rm = TRUE)
-meanPMI_all <- summarySE(PMIfilt, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
-                         na.rm = TRUE)
+#### outlier removal step has been removed from this analysis - code with this in can be found:
+#### DMT -> analysis -> radial_reaching -> as-preregistered
 
 ######## CASE CONTROL ANALYSIS ########
 # create data-frames (controls and patients) with key information
@@ -694,7 +615,7 @@ ggplot(plot_PMI, aes(x = DOM, y = PMI, colour = SITE, group = PPT, shape = DEFIC
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   scale_color_manual(values = c('grey45','dodgerblue3')) +
-  scale_shape_manual(values = c(1,18,16)) +
+  scale_shape_manual(values = c(1,16,18)) +
   facet_wrap(~DIAGNOSIS) +
   labs(x = 'Side', y = 'Radial PMI (mm)') +
   theme_classic() + theme(legend.position = 'none', 
@@ -717,7 +638,7 @@ ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = SITE, group = PPT, shape
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   scale_color_manual(values = c('grey45','dodgerblue3')) +
-  scale_shape_manual(values = c(1,18,16)) +
+  scale_shape_manual(values = c(1,18)) +
   labs(x = 'Diagnosis', y = '') +
   theme_classic() + theme(legend.position = 'none', 
                           axis.title = element_text(size = 12),

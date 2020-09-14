@@ -25,17 +25,11 @@ dataPath <- '/Users/Alex/Documents/DMT/data'
 setwd(anaPath)
 
 res <- read.csv('all_radial-reaching_compiled.csv')
-## find outliers and remove 
-xclude <- read.csv('radial-reaching_outliers.csv')
-res <- res[!(res$PPT %in% xclude$PPT), ]
 res$ECC <- abs(res$POSITION) #adding eccentricity = absolute target position
-# data-frame with only 2 target locations (middle 2)
-res2 <- res[res$ECC != 100 & res$ECC != 400 ,]
 
 ##### DIRECTIONAL ERROR: median, means, PMI #####
-## 2 MID TARG LOCS ##
 dir_medians <- aggregate(LANDx ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS * ECC, 
-                         median, data = res2)
+                         median, data = res)
 dir_means <- aggregate(LANDx ~ PPT* VIEW * SIDE * SITE * GRP * DIAGNOSIS, 
                            mean, data = dir_medians)
 # casting by task
@@ -138,72 +132,8 @@ DECC_ANOVA$`Sphericity Corrections`
 aovDECC <- aovEffectSize(ezObj = DECC_ANOVA, effectSize = "pes")
 aovDispTable(aovDECC)
 
-
-## ALL TARG LOCS ##
-dir_medians_all <- aggregate(LANDx ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS * ECC, 
-                         median, data = res)
-dir_medians_all$PPT <- factor(dir_medians_all$PPT)
-
-# remove outlier in P101
-dir_medians_all <- dir_medians_all[!(dir_medians_all$PPT == '101' & dir_medians_all$LANDx > 50) ,]
-
-dir_means_all <- aggregate(LANDx ~ PPT* VIEW * SIDE * SITE * GRP * DIAGNOSIS, 
-                       mean, data = dir_medians_all)
-
-# casting by task
-dPMIall <- dcast(dir_means_all, PPT+DIAGNOSIS+GRP+SIDE+SITE ~ VIEW)
-dPMIall$PMI <- dPMIall$Peripheral - dPMIall$Free
-write.csv(dPMIall, 'radial-reaching_dirPMI_all.csv', row.names = FALSE)
-
-### PLOTTING ###
-# PMI
-dPMIall$DIAGNOSIS <- factor(dPMIall$DIAGNOSIS, levels = c('HC','MCI','AD'))
-ggplot(dPMIall, aes(x = SIDE, y = PMI, group = PPT, colour = SITE)) + 
-  geom_point(shape = 1, size = 2, stroke = .8, position = position_dodge(width = .2)) +
-  geom_line(aes(group = PPT), alpha = .5, size = .5, 
-            position = position_dodge(width = .2)) +
-  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 3.5, group = 1) +
-  scale_color_manual(values = c('dodgerblue3','grey50')) +
-  labs(title = 'All target locs', x = 'Side', y = 'x-axis PMI (mm)', 
-       element_text(size = 12)) +
-  facet_wrap(~DIAGNOSIS) +
-  theme_classic() + theme(legend.position = 'bottom', 
-                          axis.title = element_text(size = 12),
-                          axis.text = element_text(size = 10),
-                          strip.text = element_text(size = 10) 
-  )
-
-ggsave('RADdPMI_all_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 5, height = 6, path = anaPath)
-
-# Mean absolute error
-## plotting data frame
-Err_summary_all <- summarySE(dir_means_all, measurevar = 'LANDx', 
-                         groupvar = c('DIAGNOSIS', 'SIDE', 'VIEW'), na.rm = TRUE)
-Err_summary_all$DIAGNOSIS <- factor(Err_summary_all$DIAGNOSIS, levels = c('HC','MCI','AD'))
-
-ggplot(Err_summary_all, aes(x = SIDE, y = LANDx, colour = DIAGNOSIS, shape = DIAGNOSIS,
-                        group = DIAGNOSIS)) +
-  geom_point(size = 4, position = position_dodge(width = .3)) +
-  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
-  geom_errorbar(aes(ymin=LANDx-ci, ymax=LANDx+ci), 
-                width=.3, position = position_dodge(width = .3)) +
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  labs(title = 'All target locs', 
-       x = 'Side', y = 'Radial reaching error (x-axis, mm)') + 
-  facet_wrap(~VIEW) +
-  theme_classic() + theme(legend.position = 'bottom', 
-                          legend.title = element_blank(),
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 12),
-                          strip.text = element_text(size = 12))
-
-ggsave('RADxerr_allmeans_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 5, height = 6, path = anaPath)
-
 # Median absolute error
-av_ecc <- summarySE(dir_medians_all, measurevar = 'LANDx', 
+av_ecc <- summarySE(dir_medians, measurevar = 'LANDx', 
                     groupvar = c('DIAGNOSIS','POSITION','VIEW','SIDE'), na.rm = TRUE)
 av_ecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 av_ecc$POSITION <- factor(av_ecc$POSITION)
@@ -234,53 +164,10 @@ ggsave('RADxerr_ECC_plot.png', plot = last_plot(), device = NULL, dpi = 300,
 dPMIanova_all <- dPMIall[dPMIall$PPT != 212 & dPMIall$PPT != 310 
                   & dPMIall$PPT != 407,] #removing participants where we only have 1 data-point
 
-# FULL ANOVA ON FILTERED DATA
-ALLDPMI_ANOVA <- ezANOVA(
-  data = dPMIanova_all
-  , dv = .(PMI)
-  , wid = .(PPT)
-  , within = .(SIDE)
-  , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE, AGE)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-ALLDPMI_ANOVA$ANOVA
-ALLDPMI_ANOVA$`Mauchly's Test for Sphericity`
-ALLDPMI_ANOVA$`Sphericity Corrections`
-aovDPMI_all <- aovEffectSize(ezObj = ALLDPMI_ANOVA, effectSize = "pes")
-aovDispTable(aovDPMI_all)
-
-# Reaching error
-dECCanova_all <- dir_medians_all[dir_medians_all$PPT != 101 & dir_medians_all$PPT != 212 & 
-                                   dir_medians_all$PPT != 310 & dir_medians_all$PPT != 403 ,]
-dECCanova_all$ECC <- factor(dECCanova_all$ECC)
-
-# FULL ANOVA ON ECCENTRICITY DATA
-ALLDECC_ANOVA <- ezANOVA(
-  data = dECCanova_all
-  , dv = .(LANDx)
-  , wid = .(PPT)
-  , within = .(VIEW, SIDE, ECC)
-  , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE, AGE)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-ALLDECC_ANOVA$ANOVA
-ALLDECC_ANOVA$`Mauchly's Test for Sphericity`
-ALLDECC_ANOVA$`Sphericity Corrections`
-aovDECC_all <- aovEffectSize(ezObj = ALLDECC_ANOVA, effectSize = "pes")
-aovDispTable(aovDECC_all)
-
 
 ###### MOVEMENT TIME #######
 MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
-                        median, data = res2)
+                        median, data = res)
 MT_means <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
                       mean, data = MT_medians)
 # average across side
@@ -414,7 +301,7 @@ print(MTttest)
 
 ###### REACTION TIME ######
 RT_medians <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
-                        median, data = res2)
+                        median, data = res)
 RT_means <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
                       mean, data = RT_medians)
 # average across side
@@ -528,7 +415,7 @@ print(RTttest)
 
 ##### PEAK SPEED #####
 PS_medians <- aggregate(PS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
-                        median, data = res2)
+                        median, data = res)
 # remove 310, not using them and 315 - noisy
 PS_medians <- PS_medians[PS_medians$PPT != 310 & PS_medians$PPT != 315 ,]
 # remove outlier in P407
@@ -644,7 +531,7 @@ print(PSttest)
 
 ##### TIME TO PV #####
 TPS_medians <- aggregate(TPS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
-                         median, data = res2)
+                         median, data = res)
 # remove 310, not using them and 315 - noisy
 TPS_medians <- TPS_medians[TPS_medians$PPT != 310 & TPS_medians$PPT != 315 ,]
 TPS_means <- aggregate(TPS ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
@@ -760,7 +647,7 @@ print(TPSttest)
 res2$TAPS <- res2$MT - res2$TPS
 
 TAPS_medians <- aggregate(TAPS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
-                          median, data = res2)
+                          median, data = res)
 # remove 310, not using them and 315 - noisy
 TAPS_medians <- TAPS_medians[TAPS_medians$PPT != 310 & TAPS_medians$PPT != 315 ,]
 TAPS_means <- aggregate(TAPS ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
@@ -876,7 +763,7 @@ print(TAPSttest)
 res2$NTAPS <- (res2$MT - res2$TPS)/res2$MT
 
 NTAPS_medians <- aggregate(NTAPS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
-                        median, data = res2)
+                        median, data = res)
 # remove 310, not using them and 315 - noisy
 NTAPS_medians <- NTAPS_medians[NTAPS_medians$PPT != 310 & NTAPS_medians$PPT != 315 ,]
 NTAPS_means <- aggregate(NTAPS ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
