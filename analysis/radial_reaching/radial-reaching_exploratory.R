@@ -28,12 +28,12 @@ res <- read.csv('all_radial-reaching_compiled.csv')
 res$ECC <- abs(res$POSITION) #adding eccentricity = absolute target position
 
 ##### DIRECTIONAL ERROR: median, means, PMI #####
-dir_medians <- aggregate(LANDx ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS * ECC, 
+dir_medians <- aggregate(LANDx ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS * AGE * ECC, 
                          median, data = res)
-dir_means <- aggregate(LANDx ~ PPT* VIEW * SIDE * SITE * GRP * DIAGNOSIS, 
+dir_means <- aggregate(LANDx ~ PPT* VIEW * SIDE * SITE * GRP * DIAGNOSIS * AGE, 
                            mean, data = dir_medians)
 # casting by task
-dPMI <- dcast(dir_means, PPT+DIAGNOSIS+GRP+SIDE+SITE ~ VIEW)
+dPMI <- dcast(dir_means, PPT+DIAGNOSIS+GRP+SIDE+SITE+AGE ~ VIEW)
 dPMI$PMI <- dPMI$Peripheral - dPMI$Free
 write.csv(dPMI, 'radial-reaching_dirPMI.csv', row.names = FALSE)
 
@@ -110,7 +110,7 @@ aovDispTable(aovDPMI)
 
 # Reaching error
 dECCanova <- dir_medians[dir_medians$PPT != 212 & dir_medians$PPT != 310
-                         & dir_medians$PPT != 407 ,]
+                         & dir_medians$PPT != 403 & dir_medians$PPT != 407 ,]
 dECCanova$ECC <- factor(dECCanova$ECC)
 
 # FULL ANOVA ON ECCENTRICITY DATA
@@ -159,11 +159,6 @@ ggplot(av_ecc, aes(x = POSITION, y = LANDx, group = DIAGNOSIS, colour = DIAGNOSI
 ggsave('RADxerr_ECC_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 6, height = 5, path = anaPath)
 
-### ANOVA ###
-# PMI
-dPMIanova_all <- dPMIall[dPMIall$PPT != 212 & dPMIall$PPT != 310 
-                  & dPMIall$PPT != 407,] #removing participants where we only have 1 data-point
-
 
 ###### MOVEMENT TIME #######
 MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
@@ -188,7 +183,7 @@ ggplot(MTsummary, aes(x = VIEW, y = MT, colour = DIAGNOSIS, group = DIAGNOSIS,
   geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
                 width=.4, position = position_dodge(width = .3)) +
   scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~DOM) + ylim(500,800) +
+  facet_grid(~DOM) + ylim(500,1000) +
   labs(x = '', y = 'Movement time (ms)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'bottom', 
                           legend.title = element_blank(),
@@ -236,7 +231,7 @@ ggplot(MTecc, aes(x = POSITION, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
   labs(x = 'Eccentricity (°)', y = 'Movement time (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_wrap(~VIEW) + theme_classic() + ylim(500,900) +
+  facet_wrap(~VIEW) + theme_classic() + ylim(500,1000) +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
@@ -270,10 +265,13 @@ aovMT <- aovEffectSize(ezObj = MT_ANOVA, effectSize = "pes")
 aovDispTable(aovMT)
 
 # FULL ANOVA ON MOVEMENT TIME DATA BY ECCENTRICITY
+# removing ppt with fewer trials (data invalid)
 MTECCanova <- MT_medians[MT_medians$PPT != 212 & 
+                           MT_medians$PPT != 302 & 
                            MT_medians$PPT != 310 &
                            MT_medians$PPT != 315 &
-                           MT_medians$PPT != 302 ,]
+                           MT_medians$PPT != 403 &
+                           MT_medians$PPT != 407,]
 MTECCanova$ECC <- factor(MTECCanova$ECC)
 
 MTECCanova$POSITION <- factor(MTECCanova$POSITION)
@@ -388,7 +386,9 @@ ggsave('RADRTecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300,
 RTECCanova <- RT_medians[RT_medians$PPT != 212 & 
                            RT_medians$PPT != 310 &
                            RT_medians$PPT != 315 &
-                           RT_medians$PPT != 302 ,]
+                           RT_medians$PPT != 302 &
+                           RT_medians$PPT != 403 &
+                           RT_medians$PPT != 407,]
 RTECCanova$ECC <- factor(RTECCanova$ECC)
 
 RTECC_ANOVA <- ezANOVA(
@@ -489,7 +489,7 @@ ggplot(PSecc, aes(x = POSITION, y = PS, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
   labs(x = 'Eccentricity (mm)', y = 'Peak velocity (mm/s2)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~VIEW) + theme_classic() + ylim(1000,2200) +
+  facet_grid(~VIEW) + theme_classic() + 
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
@@ -504,6 +504,7 @@ ggsave('RADPSecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300,
 ## ANOVA ##
 # full anova on PS by ecc
 PSECCanova <- PS_medians[PS_medians$PPT != 212 & 
+                           PS_medians$PPT != 403 &
                            PS_medians$PPT != 407 ,]
 PSECCanova$ECC <- factor(PSECCanova$ECC)
 
@@ -555,7 +556,7 @@ ggplot(TPSsummary, aes(x = VIEW, y = TPS, colour = DIAGNOSIS, group = DIAGNOSIS,
   geom_errorbar(aes(ymin=TPS-ci, ymax=TPS+ci), 
                 width=.4, position = position_dodge(width = .3)) +
   scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~DOM) + ylim(150,260) +
+  facet_grid(~DOM) + 
   labs(x = 'Side', y = 'Time to peak velocity (ms)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'bottom', 
                           legend.title = element_blank(),
@@ -618,7 +619,9 @@ ggsave('RADTPSecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300,
 ## ANOVA ##
 # full anova on TPS by ecc
 TPSECCanova <- TPS_medians[TPS_medians$PPT != 212 & 
-                             TPS_medians$PPT != 302 ,]
+                             TPS_medians$PPT != 302 &
+                             TPS_medians$PPT != 403 &
+                             TPS_medians$PPT != 407 ,]
 TPSECCanova$ECC <- factor(TPSECCanova$ECC)
 
 TPSECC_ANOVA <- ezANOVA(
@@ -644,7 +647,7 @@ TPSttest <- pairwise.t.test(TPS_medians$TPS, TPS_medians$DIAGNOSIS, p.adj = 'bon
 print(TPSttest)
 
 ##### TIME AFTER PV #####
-res2$TAPS <- res2$MT - res2$TPS
+res$TAPS <- res$MT - res$TPS
 
 TAPS_medians <- aggregate(TAPS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
                           median, data = res)
@@ -734,7 +737,9 @@ ggsave('RADTAPSecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300,
 ## ANOVA ##
 # full anova on TAPS by ecc
 TAPSECCanova <- TAPS_medians[TAPS_medians$PPT != 212 & 
-                               TAPS_medians$PPT != 302 ,]
+                               TAPS_medians$PPT != 302 &
+                               TAPS_medians$PPT != 403 &
+                               TAPS_medians$PPT != 407,]
 TAPSECCanova$ECC <- factor(TAPSECCanova$ECC)
 
 TAPSECC_ANOVA <- ezANOVA(
@@ -760,7 +765,7 @@ TAPSttest <- pairwise.t.test(TAPS_medians$TAPS, TAPS_medians$DIAGNOSIS, p.adj = 
 print(TAPSttest)
 
 ##### NORM TIME AFTER PV #####
-res2$NTAPS <- (res2$MT - res2$TPS)/res2$MT
+res$NTAPS <- (res$MT - res$TPS)/res$MT
 
 NTAPS_medians <- aggregate(NTAPS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
                         median, data = res)
@@ -850,7 +855,9 @@ ggsave('RADnTAPSecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300,
 ## ANOVA ##
 # full anova on TAPS by ecc
 NTAPSECCanova <- NTAPS_medians[NTAPS_medians$PPT != 212 & 
-                                 NTAPS_medians$PPT != 302 ,]
+                                 NTAPS_medians$PPT != 302 &
+                                 NTAPS_medians$PPT != 403 &
+                                 NTAPS_medians$PPT != 407,]
 NTAPSECCanova$ECC <- factor(NTAPSECCanova$ECC)
 
 NTAPSECC_ANOVA <- ezANOVA(
