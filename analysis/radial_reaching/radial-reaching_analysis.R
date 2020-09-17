@@ -70,8 +70,6 @@ res$DOM <- factor(res$DOM, labels= c('ND','D'))
 res <- res[, c(1,6,23:25,2:5,7:22)]
 
 ## removing invalid trials that were not picked up on
-#101 looks like a calib problem -100 left high error (around 100mm on all left -100 trials)
-res <- res[!(res$PPT == '101' & res$LANDx > 90) ,]
 #303 one trial extrememly high error >100mm 
 res <- res[!(res$PPT == '303' & res$LANDx < -100) ,]
 #408 one trial with extremely high error >200mm

@@ -5,11 +5,11 @@ library(ggpubr)
 library(Rmisc)
 
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on mac desktop
-anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching/'
-dataPath <- '/Users/Alex/Documents/DMT/data/'
+#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching/'
+#dataPath <- '/Users/Alex/Documents/DMT/data/'
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
 #anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
@@ -65,6 +65,8 @@ colnames(caldat)[colnames(caldat) == 'mx'] <- 'calx' #renaming for merging
 colnames(caldat)[colnames(caldat) == 'my'] <- 'caly'
 #remove unnecessary trials
 caldat <- caldat[c(7,8,10,14)]
+#remove first row of caldat data - incorrect calib
+caldat <- caldat[-c(1) ,]
 
 res <- res[!res$VIEW =='CAL', ] #data-frame without cal trials, not needed
 
@@ -105,7 +107,7 @@ res$SITE <- 'UOE'
 
 # adding demographic information
 patient_demos <- read.csv('patient_demographics.csv') #loading patient demographics
-control_demos <- read.csv('control_demographics.csv') #loading control demos
+control_demos <- read.csv('control_demographics 2.csv') #loading control demos
 #extracting ACE data into seperate data-frame
 ACEscores <- patient_demos[ ,c(1, 8:13)]
 #isolating patient demographic information to bind with control
