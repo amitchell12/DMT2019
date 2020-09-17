@@ -12,10 +12,11 @@ library(psychReport)
 
 ###### GETTING DATA #######
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
 # on desktop mac
-anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
-dataPath <- '/Users/Alex/Documents/DMT/data'
+#anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
+#dataPath <- '/Users/Alex/Documents/DMT/data'
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
 #anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
@@ -440,7 +441,7 @@ aovDispTable(aovRTECC)
 
 ##### CORRELATE PMI + MT, RT ######
 # load PMI data
-PMIdata <- read.csv('lateralPMI-filtered.csv')
+PMIdata <- read.csv('lateralPMI_all.csv')
 # cast MT and RT
 MT <- dcast(MT_means, PPT+DIAGNOSIS+DOM+SITE ~ VIEW)
 RT <- dcast(RT_means, PPT+DIAGNOSIS+DOM+SITE ~ VIEW)
