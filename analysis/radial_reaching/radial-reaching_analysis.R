@@ -8,14 +8,14 @@ library(psychReport)
 library(singcar)
 
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-#UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 
 # on desktop mac
-anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
-dataPath <- '/Users/Alex/Documents/DMT/data'
-UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
+#dataPath <- '/Users/Alex/Documents/DMT/data'
+#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
+#UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
 
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
@@ -76,7 +76,7 @@ res <- res[!(res$PPT == '303' & res$LANDx < -100) ,]
 res <- res[!(res$PPT == '408' & res$LANDx > 100) ,]
 #410 one trial extremely high error >150mm
 res <- res[!(res$PPT == '410' & res$LANDx < -150) ,]
-# removes a total of 17 trials
+# removes a total of 3 trials
 
 # save Edinburgh & UEA compiled data
 setwd(anaPath)
@@ -110,6 +110,7 @@ meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS',
                           na.rm = TRUE)
 meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
                          na.rm = TRUE)
+write.csv(meanPMI_side, 'radialPMI_means.csv', row.names = FALSE)
 
 ##### ANOVA - differences between sites #####
 siteANOVA <- na.omit(res_means)
