@@ -10,11 +10,11 @@ library(ggpubr)
 
 #set working directory to where data is
 #on mac
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
 # on desktop mac
-anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
-dataPath <- '/Users/Alex/Documents/DMT/data'
+#anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
+#dataPath <- '/Users/Alex/Documents/DMT/data'
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
 #anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
@@ -109,7 +109,7 @@ res <- res[which(res$eye_move == 0 & res$void == 0), c(1,11:15,2:5,18:23,6:8,16:
 
 # add demographic information to this data
 patient_demos <- read.csv('patient_demographics.csv') #loading patient demographics
-control_demos <- read.csv('control_demographics.csv') #loading control demos
+control_demos <- read.csv('control_demographics 2.csv') #loading control demos
 #extracting ACE data into seperate data-frame
 ACEscores <- patient_demos[ ,c(1, 8:13)]
 #isolating patient demographic information to bind with control
