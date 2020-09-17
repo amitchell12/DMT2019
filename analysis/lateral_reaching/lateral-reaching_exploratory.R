@@ -180,6 +180,9 @@ DECC_ANOVA$`Sphericity Corrections`
 aovDECC <- aovEffectSize(ezObj = DECC_ANOVA, effectSize = "pes")
 aovDispTable(aovDECC)
 
+##### AMPLITUDE ERROR ######
+# calculate error along the y-axis
+
 ###### MOVEMENT TIME #######
 MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * POSITION * SITE * GRP * DIAGNOSIS, 
                         median, data = res)
