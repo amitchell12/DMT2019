@@ -89,6 +89,7 @@ optodat$TRIAL <- substr(optodat$FILE, (nchar(optodat$FILE)-5), (nchar(optodat$FI
 # removing '0' that pre-fix digits
 optodat$TRIAL <- gsub("(^|[^0-9])0+", "\\1", optodat$TRIAL, perl = TRUE)
 
+## back to caldat
 # getting 'position' and 'ppt' data for caldat
 caldat$PPT <- substr(caldat$FILE, 5, 7)
 
@@ -105,7 +106,7 @@ buttons$caly <- as.numeric(buttons$caly)
 for (i in 1:length(buttons$PPT)){
   if (isTRUE(buttons$calx[i] < -100)){
     buttons$calx[i] = -30
-    buttons$caly[i] = 40
+    buttons$caly[i] = 39
   }
 }
 # rename columns
@@ -123,6 +124,8 @@ caldat$POSITION <- c(1:4)
 caldat$SIDE <- factor(caldat$calx < 0, labels = c('Right','Left'))
 # extract key variables
 caldat <- caldat[, c(11:13,7:8)]
+## merge button data to caldat
+caldat <- merge(caldat, buttons, by = c('SIDE','PPT'))
 
 ## missing calibration data - load this
 cal_fits <- read.csv(text='TRIAL,rX,rY,FILE')
@@ -140,18 +143,25 @@ colnames(cal_fits)[colnames(cal_fits) == 'V4'] <- 'caly'
 cal_fits$PPT <- substr(cal_fits$FILE, 1, 3)
 cal_fits$POSITION <- c(1:4)
 cal_fits$SIDE <- factor(cal_fits$calx < 0, labels = c('Right','Left'))
-#re-rodering
-cal_fits <- cal_fits[, c(5:7,2,3)]
+## add missing button data to cal_fits
+# estimate start position from the mean of the other values - for missing data
+mean_startX <- summarySEwithin(data = buttons, measurevar = 'sX', withinvars = 'SIDE')
+mean_startY <- summarySEwithin(data = buttons, measurevar = 'sY', withinvars = 'SIDE')
+# adding mean fitted data to missing data-set
+for (i in 1:length(cal_fits$PPT)){
+  if (isTRUE(cal_fits$SIDE[i] == 'Left')){
+    cal_fits$sX[i] <- mean_startX$sX[1]
+    cal_fits$sY[i] <- mean_startY$sY[1]
+  }
+  else if (isTRUE(cal_fits$SIDE[i] == 'Right')){
+    cal_fits$sX[i] <- mean_startX$sX[2]
+    cal_fits$sY[i] <- mean_startY$sY[2]
+  }
+}
+
+# merge 
+cal_fits <- cal_fits[, c(5:7,2,3,8,9)]
 caldat <- rbind(caldat,cal_fits)
-
-## merge button data to completed caldat
-# estimate start position through fits - for missing data
-
-
-# add missing ppt datat to start positions as NA
-test <- merge(caldat, buttons, by = c('PPT','SIDE'))
-
-## missing sY and sX data - fill in missing data
 
 ### MERGE
 ### IDDAT AND OPTODAT TRIALS DO NOT ALIGN - THIS IS AN ISSUE, MAYBE SPEAK TO THE OTHERS ABOUT THIS?
@@ -180,12 +190,13 @@ nVoid <- aggregate(res$RESP == '73', by=list(subject_nr = res$PPT), FUN=sum)
 res <- res[res$RESP == 32 ,]
 res <- res[complete.cases(res) ,] #removing NA values
 
-##### data analysis #####
+##### PREP FOR DATA ANALYSIS #####
 # subtracting cal from reach endpoint
 res$calx <- as.numeric(res$calx)
 res$caly <- as.numeric(res$caly)
 res$mx <- as.numeric(res$mx)
 res$my <- as.numeric(res$my)
+# calculating end-point position relative to target
 res$LANDx <- res$mx - res$calx
 res$LANDy <- res$my - res$caly
 
@@ -198,10 +209,26 @@ ggplot(res) + geom_point(aes(x = calx, y = caly, colour = POSITION), shape = 3) 
 ggsave('radial-reach_Err.png', plot = last_plot(), device = NULL, 
        path = dataPath, scale = 1, width = 15, height = 10, units = 'in')
 
-# absolute error
+## absolute error
 res$AE <- sqrt(res$LANDx^2 + res$LANDy^2) #mm
 res$GRP <- factor(substr(res$PPT, 1, 1))
 res$SITE <- 'UEA'
+
+## calculating target and end-point position relative to start-point
+res$rX <- res$mx - res$sX
+res$rY <- res$my - res$sY
+res$tX <- res$calx - res$sX
+res$tY <- res$caly - res$sY
+
+#recode response as target-relative ERRORS in polar coordinates
+res$tANG <- (atan(res$tX/res$tY))*(180/pi)
+res$tAMP <- sqrt(res$tX^2 + res$tY^2)
+res$rANG <- (atan(res$rX/res$rY))*(180/pi)
+res$rAMP <- sqrt(res$rX^2 + res$rY^2)
+
+## calculating angular error and amplitude error
+res$ANG_ERR <- res$rANG - res$tANG
+res$AMP_ERR <- res$rAMP - res$tAMP
 
 # adding demographic information
 # add demographic information to this data
