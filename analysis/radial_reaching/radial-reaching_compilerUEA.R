@@ -4,6 +4,10 @@ library(reshape2)
 library(ggpubr)
 library(Rmisc)
 
+#desktop mac
+dataPath <- '/Users/Alex/Documents/DMT/norwich_movement_data'
+setwd(dataPath)
+# mac laptop
 dataPath <- '/Users/Alex/Documents/DMT/norwich_movement_data'
 setwd(dataPath)
 
