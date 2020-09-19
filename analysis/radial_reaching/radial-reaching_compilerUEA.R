@@ -5,10 +5,10 @@ library(ggpubr)
 library(Rmisc)
 
 #desktop mac
-dataPath <- '/Users/Alex/Documents/DMT/norwich_movement_data'
-setwd(dataPath)
+#dataPath <- '/Users/Alex/Documents/DMT/norwich_movement_data'
+#setwd(dataPath)
 # mac laptop
-dataPath <- '/Users/Alex/Documents/DMT/norwich_movement_data'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data/'
 setwd(dataPath)
 
 files <- list.files(path=dataPath, pattern = "*.TRJ", full.names = TRUE, recursive = TRUE)
@@ -91,6 +91,25 @@ optodat$TRIAL <- gsub("(^|[^0-9])0+", "\\1", optodat$TRIAL, perl = TRUE)
 
 # getting 'position' and 'ppt' data for caldat
 caldat$PPT <- substr(caldat$FILE, 5, 7)
+
+# saving button locations for calculating amplitude and angular error
+button_left <- caldat[caldat$COUNT == 5 ,]
+button_right <- caldat[caldat$COUNT == 6 ,]
+# get side
+button_left$SIDE <- 'Left'
+button_right$SIDE <- 'Right'
+buttons <- rbind(button_left, button_right)
+buttons$calx <- as.numeric(buttons$calx)
+# one erroneous trial, correct
+for (i in 1:length(buttons$PPT)){
+  if (isTRUE(buttons$calx[i] < -100)){
+    buttons$calx[i] = -30
+  }
+}
+# rename columns
+
+# remove unnecessary data
+
 # position information- from counter and calx
 # first remove 6+7 (button presses)
 caldat <- subset(caldat, caldat$COUNT !=5 & caldat$COUNT !=6)
@@ -100,6 +119,29 @@ caldat$POSITION <- c(1:4)
 caldat$SIDE <- factor(caldat$calx < 0, labels = c('Right','Left'))
 # extract key variables
 caldat <- caldat[, c(11:13,7:8)]
+
+## missing calibration data - load this
+cal_fits <- read.csv(text='TRIAL,rX,rY,FILE')
+for(i in idfiles){
+  if (isTRUE(substr(basename(i), 11, 14) == 'fits')){
+    tmp <- read.csv(i, header = FALSE)[, c(1,2,4)]
+    tmp$FILE <- basename(i)
+    cal_fits <- rbind(cal_fits, tmp) #data-frame of trial information
+  }
+}
+
+# re-arrage to fit other calibration data, then bind and order
+colnames(cal_fits)[colnames(cal_fits) == 'V2'] <- 'calx' #renaming for merging
+colnames(cal_fits)[colnames(cal_fits) == 'V4'] <- 'caly'
+cal_fits$PPT <- substr(cal_fits$FILE, 1, 3)
+cal_fits$POSITION <- c(1:4)
+cal_fits$SIDE <- factor(cal_fits$calx < 0, labels = c('Right','Left'))
+#re-rodering
+cal_fits <- cal_fits[, c(5:7,2,3)]
+caldat <- rbind(caldat,cal_fits)
+# add button data to cal-dat frame
+
+## missing sY and sX data - fill in missing data
 
 ### MERGE
 ### IDDAT AND OPTODAT TRIALS DO NOT ALIGN - THIS IS AN ISSUE, MAYBE SPEAK TO THE OTHERS ABOUT THIS?
