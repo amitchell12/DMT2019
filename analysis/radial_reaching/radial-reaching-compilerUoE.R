@@ -74,7 +74,7 @@ res <- res[!res$VIEW =='CAL', ] #data-frame without cal trials, not needed
 res <- merge(res, caldat, by = c('PPT','POSITION'), all = TRUE) #SO HAPPY THIS FUNCT EXISTS
 res[res == -32768] <- NA
 
-##### data analysis #####
+##### PREP FOR DATA ANALYSIS #####
 # subtracting cal from reach endpoint
 res$LANDx <- res$mx - res$calx
 res$LANDy <- res$my - res$caly
@@ -84,7 +84,10 @@ nEye_move <- aggregate(res$EYE_MOVE == '1', by=list(subject_nr = res$PPT), FUN=s
 nVoid <- aggregate(res$EYE_MOVE == '-1', by=list(subject_nr = res$PPT), FUN=sum)
 # removing
 res <- res[res$EYE_MOVE == 0, c(1:10,12:13,17:20)]
-
+#renaming some stuff
+res$GRP <- factor(substr(res$PPT, 4, 4))
+res$PPT <- substr(res$PPT, 4, 6)
+res$SITE <- 'UOE'
 
 # plotting to get a look at data
 res$POSITION <- factor(res$POSITION)
@@ -94,16 +97,34 @@ ggplot(res) + geom_point(aes(x = calx, y = caly, colour = POSITION), shape = 3) 
 ggsave('radial-reach_Err.png', plot = last_plot(), device = NULL, 
        path = anaPath, scale = 1, width = 15, height = 10, units = 'in')
 
-
+## data transformations and calculations
 # tranforming to degrees
 res$LANDx_deg <- visAngle(size= res$LANDx, distance = 500) #using visual angle function above
 res$LANDy_deg <- visAngle(size= res$LANDy, distance = 500)
+
 # absolute error - in mm
 res$AE <- sqrt(res$LANDx^2 + res$LANDy^2) #mm
-res$AEdeg <- sqrt(res$LANDx_deg^2 + res$LANDy_deg^2) #deg
-res$GRP <- factor(substr(res$PPT, 4, 4))
-res$PPT <- substr(res$PPT, 4, 6)
-res$SITE <- 'UOE'
+
+## start position
+res$sX <- 500
+res$sY <- 0
+
+## angular error and amplitude error
+# calculating target and end-point position relative to start-point
+res$rX <- res$mx - res$sX
+res$rY <- res$my - res$sY
+res$tX <- res$calx - res$sX
+res$tY <- res$caly - res$sY
+
+#recode response as target-relative ERRORS in polar coordinates
+res$tANG <- (atan(res$tX/res$tY))*(180/pi)
+res$tAMP <- sqrt(res$tX^2 + res$tY^2)
+res$rANG <- (atan(res$rX/res$rY))*(180/pi)
+res$rAMP <- sqrt(res$rX^2 + res$rY^2)
+
+## calculating angular error and amplitude error
+res$ANG_ERR <- res$rANG - res$tANG
+res$AMP_ERR <- res$rAMP - res$tAMP
 
 # adding demographic information
 patient_demos <- read.csv('patient_demographics.csv') #loading patient demographics
