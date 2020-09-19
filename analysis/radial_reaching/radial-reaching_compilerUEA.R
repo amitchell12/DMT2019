@@ -100,15 +100,19 @@ button_left$SIDE <- 'Left'
 button_right$SIDE <- 'Right'
 buttons <- rbind(button_left, button_right)
 buttons$calx <- as.numeric(buttons$calx)
+buttons$caly <- as.numeric(buttons$caly)
 # one erroneous trial, correct
 for (i in 1:length(buttons$PPT)){
   if (isTRUE(buttons$calx[i] < -100)){
     buttons$calx[i] = -30
+    buttons$caly[i] = 40
   }
 }
 # rename columns
-
+names(buttons)[7] <- 'sX'
+names(buttons)[8] <- 'sY'
 # remove unnecessary data
+buttons <- buttons[, c(7,8,11,12)]
 
 # position information- from counter and calx
 # first remove 6+7 (button presses)
@@ -139,7 +143,13 @@ cal_fits$SIDE <- factor(cal_fits$calx < 0, labels = c('Right','Left'))
 #re-rodering
 cal_fits <- cal_fits[, c(5:7,2,3)]
 caldat <- rbind(caldat,cal_fits)
-# add button data to cal-dat frame
+
+## merge button data to completed caldat
+# estimate start position through fits - for missing data
+
+
+# add missing ppt datat to start positions as NA
+test <- merge(caldat, buttons, by = c('PPT','SIDE'))
 
 ## missing sY and sX data - fill in missing data
 
