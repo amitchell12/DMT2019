@@ -244,6 +244,7 @@ names(demo)[1] <- 'PPT'
 
 #merging demo with res medians
 res <- merge(res, demo, by = 'PPT')
+res$SITE <- 'UEA'
 
 #save compiled data-set
 write.csv(res, "radial-reaching_compiled.csv", row.names = FALSE)

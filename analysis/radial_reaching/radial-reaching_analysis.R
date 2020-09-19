@@ -27,12 +27,10 @@ resUEA <- read.csv('radial-reaching_compiled.csv')
 
 ##### DATA ORGANISE #####
 # UOE data, getting rid of 'deg' values - just use mm
-resUOE <- resUOE[, c(1:7,16,17,8:15,18:21,24,26,27)]
+resUOE <- resUOE[, c(1:23,26:38)]
 # UEA data getting rid of not needed values
-resUEA <- resUEA[, c(1:9,15:22,24:30)]
+resUEA <- resUEA[, c(1:4,10:17,19:42)]
 resUEA <- resUEA[resUEA$PPT != '311' ,]
-# change group labelling in UEA (3 = control, 4 = patient) to match UOE (1 = control, 2 = patient)
-resUEA$GRP <- factor(resUEA$GRP, labels = c('1','2'))
 # change position labelling here too - needs to match UOE (100,200,300,400mm)
 # split into two data-frames (left/right sides) and label, the bind again
 UEAright <- resUEA[resUEA$SIDE == 'Right' ,]
@@ -51,7 +49,7 @@ res <- res[order(res$PPT),]
 # changing levelsfor plotting
 res$VIEW <- factor(res$VIEW) #changing so only 2 levels recorded
 res$GRP <- factor(res$GRP)
-levels(res$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
+#levels(res$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
 res$diagnosis <- factor(res$diagnosis)
 res$POSITION <- factor(res$POSITION)
 # capitalising names of demographics to match rest
@@ -67,7 +65,7 @@ res$HAND <- factor(res$HAND, labels = c('Left','Right'))
 res$DOM <- as.numeric(res$SIDE == res$HAND) #1 = dominant, 0 = non-dominant
 res$DOM <- factor(res$DOM, labels= c('ND','D'))
 # change order so important var up-front
-res <- res[, c(1,6,23:25,2:5,7:22)]
+res <- res[, c(1:7,37,16,17,8:15,18:36)]
 
 ## removing invalid trials that were not picked up on
 #303 one trial extrememly high error >100mm 
