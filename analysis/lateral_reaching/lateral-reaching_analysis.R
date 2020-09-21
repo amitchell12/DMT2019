@@ -15,11 +15,11 @@ library(psychReport)
 #dataPath <- 'S:/groups/DMT/data'
 #anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 # on mac (desktop)
-#dataPath <- '/Users/Alex/Documents/DMT/data/'
-#anaPath <- '/Users/Alex/Documents/DMT/analysis//lateral_reaching/'
+dataPath <- '/Users/Alex/Documents/DMT/data/'
+anaPath <- '/Users/Alex/Documents/DMT/analysis//lateral_reaching/'
 # on mac (laptop)
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/'
 setwd(anaPath)
 
 # load data file

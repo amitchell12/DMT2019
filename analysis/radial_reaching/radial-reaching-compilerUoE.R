@@ -5,11 +5,11 @@ library(ggpubr)
 library(Rmisc)
 
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on mac desktop
-#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching/'
-#dataPath <- '/Users/Alex/Documents/DMT/data/'
+anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching/'
+dataPath <- '/Users/Alex/Documents/DMT/data/'
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
 #anaPath <- 'S:/groups/DMT/analysis/radial_reaching'

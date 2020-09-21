@@ -8,14 +8,14 @@ library(psychReport)
 library(singcar)
 
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 
 # on desktop mac
-#dataPath <- '/Users/Alex/Documents/DMT/data'
-#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
-#UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
+dataPath <- '/Users/Alex/Documents/DMT/data'
+anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
+UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
 
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
@@ -165,7 +165,7 @@ res_medians_all <- res_medians_all[!(res_medians_all$PPT == '101' & res_medians_
 #re-ordering position data to fit correct order
 res_medians_all$POSITION <- as.numeric(as.character(res_medians_all$POSITION))
 res_medians_all$POSITION <- factor(res_medians_all$POSITION)
-meds_control <- res_medians_all[res_medians_all$GRP == 'Control' ,]
+meds_control <- res_medians_all[res_medians_all$DIAGNOSIS == 'HC' ,]
 
 ggplot(meds_control, aes(x = POSITION, y = AE, colour = DOM)) +
   geom_point(shape = 1, size = 2) +
@@ -418,13 +418,16 @@ PMIttest <- pairwise.t.test(PMIanova$PMI, PMIanova$DIAGNOSIS, p.adj = 'bonf')
 print(PMIttest)
 
 ### ANOVA BY ECCENTRICITY ### 
-tmp <- as.numeric(levels(res_mediansF$POSITION))[res_mediansF$POSITION]
-res_mediansF$ECC <- abs(tmp)
+tmp <- as.numeric(levels(res_medians$POSITION))[res_medians$POSITION]
+res_medians$ECC <- abs(tmp)
 
 # removing participants with incomplete data-sets
-ECCanova <- res_mediansF[res_mediansF$PPT != 212
-                     & res_mediansF$PPT != 310
-                     & res_mediansF$PPT != 403,]
+ECCanova <- res_medians[res_medians$PPT != 212
+                     & res_medians$PPT != 302
+                     & res_medians$PPT != 310
+                     & res_medians$PPT != 315
+                     & res_medians$PPT != 403
+                     & res_medians$PPT != 407,]
 ECCanova$ECC <- factor(ECCanova$ECC)
 
 ECC_ANOVA <- ezANOVA(
@@ -451,12 +454,16 @@ print(ECCttest)
 
 ### ANOVA BY ECCENTRICITY ALL TARG LOCS ###
 # converting factor back to numeric keeping values
-tmp <- as.numeric(levels(res_medians_allF$POSITION))[res_medians_allF$POSITION]
-res_medians_allF$ECC <- abs(tmp)
+tmp <- as.numeric(levels(res_medians_all$POSITION))[res_medians_all$POSITION]
+res_medians_all$ECC <- abs(tmp)
 
 # removing participants with incomplete data-sets
-ECCanova_all <- res_medians_allF[res_medians_allF$PPT != 212 & res_medians_allF$PPT != 101
-                     & res_medians_allF$PPT != 310 & res_medians_allF$PPT != 403,]
+ECCanova_all <- res_medians_all[res_medians_all$PPT != 212 
+                                & res_medians_all$PPT != 302
+                                & res_medians_all$PPT != 315
+                                & res_medians_all$PPT != 310 
+                                & res_medians_all$PPT != 403
+                                & res_medians_all$PPT != 407,]
 ECCanova_all$ECC <- factor(ECCanova_all$ECC)
 
 ALLECC_ANOVA <- ezANOVA(
@@ -640,7 +647,7 @@ ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = SITE, group = PPT, shape
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   scale_color_manual(values = c('grey45','dodgerblue3')) +
-  scale_shape_manual(values = c(1,18,18)) +
+  scale_shape_manual(values = c(1,18,16)) +
   labs(x = 'Diagnosis', y = '') +
   theme_classic() + theme(legend.position = 'none', 
                           axis.title = element_text(size = 12),

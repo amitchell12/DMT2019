@@ -27,53 +27,44 @@ setwd(anaPath)
 res <- read.csv('all_radial-reaching_compiled.csv')
 res$ECC <- abs(res$POSITION) #adding eccentricity = absolute target position
 
-##### DIRECTIONAL ERROR: median, means, PMI #####
-dir_medians <- aggregate(LANDx ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS * AGE * ECC, 
+##### ANGULAR ERROR: median, means, PMI #####
+ANGmedians <- aggregate(ANG_ERR ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS * AGE * ECC, 
                          median, data = res)
-dir_means <- aggregate(LANDx ~ PPT* VIEW * SIDE * SITE * GRP * DIAGNOSIS * AGE, 
-                           mean, data = dir_medians)
-# casting by task
-dPMI <- dcast(dir_means, PPT+DIAGNOSIS+GRP+SIDE+SITE+AGE ~ VIEW)
-dPMI$PMI <- dPMI$Peripheral - dPMI$Free
-write.csv(dPMI, 'radial-reaching_dirPMI.csv', row.names = FALSE)
+ANGmeans <- aggregate(ANG_ERR ~ PPT* VIEW * SIDE * SITE * GRP * DIAGNOSIS * AGE, 
+                           mean, data = ANGmedians)
+ANGmeans$DIAGNOSIS <- factor(ANGmeans$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
 ### PLOTTING ###
-# PMI
-dPMI$DIAGNOSIS <- factor(dPMI$DIAGNOSIS, levels = c('HC','MCI','AD'))
-ggplot(dPMI, aes(x = SIDE, y = PMI, group = PPT, colour = SITE)) + 
-  geom_point(shape = 1, size = 2, stroke = .8, position = position_dodge(width = .2)) +
-  geom_line(aes(group = PPT), alpha = .5, size = .5, 
-            position = position_dodge(width = .2)) +
-  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 3.5, group = 1) +
-  scale_color_manual(values = c('dodgerblue3','grey50')) +
-  labs(title = 'Mid target locs', x = 'Side', y = 'x-axis PMI (mm)', 
-       element_text(size = 12)) +
-  facet_wrap(~DIAGNOSIS) +
-  theme_classic() + theme(legend.position = 'bottom', 
-                          axis.title = element_text(size = 12),
+## all participants
+ggplot(ANGmeans, aes(x = SIDE, y = ANG_ERR, group = PPT, colour = VIEW)) +
+  geom_hline(yintercept = 0) +
+  geom_point(size = 4, shape = 1, position = position_dodge(width = .2)) +
+  geom_line(aes(group = PPT), alpha = .5, size = 0.7, position = position_dodge(width = .2)) +
+  facet_grid(~DIAGNOSIS~VIEW) +
+  scale_colour_manual(values = c('black','grey50')) +
+  labs(x = 'Side', y = 'Angular error (°)') + 
+  theme_classic() + theme(legend.position = 'none',
                           axis.text = element_text(size = 10),
-                          strip.text = element_text(size = 10) 
-  )
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12)
+                          )
 
-ggsave('RADdPMI_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 5, height = 6, path = anaPath)
+ggsave('RADangerrPP_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 5, height = 7, path = anaPath)
 
-# Absolute error
 ## plotting data frame
-Err_summary <- summarySE(dir_means, measurevar = 'LANDx', 
+Err_summary <- summarySE(ANGmeans, measurevar = 'ANG_ERR', 
                          groupvar = c('DIAGNOSIS', 'SIDE', 'VIEW'), na.rm = TRUE)
 Err_summary$DIAGNOSIS <- factor(Err_summary$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(Err_summary, aes(x = SIDE, y = LANDx, colour = DIAGNOSIS, shape = DIAGNOSIS,
+ggplot(Err_summary, aes(x = SIDE, y = ANG_ERR, colour = DIAGNOSIS, shape = DIAGNOSIS,
                         group = DIAGNOSIS)) +
   geom_point(size = 4, position = position_dodge(width = .3)) +
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
-  geom_errorbar(aes(ymin=LANDx-ci, ymax=LANDx+ci), 
+  geom_errorbar(aes(ymin=ANG_ERR-ci, ymax=ANG_ERR+ci), 
                 width=.3, position = position_dodge(width = .3)) +
   scale_color_manual(values = c('black','grey30','grey60')) +
-  labs(title = 'Mid target locs', 
-       x = 'Side', y = 'Radial reaching error (x-axis, mm)') + 
+  labs(x = 'Side', y = 'Angular error (°)') + 
   facet_wrap(~VIEW) +
   theme_classic() + theme(legend.position = 'bottom', 
                           legend.title = element_blank(),
@@ -81,42 +72,19 @@ ggplot(Err_summary, aes(x = SIDE, y = LANDx, colour = DIAGNOSIS, shape = DIAGNOS
                           axis.title = element_text(size = 12),
                           strip.text = element_text(size = 12))
 
-ggsave('RADxerr_means_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('RADangerr_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 5, height = 6, path = anaPath)
 
+###### REACHED HERE IN EXPLORATORY DATA - ANG-ERR ANOVA STILL WORKING
 ### ANOVA ###
-# PMI
-dPMIanova <- dPMI[dPMI$PPT != 212 & dPMI$PPT != 310 
-                  & dPMI$PPT != 407,] #removing participants where we only have 1 data-point
-
-# FULL ANOVA ON FILTERED DATA
-DPMI_ANOVA <- ezANOVA(
-  data = dPMIanova
-  , dv = .(PMI)
-  , wid = .(PPT)
-  , within = .(SIDE)
-  , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE, AGE)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-DPMI_ANOVA$ANOVA
-DPMI_ANOVA$`Mauchly's Test for Sphericity`
-DPMI_ANOVA$`Sphericity Corrections`
-aovDPMI <- aovEffectSize(ezObj = DPMI_ANOVA, effectSize = "pes")
-aovDispTable(aovDPMI)
-
-# Reaching error
-dECCanova <- dir_medians[dir_medians$PPT != 212 & dir_medians$PPT != 310
-                         & dir_medians$PPT != 403 & dir_medians$PPT != 407 ,]
-dECCanova$ECC <- factor(dECCanova$ECC)
+ANGanova <- ANGmedians[ANGmedians$PPT != 212 & ANGmedians$PPT != 310
+                         & ANGmedians$PPT != 403 & ANGmedians$PPT != 407 ,]
+ANGanova$ECC <- factor(ANGanova$ECC)
 
 # FULL ANOVA ON ECCENTRICITY DATA
-DECC_ANOVA <- ezANOVA(
-  data = dECCanova
-  , dv = .(LANDx)
+ANG_ANOVA <- ezANOVA(
+  data = ANGanova
+  , dv = .(ANG_ERR)
   , wid = .(PPT)
   , within = .(VIEW, SIDE, ECC)
   , between = .(DIAGNOSIS)
