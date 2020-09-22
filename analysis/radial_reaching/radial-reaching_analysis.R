@@ -664,25 +664,3 @@ PMIfig <- ggarrange(pPMI, avPMI,
 PMIfig
 ggsave('RADPMI-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 8, height = 4, path = anaPath)
-
-## PLOT 5: PMI 4 targ locs ##
-PMIall$DOM <- factor(PMIall$DOM, levels = c('ND', 'D'))
-PMIall$DIAGNOSIS <- factor(PMIall$DIAGNOSIS, levels = c('HC','MCI','AD'))
-
-ggplot(PMIall, aes(x = DOM, y = PMI, colour = SITE, group = PPT)) + 
-  geom_line(aes(group = PPT), alpha = .5, size = 0.7, position = position_dodge(.2)) +
-  geom_point(size = 2.5, position = position_dodge(.2)) +
-  stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  scale_color_manual(values = c('grey45','dodgerblue3')) +
-  facet_wrap(~DIAGNOSIS) +
-  labs(x = 'Side', y = 'Radial PMI (mm)') +
-  theme_classic() + theme(legend.position = 'none', 
-                          axis.title = element_text(size = 12),
-                          axis.text = element_text(size = 10),
-                          strip.text = element_text(size = 10) 
-  )
-
-ggsave('RADPMI_all-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 6, height = 4, path = anaPath)
-
