@@ -6,6 +6,7 @@ library(Rmisc)
 library(ez)
 library(psychReport)
 library(singcar)
+library(tidyverse)
 
 #on mac
 #anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
@@ -73,8 +74,8 @@ res <- res[res$PPT != 310 ,]
 
 # calculating z-score for each participant
 # get PP matrix
-PPT <- count(res, 'PPT')
-Z <- read.csv(text = 'AEZ,PPT,VIEW')
+PPT <- count(res, PPT)
+Z <- read.csv(text = 'AEZ,AE,PPT,VIEW')
 
 # first for free reaching
 resFree <- res[res$VIEW == 'Free' ,]
@@ -82,7 +83,8 @@ for (p in PPT$PPT){
   tmp <- resFree[resFree$PPT == p ,]
    # temporary matrix to save data to
   Zscore <- data.frame(matrix(ncol = 0, nrow = length(tmp$PPT)))
-  Zscore$AEZ <- scale(tmp$AE)
+  Zscore$AEZ <- abs(scale(tmp$AE))
+  Zscore$AE <- tmp$AE
   Zscore$PPT <- p
   Zscore$VIEW <- 'Free'
     
@@ -94,17 +96,19 @@ for (p in PPT$PPT){
   tmp <- resPeriph[resPeriph$PPT == p ,]
   # temporary matrix to save data to
   Zscore <- data.frame(matrix(ncol = 0, nrow = length(tmp$PPT)))
-  Zscore$AEZ <- scale(tmp$AE)
+  Zscore$AEZ <- abs(scale(tmp$AE))
+  Zscore$AE <- tmp$AE
   Zscore$PPT <- p
   Zscore$VIEW <- 'Peripheral'
   
   Z <- rbind(Z, Zscore)
 }
-# merge back into res data-frame
-Z$VIEW <- factor(Z$VIEW)
-test <- merge(Z, res)
 
-## remove trials where absolute z-score is > 3?
+# merge data-frames
+res <- merge(res,Z)
+## remove trials where absolute z-score is > 4
+XCLUDE <- res[res$AEZ > 4 ,]
+res <- res[!(res$AEZ %in% XCLUDE$AEZ), ]
 
 # save Edinburgh & UEA compiled data
 setwd(anaPath)
@@ -537,7 +541,7 @@ ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = SITE, group = PPT, shape
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   scale_color_manual(values = c('grey45','dodgerblue3')) +
-  scale_shape_manual(values = c(1,18,16)) +
+  scale_shape_manual(values = c(1,16,18)) +
   labs(x = 'Diagnosis', y = '') +
   theme_classic() + theme(legend.position = 'none', 
                           axis.title = element_text(size = 12),
