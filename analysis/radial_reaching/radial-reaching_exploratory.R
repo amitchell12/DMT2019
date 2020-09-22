@@ -27,6 +27,60 @@ setwd(anaPath)
 res <- read.csv('all_radial-reaching_compiled.csv')
 res$ECC <- abs(res$POSITION) #adding eccentricity = absolute target position
 
+### AE BY ECCENTRICITY ALL TARG LOCS ###
+# converting factor back to numeric keeping values
+res_medians <- a
+tmp <- as.numeric(levels(res_medians_all$POSITION))[res_medians$POSITION]
+# aggregrating across target locations
+res_medians$ECC <- aggregate(AE ~ PPT*POSITION*VIEW*DOM*DIAGNOSIS*GRP*SITE*AGE, 
+                             median, data = res)
+# averaging across side
+absErr <- aggregate(AE ~ PPT*POSITION*VIEW*DIAGNOSIS*GRP*SITE*AGE, 
+                    mean, data = res_medians)
+  
+ALLECC_ANOVA <- ezANOVA(
+  data = ECCanova_all
+  , dv = .(AE)
+  , wid = .(PPT)
+  , within = .(VIEW, ECC)
+  , between = .(DIAGNOSIS)
+  , between_covariates = .(SITE, AGE)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+ALLECC_ANOVA$ANOVA
+ALLECC_ANOVA$`Mauchly's Test for Sphericity`
+ALLECC_ANOVA$`Sphericity Corrections`
+aovECCall <- aovEffectSize(ezObj = ALLECC_ANOVA, effectSize = "pes")
+aovDispTable(aovECCall)
+
+## PLOT: eccentricity ##
+ECCsummary <- summarySE(res_medians, measurevar = 'AE', 
+                        groupvar = c('DIAGNOSIS', 'VIEW', 'POSITION'), na.rm = TRUE)
+ECCsummary$DIAGNOSIS <- factor(ECCsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(ECCsummary, aes(x = POSITION, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS, 
+                       shape = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(width = .4)) +
+  geom_errorbar(aes(ymin=AE-ci, ymax=AE+ci), 
+                width=.4, position = position_dodge(width = .4)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(x = 'Eccentricity (mm)', y = 'Radial reaching error (mm)') +
+  facet_grid(~VIEW) + theme_classic() +
+  theme(legend.position = 'bottom',
+        legend.title = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 12)
+  )
+
+ggsave('RADeccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 7, height = 5, path = anaPath)
+
+
 ##### ANGULAR ERROR: median, means, PMI #####
 ANGmedians <- aggregate(ANG_ERR ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS * AGE * ECC, 
                          median, data = res)

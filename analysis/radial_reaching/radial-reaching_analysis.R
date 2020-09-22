@@ -67,14 +67,44 @@ res$DOM <- factor(res$DOM, labels= c('ND','D'))
 # change order so important var up-front
 res <- res[, c(1:7,37,16,17,8:15,18:36)]
 
-## removing invalid trials that were not picked up on
-#303 one trial extrememly high error >100mm 
-res <- res[!(res$PPT == '303' & res$LANDx < -100) ,]
-#408 one trial with extremely high error >200mm
-res <- res[!(res$PPT == '408' & res$LANDx > 100) ,]
-#410 one trial extremely high error >150mm
-res <- res[!(res$PPT == '410' & res$LANDx < -150) ,]
-# removes a total of 3 trials
+##### TRIAL OUTLIERS #####
+# first remove ppt 310, no peripheral data
+res <- res[res$PPT != 310 ,]
+
+# calculating z-score for each participant
+# get PP matrix
+PPT <- count(res, 'PPT')
+Z <- read.csv(text = 'AEZ,PPT,VIEW')
+
+# first for free reaching
+resFree <- res[res$VIEW == 'Free' ,]
+for (p in PPT$PPT){
+  tmp <- resFree[resFree$PPT == p ,]
+   # temporary matrix to save data to
+  Zscore <- data.frame(matrix(ncol = 0, nrow = length(tmp$PPT)))
+  Zscore$AEZ <- scale(tmp$AE)
+  Zscore$PPT <- p
+  Zscore$VIEW <- 'Free'
+    
+  Z <- rbind(Z, Zscore)
+}
+# then for peripheral reaching
+resPeriph <- res[res$VIEW == 'Peripheral' ,]
+for (p in PPT$PPT){
+  tmp <- resPeriph[resPeriph$PPT == p ,]
+  # temporary matrix to save data to
+  Zscore <- data.frame(matrix(ncol = 0, nrow = length(tmp$PPT)))
+  Zscore$AEZ <- scale(tmp$AE)
+  Zscore$PPT <- p
+  Zscore$VIEW <- 'Peripheral'
+  
+  Z <- rbind(Z, Zscore)
+}
+# merge back into res data-frame
+Z$VIEW <- factor(Z$VIEW)
+test <- merge(Z, res)
+
+## remove trials where absolute z-score is > 3?
 
 # save Edinburgh & UEA compiled data
 setwd(anaPath)
@@ -106,8 +136,6 @@ write.csv(PMIdata, 'radialPMI.csv', row.names = FALSE)
 ## summary data
 meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'DOM'),
                           na.rm = TRUE)
-meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
-                         na.rm = TRUE)
 write.csv(meanPMI_side, 'radialPMI_means.csv', row.names = FALSE)
 
 ##### ANOVA - differences between sites #####
@@ -134,24 +162,6 @@ ggplot(siteANOVA, aes(x = VIEW, y = AEmean, colour = DIAGNOSIS)) +
 
 ggsave('site_comparison.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
-
-### tests for age & education ###
-# plot age
-ggplot(res, aes(x = DIAGNOSIS, y = AGE, group = PPT)) +
-  geom_point(position = position_dodge(.2))
-# create necessary data-frames for ANOVA
-age <- aggregate(AGE ~ PPT*DIAGNOSIS, mean, data = res)
-
-# ANOVAS
-AGE_ANOVA <- ezANOVA(
-  data = age
-  , dv = .(AGE)
-  , wid = .(PPT)
-  , between = .(DIAGNOSIS)
-  , type = 3
-)
-
-print(AGE_ANOVA)
 
 # Eccentricity plots
 # creating another data-frame with all position data, for plotting eccentricity info
@@ -391,15 +401,14 @@ print(binALL)
 
 ##### ANOVAS, group comparisons #####
 # use PMI data-frame to run between-subject ANOVA
-# removing NA values for ANOVA - entire participant (not just side)
-PMIanova <- PMIdata[PMIdata$PPT != 212, ]
+# collapse across side to run anova
+PMIanova <- aggregate(PMI ~ PPT+DIAGNOSIS+SITE+AGE, mean, data = PMIdata)
 
 # FULL ANOVA ON FILTERED DATA
 FILT_ANOVA <- ezANOVA(
   data = PMIanova
   , dv = .(PMI)
   , wid = .(PPT)
-  , within = .(DOM)
   , between = .(DIAGNOSIS)
   , between_covariates = .(SITE, AGE)
   , type = 3,
@@ -417,77 +426,6 @@ aovDispTable(aovPMI)
 PMIttest <- pairwise.t.test(PMIanova$PMI, PMIanova$DIAGNOSIS, p.adj = 'bonf')
 print(PMIttest)
 
-### ANOVA BY ECCENTRICITY ### 
-tmp <- as.numeric(levels(res_medians$POSITION))[res_medians$POSITION]
-res_medians$ECC <- abs(tmp)
-
-# removing participants with incomplete data-sets
-ECCanova <- res_medians[res_medians$PPT != 212
-                     & res_medians$PPT != 302
-                     & res_medians$PPT != 310
-                     & res_medians$PPT != 315
-                     & res_medians$PPT != 403
-                     & res_medians$PPT != 407,]
-ECCanova$ECC <- factor(ECCanova$ECC)
-
-ECC_ANOVA <- ezANOVA(
-  data = ECCanova
-  , dv = .(AEmed)
-  , wid = .(PPT)
-  , within = .(DOM, VIEW, ECC)
-  , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE, AGE)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-ECC_ANOVA$ANOVA
-ECC_ANOVA$`Mauchly's Test for Sphericity`
-ECC_ANOVA$`Sphericity Corrections`
-aovECC <- aovEffectSize(ezObj = ECC_ANOVA, effectSize = "pes")
-aovDispTable(aovECC)
-
-#pair-wise t-test
-ECCttest <- pairwise.t.test(ECCanova$AE, ECCanova$DIAGNOSIS, p.adj = 'bonf')
-print(ECCttest)
-
-### ANOVA BY ECCENTRICITY ALL TARG LOCS ###
-# converting factor back to numeric keeping values
-tmp <- as.numeric(levels(res_medians_all$POSITION))[res_medians_all$POSITION]
-res_medians_all$ECC <- abs(tmp)
-
-# removing participants with incomplete data-sets
-ECCanova_all <- res_medians_all[res_medians_all$PPT != 212 
-                                & res_medians_all$PPT != 302
-                                & res_medians_all$PPT != 315
-                                & res_medians_all$PPT != 310 
-                                & res_medians_all$PPT != 403
-                                & res_medians_all$PPT != 407,]
-ECCanova_all$ECC <- factor(ECCanova_all$ECC)
-
-ALLECC_ANOVA <- ezANOVA(
-  data = ECCanova_all
-  , dv = .(AE)
-  , wid = .(PPT)
-  , within = .(DOM, VIEW, ECC)
-  , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE, AGE)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-ALLECC_ANOVA$ANOVA
-ALLECC_ANOVA$`Mauchly's Test for Sphericity`
-ALLECC_ANOVA$`Sphericity Corrections`
-aovECCall <- aovEffectSize(ezObj = ALLECC_ANOVA, effectSize = "pes")
-aovDispTable(aovECCall)
-
-#pair-wise t-test
-ECCttest <- pairwise.t.test(ECCanova_all$AE, ECCanova_all$DIAGNOSIS, p.adj = 'bonf')
-print(ECCttest)
-
 ### PMI ANOVA - ALL TARG LOCS ###
 res_means_all <- aggregate(AE ~ PPT*VIEW*SIDE*DOM*GRP*DIAGNOSIS*SITE*AGE, 
                             mean, data = res_medians_all)
@@ -495,15 +433,14 @@ PMIall <- dcast(res_means_all, PPT+GRP+DIAGNOSIS+DOM+SIDE+SITE+AGE ~ VIEW)
 PMIall$PMI <- PMIall$Peripheral - PMIall$Free
 PMIall$PPT <- factor(PMIall$PPT)
 PMIall$DIAGNOSIS <- factor(PMIall$DIAGNOSIS)
-
-PMIanova_all <- PMIall[PMIall$PPT != 212 & PMIall$PPT != 310, ]
+# collapsing across side
+PMIanova_all <- aggregate(PMI ~ PPT+DIAGNOSIS+SITE+AGE, mean, data = PMIall)
 
 # FULL ANOVA ON FILTERED DATA, all targ locs
 ALLFILT_ANOVA <- ezANOVA(
   data = PMIanova_all
   , dv = .(PMI)
   , wid = .(PPT)
-  , within = .(DOM)
   , between = .(DIAGNOSIS)
   , between_covariates = .(SITE, AGE)
   , type = 3,
@@ -522,31 +459,7 @@ PMIall_ttest <- pairwise.t.test(PMIanova_all$PMI, PMIanova_all$DIAGNOSIS, p.adj 
 print(PMIall_ttest)
 
 ##### PLOTTING #####
-## PLOT 1: eccentricity ##
-ECCsummary <- summarySE(res_medians_all, measurevar = 'AE', 
-                        groupvar = c('DIAGNOSIS', 'SIDE', 'VIEW', 'POSITION'), na.rm = TRUE)
-ECCsummary$DIAGNOSIS <- factor(ECCsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
-
-ggplot(ECCsummary, aes(x = POSITION, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS, 
-                   shape = DIAGNOSIS)) +
-  geom_point(size = 3, position = position_dodge(width = .4)) +
-  geom_errorbar(aes(ymin=AE-ci, ymax=AE+ci), 
-                width=.4, position = position_dodge(width = .4)) + 
-  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  labs(x = 'Eccentricity (mm)', y = 'Radial reaching error (mm)') +
-  facet_grid(~VIEW) + theme_classic() +
-  theme(legend.position = 'bottom',
-        legend.title = element_blank(),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12),
-        strip.text = element_text(size = 12)
-  )
-
-ggsave('RADeccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 7, height = 5, path = anaPath)
-
-## PLOT 2: mean AE - 2 targ locs
+## PLOT 1: mean AE - 2 targ locs
 AEsummary <- summarySE(res_means, measurevar = 'AEmean', 
                        groupvar = c('DIAGNOSIS', 'DOM', 'VIEW'), na.rm = TRUE)
 
@@ -570,30 +483,7 @@ ggplot(AEsummary, aes(x = DOM, y = AEmean, colour = VIEW, group = DIAGNOSIS)) +
 ggsave('RADmean-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 4.5, height = 6, path = anaPath)
 
-## PLOT 3: mean AE - 4 targ locs
-AEall_summary <- summarySE(res_means_all, measurevar = 'AE', 
-                       groupvar = c('DIAGNOSIS', 'DOM', 'VIEW'), na.rm = TRUE)
-AEall_summary$DIAGNOSIS <- factor(AEall_summary$DIAGNOSIS, levels = c('HC','MCI','AD'))
-
-ggplot(AEall_summary, aes(x = DOM, y = AE, colour = VIEW, group = DIAGNOSIS)) +
-  geom_point(size = 3) +
-  geom_line(aes(group = VIEW), size = 0.7) +
-  geom_errorbar(aes(ymin=AE-ci, ymax=AE+ci), 
-                width=.3) +
-  scale_color_manual(values = c('black','grey60')) +
-  labs(title = 'All target locations', 
-       x = 'Side', y = 'Radial reaching error (mm)') + 
-  facet_wrap(~DIAGNOSIS) +
-  theme_classic() + theme(legend.position = 'bottom', 
-                          legend.title = element_blank(),
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 12),
-                          strip.text = element_text(size = 12))
-
-ggsave('RADmean_all-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 4.5, height = 6, path = anaPath)
-
-## PLOT 4: PMI 2 targ locs ##
+## PLOT 2: PMI 2 targ locs ##
 # make control data-frame
 control_PMI <- subset(PMIdata, PMIdata$DIAGNOSIS == 'HC')
 control_PMI$TSTAT <- 0
