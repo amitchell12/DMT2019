@@ -5,6 +5,7 @@ library(ggplot2)
 library(Rmisc)
 library(gridExtra)
 library(plyr)
+library(dplyr)
 library(tidyverse)
 library(reshape2)
 library(Hmisc)
@@ -25,24 +26,18 @@ dataPath <- '/Users/Alex/Documents/DMT/data'
 setwd(anaPath)
 
 res <- read.csv('all_radial-reaching_compiled.csv')
-res$ECC <- abs(res$POSITION) #adding eccentricity = absolute target position
+res$ECC <- factor(abs(res$POSITION)) #adding eccentricity = absolute target position
 
-### AE BY ECCENTRICITY ALL TARG LOCS ###
+##### AE BY ECCENTRICITY ALL TARG LOCS #####
 # calculating medians
-res_medians <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE, 
+res_medians <- aggregate(AE ~ PPT*ECC*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE, 
                                                        median, data = res)
 # averaging across side
-AE_ECC <- aggregate(AE ~ PPT*POSITION*VIEW*DIAGNOSIS*GRP*SITE*AGE, 
+resAE <- aggregate(AE ~ PPT*ECC*VIEW*DIAGNOSIS*SITE*AGE, 
                     mean, data = res_medians)
-
-tmp <- as.numeric(levels(res_medians_all$POSITION))[res_medians$POSITION]
-# aggregrating across target locations
-res_medians$ECC <- aggregate(AE ~ PPT*POSITION*VIEW*DOM*DIAGNOSIS*GRP*SITE*AGE, 
-                             median, data = res)
-
-  
+## CALCULATING ANOVA ##
 ALLECC_ANOVA <- ezANOVA(
-  data = ECCanova_all
+  data = resAE
   , dv = .(AE)
   , wid = .(PPT)
   , within = .(VIEW, ECC)
@@ -60,16 +55,16 @@ aovECCall <- aovEffectSize(ezObj = ALLECC_ANOVA, effectSize = "pes")
 aovDispTable(aovECCall)
 
 ## PLOT: eccentricity ##
-ECCsummary <- summarySE(res_medians, measurevar = 'AE', 
-                        groupvar = c('DIAGNOSIS', 'VIEW', 'POSITION'), na.rm = TRUE)
+ECCsummary <- summarySE(resAE, measurevar = 'AE', 
+                        groupvar = c('DIAGNOSIS', 'VIEW', 'ECC'), na.rm = TRUE)
 ECCsummary$DIAGNOSIS <- factor(ECCsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(ECCsummary, aes(x = POSITION, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS, 
+ggplot(ECCsummary, aes(x = ECC, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS, 
                        shape = DIAGNOSIS)) +
-  geom_point(size = 3, position = position_dodge(width = .4)) +
+  geom_point(size = 3, position = position_dodge(-.2)) +
   geom_errorbar(aes(ymin=AE-ci, ymax=AE+ci), 
-                width=.4, position = position_dodge(width = .4)) + 
-  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
+                width=.4, position = position_dodge(-.2)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(-.2)) +
   scale_color_manual(values = c('black','grey30','grey60')) +
   labs(x = 'Eccentricity (mm)', y = 'Radial reaching error (mm)') +
   facet_grid(~VIEW) + theme_classic() +
@@ -85,20 +80,31 @@ ggsave('RADeccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300,
 
 
 ##### ANGULAR ERROR: median, means, PMI #####
-ANGmedians <- aggregate(ANG_ERR ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS * AGE * ECC, 
+ANGmedians <- aggregate(ANG_ERR ~ PPT * VIEW * SIDE * ECC * SITE * GRP * DIAGNOSIS * AGE * ECC, 
                          median, data = res)
-ANGmeans <- aggregate(ANG_ERR ~ PPT* VIEW * SIDE * SITE * GRP * DIAGNOSIS * AGE, 
+## need to average across side to translate values so -ve = close to fixation
+# change sign for left-sided ang-err - use dlpyr funct for this
+ANGmedians <- ANGmedians %>%
+  mutate(ANG_ERR = ifelse(SIDE == 'Left', -ANG_ERR, ANG_ERR))
+
+# now can average across sides because -ve is towards fix for both R and L trials
+ANG_ECC <- aggregate(ANG_ERR ~ PPT * VIEW * SITE * ECC * DIAGNOSIS * AGE, 
+                      mean, data = ANGmedians)
+# average across target location
+ANGmeans <- aggregate(ANG_ERR ~ PPT * VIEW * SITE * DIAGNOSIS * AGE, 
                            mean, data = ANGmedians)
 ANGmeans$DIAGNOSIS <- factor(ANGmeans$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
 ### PLOTTING ###
-## all participants
-ggplot(ANGmeans, aes(x = SIDE, y = ANG_ERR, group = PPT, colour = VIEW)) +
+## mean all participants
+ggplot(ANGmeans, aes(x = VIEW, y = ANG_ERR, group = PPT, colour = DIAGNOSIS)) +
   geom_hline(yintercept = 0) +
-  geom_point(size = 4, shape = 1, position = position_dodge(width = .2)) +
-  geom_line(aes(group = PPT), alpha = .5, size = 0.7, position = position_dodge(width = .2)) +
-  facet_grid(~DIAGNOSIS~VIEW) +
-  scale_colour_manual(values = c('black','grey50')) +
+  geom_point(size = 3, shape = 1, position = position_dodge(width = .2)) +
+  stat_summary(aes(y = ANG_ERR, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  geom_line(aes(group = PPT), alpha = .4, size = 0.7, position = position_dodge(width = .2)) +
+  scale_color_manual(values = c('grey50','grey50','grey50')) +
+  facet_grid(~DIAGNOSIS) +
   labs(x = 'Side', y = 'Angular error (°)') + 
   theme_classic() + theme(legend.position = 'none',
                           axis.text = element_text(size = 10),
@@ -106,16 +112,17 @@ ggplot(ANGmeans, aes(x = SIDE, y = ANG_ERR, group = PPT, colour = VIEW)) +
                           strip.text = element_text(size = 12)
                           )
 
-ggsave('RADangerrPP_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('RAD_ANGERRmeans.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 5, height = 7, path = anaPath)
 
 ## plotting data frame
-Err_summary <- summarySE(ANGmeans, measurevar = 'ANG_ERR', 
-                         groupvar = c('DIAGNOSIS', 'SIDE', 'VIEW'), na.rm = TRUE)
-Err_summary$DIAGNOSIS <- factor(Err_summary$DIAGNOSIS, levels = c('HC','MCI','AD'))
+ANGECC_summary <- summarySE(ANG_ECC, measurevar = 'ANG_ERR', 
+                         groupvar = c('DIAGNOSIS', 'VIEW', 'ECC'), na.rm = TRUE)
+ANGECC_summary$DIAGNOSIS <- factor(ANGECC_summary$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(Err_summary, aes(x = SIDE, y = ANG_ERR, colour = DIAGNOSIS, shape = DIAGNOSIS,
+ggplot(ANGECC_summary, aes(x = ECC, y = ANG_ERR, colour = DIAGNOSIS, shape = DIAGNOSIS,
                         group = DIAGNOSIS)) +
+  geom_hline(yintercept = 0) +
   geom_point(size = 4, position = position_dodge(width = .3)) +
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
   geom_errorbar(aes(ymin=ANG_ERR-ci, ymax=ANG_ERR+ci), 
@@ -129,21 +136,16 @@ ggplot(Err_summary, aes(x = SIDE, y = ANG_ERR, colour = DIAGNOSIS, shape = DIAGN
                           axis.title = element_text(size = 12),
                           strip.text = element_text(size = 12))
 
-ggsave('RADangerr_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('RAD_ANGERR_ECC.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 5, height = 6, path = anaPath)
 
-###### REACHED HERE IN EXPLORATORY DATA - ANG-ERR ANOVA STILL WORKING
 ### ANOVA ###
-ANGanova <- ANGmedians[ANGmedians$PPT != 212 & ANGmedians$PPT != 310
-                         & ANGmedians$PPT != 403 & ANGmedians$PPT != 407 ,]
-ANGanova$ECC <- factor(ANGanova$ECC)
-
 # FULL ANOVA ON ECCENTRICITY DATA
 ANG_ANOVA <- ezANOVA(
-  data = ANGanova
+  data = ANG_ECC
   , dv = .(ANG_ERR)
   , wid = .(PPT)
-  , within = .(VIEW, SIDE, ECC)
+  , within = .(VIEW, ECC)
   , between = .(DIAGNOSIS)
   , between_covariates = .(SITE, AGE)
   , type = 3,
@@ -151,11 +153,11 @@ ANG_ANOVA <- ezANOVA(
   detailed = TRUE
 )
 
-DECC_ANOVA$ANOVA
-DECC_ANOVA$`Mauchly's Test for Sphericity`
-DECC_ANOVA$`Sphericity Corrections`
-aovDECC <- aovEffectSize(ezObj = DECC_ANOVA, effectSize = "pes")
-aovDispTable(aovDECC)
+ANG_ANOVA$ANOVA
+ANG_ANOVA$`Mauchly's Test for Sphericity`
+ANG_ANOVA$`Sphericity Corrections`
+aovANGECC <- aovEffectSize(ezObj = ANG_ANOVA, effectSize = "pes")
+aovDispTable(aovANGECC)
 
 # Median absolute error
 av_ecc <- summarySE(dir_medians, measurevar = 'LANDx', 
@@ -163,27 +165,7 @@ av_ecc <- summarySE(dir_medians, measurevar = 'LANDx',
 av_ecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 av_ecc$POSITION <- factor(av_ecc$POSITION)
 
-# plot 
-ggplot(av_ecc, aes(x = POSITION, y = LANDx, group = DIAGNOSIS, colour = DIAGNOSIS, 
-                   shape = DIAGNOSIS)) +
-  geom_point(size = 3, position = position_dodge(width = .4)) +
-  geom_errorbar(aes(ymin=LANDx-ci, ymax=LANDx+ci), 
-                width=.4, position = position_dodge(width = .4)) + 
-  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  geom_hline(yintercept = 0) + 
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  labs(x = 'Eccentricity (mm)', y = 'Radial reaching error (x-axis, mm)') +
-  facet_grid(~VIEW) + theme_classic() +
-  theme(legend.position = 'bottom',
-        legend.title = element_blank(),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12),
-        strip.text = element_text(size = 12)
-  )
-
-ggsave('RADxerr_ECC_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 6, height = 5, path = anaPath)
-
+###### ABSOLUTE ERROR ######
 
 ###### MOVEMENT TIME #######
 MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
