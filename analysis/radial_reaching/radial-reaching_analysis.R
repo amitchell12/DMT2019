@@ -22,9 +22,9 @@ UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
 #dataPath <- 'S:/groups/DMT/data'
 #anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
 setwd(anaPath) #for Edinburgh data 
-resUOE <- read.csv('radial-reaching_compiled.csv')
+resUOE <- read.csv('radial-reaching_compiledUOE.csv')
 setwd(UEAPath) #for Norwich data
-resUEA <- read.csv('radial-reaching_compiled.csv') 
+resUEA <- read.csv('radial-reaching_compiledUEA.csv') 
 
 ##### DATA ORGANISE #####
 # UOE data, getting rid of 'deg' values - just use mm

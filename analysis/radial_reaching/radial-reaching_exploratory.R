@@ -97,16 +97,16 @@ ANGmeans$DIAGNOSIS <- factor(ANGmeans$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
 ### PLOTTING ###
 ## mean all participants
-ggplot(ANGmeans, aes(x = VIEW, y = ANG_ERR, group = PPT, colour = DIAGNOSIS)) +
+ggplot(ANGmeans, aes(x = VIEW, y = ANG_ERR, group = PPT, colour = SITE)) +
   geom_hline(yintercept = 0) +
-  geom_point(size = 3, shape = 1, position = position_dodge(width = .2)) +
+  geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
   stat_summary(aes(y = ANG_ERR, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  geom_line(aes(group = PPT), alpha = .4, size = 0.7, position = position_dodge(width = .2)) +
-  scale_color_manual(values = c('grey50','grey50','grey50')) +
+  geom_line(aes(group = PPT), alpha = .4, size = 0.7, position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('dodgerblue3','grey50')) + 
   facet_grid(~DIAGNOSIS) +
   labs(x = 'Side', y = 'Angular error (°)') + 
-  theme_classic() + theme(legend.position = 'none',
+  theme_classic() + theme(legend.position = 'bottom',
                           axis.text = element_text(size = 10),
                           axis.title = element_text(size = 12),
                           strip.text = element_text(size = 12)
@@ -115,7 +115,8 @@ ggplot(ANGmeans, aes(x = VIEW, y = ANG_ERR, group = PPT, colour = DIAGNOSIS)) +
 ggsave('RAD_ANGERRmeans.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 5, height = 7, path = anaPath)
 
-## plotting data frame
+## eccentricity
+# plotting data frame
 ANGECC_summary <- summarySE(ANG_ECC, measurevar = 'ANG_ERR', 
                          groupvar = c('DIAGNOSIS', 'VIEW', 'ECC'), na.rm = TRUE)
 ANGECC_summary$DIAGNOSIS <- factor(ANGECC_summary$DIAGNOSIS, levels = c('HC','MCI','AD'))
@@ -128,7 +129,7 @@ ggplot(ANGECC_summary, aes(x = ECC, y = ANG_ERR, colour = DIAGNOSIS, shape = DIA
   geom_errorbar(aes(ymin=ANG_ERR-ci, ymax=ANG_ERR+ci), 
                 width=.3, position = position_dodge(width = .3)) +
   scale_color_manual(values = c('black','grey30','grey60')) +
-  labs(x = 'Side', y = 'Angular error (°)') + 
+  labs(x = 'Eccentricity (mm)', y = 'Angular error (°)') + 
   facet_wrap(~VIEW) +
   theme_classic() + theme(legend.position = 'bottom', 
                           legend.title = element_blank(),
@@ -172,16 +173,16 @@ AMPmeans$DIAGNOSIS <- factor(AMPmeans$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
 ### PLOTTING ###
 ## mean all participants
-ggplot(AMPmeans, aes(x = VIEW, y = AMP_ERR, group = PPT, colour = DIAGNOSIS)) +
+ggplot(AMPmeans, aes(x = VIEW, y = AMP_ERR, group = PPT, colour = SITE)) +
   geom_hline(yintercept = 0) +
-  geom_point(size = 3, shape = 1, position = position_dodge(width = .2)) +
+  geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
   stat_summary(aes(y = AMP_ERR, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  geom_line(aes(group = PPT), alpha = .4, size = 0.7, position = position_dodge(width = .2)) +
-  scale_color_manual(values = c('grey50','grey50','grey50')) +
+  geom_line(aes(group = PPT), alpha = .4, size = 0.7, position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('dodgerblue3','grey50')) +
   facet_grid(~DIAGNOSIS) +
   labs(x = 'Side', y = 'Amplutude error (mm)') + 
-  theme_classic() + theme(legend.position = 'none',
+  theme_classic() + theme(legend.position = 'bottom',
                           axis.text = element_text(size = 10),
                           axis.title = element_text(size = 12),
                           strip.text = element_text(size = 12)
@@ -203,7 +204,7 @@ ggplot(AMPECC_summary, aes(x = ECC, y = AMP_ERR, colour = DIAGNOSIS, shape = DIA
   geom_errorbar(aes(ymin=AMP_ERR-ci, ymax=AMP_ERR+ci), 
                 width=.3, position = position_dodge(width = .3)) +
   scale_color_manual(values = c('black','grey30','grey60')) +
-  labs(x = 'Side', y = 'Amplitude error (mm)') + 
+  labs(x = 'Eccentricity (mm)', y = 'Amplitude error (mm)') + 
   facet_wrap(~VIEW) +
   theme_classic() + theme(legend.position = 'bottom', 
                           legend.title = element_blank(),
@@ -237,43 +238,16 @@ aovDispTable(aovAMPECC)
 ###### MOVEMENT TIME #######
 MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * ECC * SITE * DIAGNOSIS, 
                         median, data = res)
-MT_medians <- aggregate(MT ~ PPT * VIEW * DOM * ECC * SITE * DIAGNOSIS, 
+MT_ECC <- aggregate(MT ~ PPT * VIEW * ECC * SITE * DIAGNOSIS, 
                         median, data = MT_medians)
-MT_means <- aggregate(MT ~ PPT * VIEW * DOM * SITE * DIAGNOSIS,
+MT_means <- aggregate(MT ~ PPT * VIEW * SITE * DIAGNOSIS,
                       mean, data = MT_ECC)
-# average across side
-MTav <- aggregate(MT ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
-                  mean, data = MT_medians)
+
 ## plotting :)
-# both sides
-MTsummary <- summarySE(MT_means, measurevar = 'MT', 
-                       groupvar = c('DIAGNOSIS','VIEW','DOM'), na.rm = TRUE)
-MTsummary$DIAGNOSIS <- factor(MTsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
-MTsummary$DOM <- factor(MTsummary$DOM, labels = c('Non-dominant','Dominant'))
+# means for all PP
+MT_means$DIAGNOSIS <- factor(MT_means$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(MTsummary, aes(x = VIEW, y = MT, colour = DIAGNOSIS, group = DIAGNOSIS,
-                      shape = DIAGNOSIS)) +
-  geom_point(size = 3, position = position_dodge(width = .3)) +
-  geom_line(aes(group = DIAGNOSIS), size = 0.5, alpha = .5,
-            position = position_dodge(width = .3)) +
-  geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
-                width=.4, position = position_dodge(width = .3)) +
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~DOM) + ylim(500,1000) +
-  labs(x = '', y = 'Movement time (ms)', element_text(size = 12)) +
-  theme_classic() + theme(legend.position = 'bottom', 
-                          legend.title = element_blank(),
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 12),
-                          strip.text = element_text(size = 12)
-  ) 
-
-ggsave('RADMTmean_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 4, height = 5, path = anaPath)
-
-# average across sides
-MTav$DIAGNOSIS <- factor(MTav$DIAGNOSIS, levels = c('HC','MCI','AD'))
-ggplot(MTav, aes(x = VIEW, y = MT, colour = SITE, group = PPT)) +
+ggplot(MT_means, aes(x = VIEW, y = MT, colour = SITE, group = PPT)) +
   geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
             position = position_dodge(width = .3)) +
@@ -288,24 +262,22 @@ ggplot(MTav, aes(x = VIEW, y = MT, colour = SITE, group = PPT)) +
                           strip.text = element_text(size = 12)
   ) 
 
-ggsave('RADMTav_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('RAD_MTmeans.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 6, height = 4, path = anaPath)
 
-# by eccentricity
-MT_medians$POSITION <- factor(MT_medians$POSITION)
-
+## by eccentricity
 # summary data
-MTecc <- summarySE(MT_medians, measurevar = 'MT', 
-                   groupvar = c('DIAGNOSIS','POSITION','VIEW'), na.rm = TRUE)
+MTecc <- summarySE(MT_ECC, measurevar = 'MT', 
+                   groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
 MTecc$DIAGNOSIS <- factor(MTecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(MTecc, aes(x = POSITION, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
+ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
                    shape = DIAGNOSIS)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = 'Eccentricity (°)', y = 'Movement time (ms)') +
+  labs(x = 'Eccentricity (mm)', y = 'Movement time (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_wrap(~VIEW) + theme_classic() + ylim(500,1000) +
   theme(legend.position = 'bottom',
@@ -315,18 +287,16 @@ ggplot(MTecc, aes(x = POSITION, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
         strip.text = element_text(size = 12)
   )
 
-ggsave('RADMTecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('RAD_MT_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 7.5, height = 5, path = anaPath)
 
 ## ANOVA ## 
-MTanova <- MT_means[MT_means$PPT != 212 & MT_means$PPT != 310 ,]
-
 # FULL ANOVA ON MOVEMENT TIME DATA
 MT_ANOVA <- ezANOVA(
-  data = MTanova
+  data = MT_ECC
   , dv = .(MT)
   , wid = .(PPT)
-  , within = .(VIEW, DOM)
+  , within = .(VIEW, ECC)
   , between = .(DIAGNOSIS)
   , between_covariates = .(SITE)
   , type = 3,
@@ -340,78 +310,23 @@ MT_ANOVA$`Sphericity Corrections`
 aovMT <- aovEffectSize(ezObj = MT_ANOVA, effectSize = "pes")
 aovDispTable(aovMT)
 
-# FULL ANOVA ON MOVEMENT TIME DATA BY ECCENTRICITY
-# removing ppt with fewer trials (data invalid)
-MTECCanova <- MT_medians[MT_medians$PPT != 212 & 
-                           MT_medians$PPT != 302 & 
-                           MT_medians$PPT != 310 &
-                           MT_medians$PPT != 315 &
-                           MT_medians$PPT != 403 &
-                           MT_medians$PPT != 407,]
-MTECCanova$ECC <- factor(MTECCanova$ECC)
-
-MTECCanova$POSITION <- factor(MTECCanova$POSITION)
-MTECC_ANOVA <- ezANOVA(
-  data = MTECCanova
-  , dv = .(MT)
-  , wid = .(PPT)
-  , within = .(VIEW, DOM, ECC)
-  , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-MTECC_ANOVA$ANOVA
-MTECC_ANOVA$`Mauchly's Test for Sphericity`
-MTECC_ANOVA$`Sphericity Corrections`
-aovMTECC <- aovEffectSize(ezObj = MTECC_ANOVA, effectSize = "pes")
-aovDispTable(aovMTECC)
-
 #pair-wise t-test
-MTttest <- pairwise.t.test(MT_medians$MT, MT_medians$DIAGNOSIS, p.adj = 'bonf')
+MTttest <- pairwise.t.test(MT_ECC$MT, MT_ECC$DIAGNOSIS, p.adj = 'bonf')
 print(MTttest)
 
 ###### REACTION TIME ######
-RT_medians <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
+RT_medians <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * ECC * SITE * DIAGNOSIS, 
                         median, data = res)
-RT_means <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
-                      mean, data = RT_medians)
-# average across side
-RTav <- aggregate(RT ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
-                  mean, data = RT_medians)
+RT_ECC <- aggregate(RT ~ PPT * VIEW * ECC * SITE * DIAGNOSIS, 
+                    median, data = RT_medians)
+RT_means <- aggregate(RT ~ PPT * VIEW * SITE * DIAGNOSIS,
+                      mean, data = RT_ECC)
 
-## plotting :)
-# both sides
-RTsummary <- summarySE(RT_means, measurevar = 'RT', 
-                       groupvar = c('DIAGNOSIS','VIEW','DOM'), na.rm = TRUE)
-RTsummary$DIAGNOSIS <- factor(RTsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
-RTsummary$DOM <- factor(RTsummary$DOM, labels = c('Non-dominant','Dominant'))
+## plotting 
+# mean - all PP
+RT_means$DIAGNOSIS <- factor(RT_means$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(RTsummary, aes(x = VIEW, y = RT, colour = DIAGNOSIS, group = DIAGNOSIS,
-                      shape = DIAGNOSIS)) +
-  geom_point(size = 3, position = position_dodge(width = .3)) +
-  geom_line(aes(group = DIAGNOSIS), size = 0.5, alpha = .5,
-            position = position_dodge(width = .3)) +
-  geom_errorbar(aes(ymin=RT-ci, ymax=RT+ci), 
-                width=.4, position = position_dodge(width = .3)) +
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~DOM) + #ylim(300,900) +
-  labs(x = 'Side', y = 'Reaction time (ms)', element_text(size = 12)) +
-  theme_classic() + theme(legend.position = 'bottom', 
-                          legend.title = element_blank(),
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 12),
-                          strip.text = element_text(size = 12)
-  ) 
-
-ggsave('RADRTmean_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 4, height = 5, path = anaPath)
-
-# average across sides
-RTav$DIAGNOSIS <- factor(RTav$DIAGNOSIS, levels = c('HC','MCI','AD'))
-ggplot(RTav, aes(x = VIEW, y = RT, colour = SITE, group = PPT)) +
+ggplot(RT_means, aes(x = VIEW, y = RT, colour = SITE, group = PPT)) +
   geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
             position = position_dodge(width = .3)) +
@@ -429,21 +344,19 @@ ggplot(RTav, aes(x = VIEW, y = RT, colour = SITE, group = PPT)) +
 ggsave('RADRTav_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 6, height = 4, path = anaPath)
 
-# by eccentricity
-RT_medians$POSITION <- factor(RT_medians$POSITION)
-
+## by eccentricity
 # summary data
-RTecc <- summarySE(RT_medians, measurevar = 'RT', 
-                   groupvar = c('DIAGNOSIS','POSITION','VIEW','SIDE'), na.rm = TRUE)
+RTecc <- summarySE(RT_ECC, measurevar = 'RT', 
+                   groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
 RTecc$DIAGNOSIS <- factor(RTecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(RTecc, aes(x = POSITION, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
+ggplot(RTecc, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
                  shape = DIAGNOSIS)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=RT-ci, ymax=RT+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = 'Eccentricity (°)', y = 'Reaction time (ms)') +
+  labs(x = 'Eccentricity (mm)', y = 'Reaction time (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() +
   theme(legend.position = 'bottom',
@@ -458,20 +371,11 @@ ggsave('RADRTecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300,
        width = 7.5, height = 5, path = anaPath)
 
 ## ANOVA ##
-# FULL ANOVA ON REACTION TIME DATA BY ECCENTRICITY
-RTECCanova <- RT_medians[RT_medians$PPT != 212 & 
-                           RT_medians$PPT != 310 &
-                           RT_medians$PPT != 315 &
-                           RT_medians$PPT != 302 &
-                           RT_medians$PPT != 403 &
-                           RT_medians$PPT != 407,]
-RTECCanova$ECC <- factor(RTECCanova$ECC)
-
 RTECC_ANOVA <- ezANOVA(
-  data = RTECCanova
+  data = RT_ECC
   , dv = .(RT)
   , wid = .(PPT)
-  , within = .(VIEW, DOM, ECC)
+  , within = .(VIEW, ECC)
   , between = .(DIAGNOSIS)
   , between_covariates = .(SITE)
   , type = 3,
@@ -486,52 +390,22 @@ aovRTECC <- aovEffectSize(ezObj = RTECC_ANOVA, effectSize = "pes")
 aovDispTable(aovRTECC)
 
 #pair-wise t-test
-RTttest <- pairwise.t.test(RT_medians$RT, RT_medians$DIAGNOSIS, p.adj = 'bonf')
+RTttest <- pairwise.t.test(RT_ECC$RT, RT_ECC$DIAGNOSIS, p.adj = 'bonf')
 print(RTttest)
 
 ##### PEAK SPEED #####
-PS_medians <- aggregate(PS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
+PS_medians <- aggregate(PS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * DIAGNOSIS, 
                         median, data = res)
-# remove 310, not using them and 315 - noisy
-PS_medians <- PS_medians[PS_medians$PPT != 310 & PS_medians$PPT != 315 ,]
-# remove outlier in P407
-PS_medians <- PS_medians[!(PS_medians$PPT == '407' & PS_medians$PS > 4000) ,]
-PS_means <- aggregate(PS ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
-                      mean, data = PS_medians)
-# average across side
-PSav <- aggregate(PS ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
-                  mean, data = PS_medians)
+PS_ECC <- aggregate(PS ~ PPT * VIEW * ECC * SITE * DIAGNOSIS, 
+                        median, data = PS_medians)
+PS_means <- aggregate(PS ~ PPT * VIEW * SITE * DIAGNOSIS,
+                      mean, data = PS_ECC)
 
 ## plotting :)
-# both sides
-PSsummary <- summarySE(PS_means, measurevar = 'PS', 
-                       groupvar = c('DIAGNOSIS','VIEW','DOM'), na.rm = TRUE)
-PSsummary$DIAGNOSIS <- factor(PSsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
-PSsummary$DOM <- factor(PSsummary$DOM, labels = c('Non-dominant','Dominant'))
+# mean all PP
+PS_means$DIAGNOSIS <- factor(PS_means$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(PSsummary, aes(x = VIEW, y = PS, colour = DIAGNOSIS, group = DIAGNOSIS,
-                      shape = DIAGNOSIS)) +
-  geom_point(size = 3, position = position_dodge(width = .3)) +
-  geom_line(aes(group = DIAGNOSIS), size = 0.5, alpha = .5,
-            position = position_dodge(width = .3)) +
-  geom_errorbar(aes(ymin=PS-ci, ymax=PS+ci), 
-                width=.4, position = position_dodge(width = .3)) +
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~DOM) + #ylim(300,900) +
-  labs(x = 'Side', y = 'Peak velocity (mm/s2)', element_text(size = 12)) +
-  theme_classic() + theme(legend.position = 'bottom', 
-                          legend.title = element_blank(),
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 12),
-                          strip.text = element_text(size = 12)
-  ) 
-
-ggsave('RADPSmean_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 4, height = 5, path = anaPath)
-
-# average across sides
-PSav$DIAGNOSIS <- factor(PSav$DIAGNOSIS, levels = c('HC','MCI','AD'))
-ggplot(PSav, aes(x = VIEW, y = PS, colour = SITE, group = PPT)) +
+ggplot(PS_means, aes(x = VIEW, y = PS, colour = SITE, group = PPT)) +
   geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
             position = position_dodge(width = .3)) +
@@ -539,25 +413,23 @@ ggplot(PSav, aes(x = VIEW, y = PS, colour = SITE, group = PPT)) +
   stat_summary(aes(y = PS, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   facet_wrap(~DIAGNOSIS) + 
-  labs(x = '', y = 'Peak velocity (mm/s2)', element_text(size = 12)) +
+  labs(x = '', y = 'Peak speed (ms)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'bottom', 
                           axis.text = element_text(size = 10),
                           axis.title = element_text(size = 12),
                           strip.text = element_text(size = 12)
   ) 
 
-ggsave('RADPSav_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('RAD_PSmean.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 6, height = 4, path = anaPath)
 
 # by eccentricity
-PS_medians$POSITION <- factor(PS_medians$POSITION)
-
 # summary data
 PSecc <- summarySE(PS_medians, measurevar = 'PS', 
-                   groupvar = c('DIAGNOSIS','POSITION','VIEW','SIDE'), na.rm = TRUE)
+                   groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
 PSecc$DIAGNOSIS <- factor(PSecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(PSecc, aes(x = POSITION, y = PS, group = DIAGNOSIS, colour = DIAGNOSIS,
+ggplot(PSecc, aes(x = ECC, y = PS, group = DIAGNOSIS, colour = DIAGNOSIS,
                   shape = DIAGNOSIS)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=PS-ci, ymax=PS+ci), 
@@ -574,21 +446,15 @@ ggplot(PSecc, aes(x = POSITION, y = PS, group = DIAGNOSIS, colour = DIAGNOSIS,
   )
 
 
-ggsave('RADPSecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('RAD_PS_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 7.5, height = 5, path = anaPath)
 
 ## ANOVA ##
-# full anova on PS by ecc
-PSECCanova <- PS_medians[PS_medians$PPT != 212 & 
-                           PS_medians$PPT != 403 &
-                           PS_medians$PPT != 407 ,]
-PSECCanova$ECC <- factor(PSECCanova$ECC)
-
 PSECC_ANOVA <- ezANOVA(
-  data = PSECCanova
+  data = PS_ECC
   , dv = .(PS)
   , wid = .(PPT)
-  , within = .(VIEW, DOM, ECC)
+  , within = .(VIEW, ECC)
   , between = .(DIAGNOSIS)
   , between_covariates = .(SITE)
   , type = 3,
@@ -603,50 +469,22 @@ aovPSECC <- aovEffectSize(ezObj = PSECC_ANOVA, effectSize = "pes")
 aovDispTable(aovPSECC)
 
 #pair-wise t-test
-PSttest <- pairwise.t.test(PS_medians$PS, PS_medians$DIAGNOSIS, p.adj = 'bonf')
+PSttest <- pairwise.t.test(PS_ECC$PS, PS_ECC$DIAGNOSIS, p.adj = 'bonf')
 print(PSttest)
 
-##### TIME TO PV #####
-TPS_medians <- aggregate(TPS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
+##### TIME TO PS #####
+TPS_medians <- aggregate(TPS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * DIAGNOSIS, 
                          median, data = res)
-# remove 310, not using them and 315 - noisy
-TPS_medians <- TPS_medians[TPS_medians$PPT != 310 & TPS_medians$PPT != 315 ,]
-TPS_means <- aggregate(TPS ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
-                        mean, data = TPS_medians)
-# average across side
-TPSav <- aggregate(TPS ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
-                    mean, data = TPS_medians)
+TPS_ECC <- aggregate(TPS ~ PPT * VIEW * ECC * SITE * DIAGNOSIS, 
+                         median, data = TPS_medians)
+TPS_means <- aggregate(TPS ~ PPT * VIEW * SITE * DIAGNOSIS,
+                        mean, data = TPS_ECC)
 
 ## plotting :)
-# both sides
-TPSsummary <- summarySE(TPS_means, measurevar = 'TPS', 
-                         groupvar = c('DIAGNOSIS','VIEW','DOM'), na.rm = TRUE)
-TPSsummary$DIAGNOSIS <- factor(TPSsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
-TPSsummary$DOM <- factor(TPSsummary$DOM, labels = c('Non-dominant','Dominant'))
-
-ggplot(TPSsummary, aes(x = VIEW, y = TPS, colour = DIAGNOSIS, group = DIAGNOSIS,
-                        shape = DIAGNOSIS)) +
-  geom_point(size = 3, position = position_dodge(width = .3)) +
-  geom_line(aes(group = DIAGNOSIS), size = 0.5, alpha = .5,
-            position = position_dodge(width = .3)) +
-  geom_errorbar(aes(ymin=TPS-ci, ymax=TPS+ci), 
-                width=.4, position = position_dodge(width = .3)) +
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~DOM) + 
-  labs(x = 'Side', y = 'Time to peak velocity (ms)', element_text(size = 12)) +
-  theme_classic() + theme(legend.position = 'bottom', 
-                          legend.title = element_blank(),
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 12),
-                          strip.text = element_text(size = 12)
-  ) 
-
-ggsave('RADTPSmean_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 4, height = 5, path = anaPath)
-
 # average across sides
-TPSav$DIAGNOSIS <- factor(TPSav$DIAGNOSIS, levels = c('HC','MCI','AD'))
-ggplot(TPSav, aes(x = VIEW, y = TPS, colour = SITE, group = PPT)) +
+TPS_means$DIAGNOSIS <- factor(TPS_means$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(TPS_means, aes(x = VIEW, y = TPS, colour = SITE, group = PPT)) +
   geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
             position = position_dodge(width = .3)) +
@@ -661,18 +499,16 @@ ggplot(TPSav, aes(x = VIEW, y = TPS, colour = SITE, group = PPT)) +
                           strip.text = element_text(size = 12)
   ) 
 
-ggsave('RADTPSav_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('RAD_TPSmean.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 6, height = 4, path = anaPath)
 
 # by eccentricity
-TPS_medians$POSITION <- factor(TPS_medians$POSITION)
-
 # summary data
 TPSecc <- summarySE(TPS_medians, measurevar = 'TPS', 
-                     groupvar = c('DIAGNOSIS','POSITION','VIEW','SIDE'), na.rm = TRUE)
+                     groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
 TPSecc$DIAGNOSIS <- factor(TPSecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(TPSecc, aes(x = POSITION, y = TPS, group = DIAGNOSIS, colour = DIAGNOSIS,
+ggplot(TPSecc, aes(x = ECC, y = TPS, group = DIAGNOSIS, colour = DIAGNOSIS,
                     shape = DIAGNOSIS)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=TPS-ci, ymax=TPS+ci), 
@@ -689,22 +525,16 @@ ggplot(TPSecc, aes(x = POSITION, y = TPS, group = DIAGNOSIS, colour = DIAGNOSIS,
   )
 
 
-ggsave('RADTPSecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('RAD_TPS_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 7.5, height = 5, path = anaPath)
 
 ## ANOVA ##
 # full anova on TPS by ecc
-TPSECCanova <- TPS_medians[TPS_medians$PPT != 212 & 
-                             TPS_medians$PPT != 302 &
-                             TPS_medians$PPT != 403 &
-                             TPS_medians$PPT != 407 ,]
-TPSECCanova$ECC <- factor(TPSECCanova$ECC)
-
 TPSECC_ANOVA <- ezANOVA(
-  data = TPSECCanova
+  data = TPS_ECC
   , dv = .(TPS)
   , wid = .(PPT)
-  , within = .(VIEW, DOM, ECC)
+  , within = .(VIEW, ECC)
   , between = .(DIAGNOSIS)
   , between_covariates = .(SITE)
   , type = 3,
@@ -719,52 +549,26 @@ aovTPSECC <- aovEffectSize(ezObj = TPSECC_ANOVA, effectSize = "pes")
 aovDispTable(aovTPSECC)
 
 #pair-wise t-test
-TPSttest <- pairwise.t.test(TPS_medians$TPS, TPS_medians$DIAGNOSIS, p.adj = 'bonf')
+TPSttest <- pairwise.t.test(TPS_ECC$TPS, TPS_ECC$DIAGNOSIS, p.adj = 'bonf')
 print(TPSttest)
 
 ##### TIME AFTER PV #####
+# calculating
 res$TAPS <- res$MT - res$TPS
 
-TAPS_medians <- aggregate(TAPS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
+TAPS_medians <- aggregate(TAPS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * DIAGNOSIS, 
                           median, data = res)
-# remove 310, not using them and 315 - noisy
-TAPS_medians <- TAPS_medians[TAPS_medians$PPT != 310 & TAPS_medians$PPT != 315 ,]
-TAPS_means <- aggregate(TAPS ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
-                        mean, data = TAPS_medians)
-# average across side
-TAPSav <- aggregate(TAPS ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
-                    mean, data = TAPS_medians)
+# collapsing across side first
+TAPS_ECC <- aggregate(TAPS ~ PPT * VIEW * ECC * SITE * DIAGNOSIS, 
+                          median, data = TAPS_medians)
+TAPS_means <- aggregate(TAPS ~ PPT * VIEW * SITE * DIAGNOSIS,
+                        mean, data = TAPS_ECC)
 
 ## plotting :)
-# both sides
-TAPSsummary <- summarySE(TAPS_means, measurevar = 'TAPS', 
-                         groupvar = c('DIAGNOSIS','VIEW','DOM'), na.rm = TRUE)
-TAPSsummary$DIAGNOSIS <- factor(TAPSsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
-TAPSsummary$DOM <- factor(TAPSsummary$DOM, labels = c('Non-dominant','Dominant'))
+# means all PP
+TAPS_means$DIAGNOSIS <- factor(TAPS_means$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(TAPSsummary, aes(x = VIEW, y = TAPS, colour = DIAGNOSIS, group = DIAGNOSIS,
-                        shape = DIAGNOSIS)) +
-  geom_point(size = 3, position = position_dodge(width = .3)) +
-  geom_line(aes(group = DIAGNOSIS), size = 0.5, alpha = .5,
-            position = position_dodge(width = .3)) +
-  geom_errorbar(aes(ymin=TAPS-ci, ymax=TAPS+ci), 
-                width=.4, position = position_dodge(width = .3)) +
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~DOM) + ylim(300,600) +
-  labs(x = 'Side', y = 'Time after peak velocity (ms)', element_text(size = 12)) +
-  theme_classic() + theme(legend.position = 'bottom', 
-                          legend.title = element_blank(),
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 12),
-                          strip.text = element_text(size = 12)
-  ) 
-
-ggsave('RADTAPSmean_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 4, height = 5, path = anaPath)
-
-# average across sides
-TAPSav$DIAGNOSIS <- factor(TAPSav$DIAGNOSIS, levels = c('HC','MCI','AD'))
-ggplot(TAPSav, aes(x = VIEW, y = TAPS, colour = SITE, group = PPT)) +
+ggplot(TAPS_means, aes(x = VIEW, y = TAPS, colour = SITE, group = PPT)) +
   geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
             position = position_dodge(width = .3)) +
@@ -779,18 +583,16 @@ ggplot(TAPSav, aes(x = VIEW, y = TAPS, colour = SITE, group = PPT)) +
                           strip.text = element_text(size = 12)
   ) 
 
-ggsave('RADTAPSav_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('RAD_TAPSmean.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 6, height = 4, path = anaPath)
 
 # by eccentricity
-TAPS_medians$POSITION <- factor(TAPS_medians$POSITION)
-
 # summary data
 TAPSecc <- summarySE(TAPS_medians, measurevar = 'TAPS', 
-                     groupvar = c('DIAGNOSIS','POSITION','VIEW','SIDE'), na.rm = TRUE)
+                     groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
 TAPSecc$DIAGNOSIS <- factor(TAPSecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(TAPSecc, aes(x = POSITION, y = TAPS, group = DIAGNOSIS, colour = DIAGNOSIS,
+ggplot(TAPSecc, aes(x = ECC, y = TAPS, group = DIAGNOSIS, colour = DIAGNOSIS,
                     shape = DIAGNOSIS)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=TAPS-ci, ymax=TAPS+ci), 
@@ -807,22 +609,15 @@ ggplot(TAPSecc, aes(x = POSITION, y = TAPS, group = DIAGNOSIS, colour = DIAGNOSI
   )
 
 
-ggsave('RADTAPSecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('RAD_TAPS_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 7.5, height = 5, path = anaPath)
 
 ## ANOVA ##
-# full anova on TAPS by ecc
-TAPSECCanova <- TAPS_medians[TAPS_medians$PPT != 212 & 
-                               TAPS_medians$PPT != 302 &
-                               TAPS_medians$PPT != 403 &
-                               TAPS_medians$PPT != 407,]
-TAPSECCanova$ECC <- factor(TAPSECCanova$ECC)
-
 TAPSECC_ANOVA <- ezANOVA(
-  data = TAPSECCanova
+  data = TAPS_ECC
   , dv = .(TAPS)
   , wid = .(PPT)
-  , within = .(VIEW, DOM, ECC)
+  , within = .(VIEW, ECC)
   , between = .(DIAGNOSIS)
   , between_covariates = .(SITE)
   , type = 3,
@@ -837,52 +632,25 @@ aovTAPSECC <- aovEffectSize(ezObj = TAPSECC_ANOVA, effectSize = "pes")
 aovDispTable(aovTAPSECC)
 
 #pair-wise t-test
-TAPSttest <- pairwise.t.test(TAPS_medians$TAPS, TAPS_medians$DIAGNOSIS, p.adj = 'bonf')
+TAPSttest <- pairwise.t.test(TAPS_ECC$TAPS, TAPS_ECC$DIAGNOSIS, p.adj = 'bonf')
 print(TAPSttest)
 
 ##### NORM TIME AFTER PV #####
+# calculating
 res$NTAPS <- (res$MT - res$TPS)/res$MT
 
-NTAPS_medians <- aggregate(NTAPS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
+NTAPS_medians <- aggregate(NTAPS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * DIAGNOSIS, 
                         median, data = res)
-# remove 310, not using them and 315 - noisy
-NTAPS_medians <- NTAPS_medians[NTAPS_medians$PPT != 310 & NTAPS_medians$PPT != 315 ,]
-NTAPS_means <- aggregate(NTAPS ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
-                      mean, data = NTAPS_medians)
-# average across side
-NTAPSav <- aggregate(NTAPS ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
-                  mean, data = NTAPS_medians)
+NTAPS_ECC <- aggregate(NTAPS ~ PPT * VIEW * ECC * SITE * DIAGNOSIS, 
+                       median, data = NTAPS_medians)
+NTAPS_means <- aggregate(NTAPS ~ PPT * VIEW * SITE * DIAGNOSIS,
+                      mean, data = NTAPS_ECC)
 
 ## plotting :)
-# both sides
-NTAPSsummary <- summarySE(NTAPS_means, measurevar = 'NTAPS', 
-                       groupvar = c('DIAGNOSIS','VIEW','DOM'), na.rm = TRUE)
-NTAPSsummary$DIAGNOSIS <- factor(NTAPSsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
-NTAPSsummary$DOM <- factor(NTAPSsummary$DOM, labels = c('Non-dominant','Dominant'))
-
-ggplot(NTAPSsummary, aes(x = VIEW, y = NTAPS, colour = DIAGNOSIS, group = DIAGNOSIS,
-                      shape = DIAGNOSIS)) +
-  geom_point(size = 3, position = position_dodge(width = .3)) +
-  geom_line(aes(group = DIAGNOSIS), size = 0.5, alpha = .5,
-            position = position_dodge(width = .3)) +
-  geom_errorbar(aes(ymin=NTAPS-ci, ymax=NTAPS+ci), 
-                width=.4, position = position_dodge(width = .3)) +
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~DOM) + ylim(0.6,0.8) +
-  labs(x = 'Side', y = 'Normalised time after peak velocity', element_text(size = 12)) +
-  theme_classic() + theme(legend.position = 'bottom', 
-                          legend.title = element_blank(),
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 12),
-                          strip.text = element_text(size = 12)
-  ) 
-
-ggsave('RADnTAPSmean_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 4, height = 5, path = anaPath)
-
 # average across sides
-NTAPSav$DIAGNOSIS <- factor(NTAPSav$DIAGNOSIS, levels = c('HC','MCI','AD'))
-ggplot(NTAPSav, aes(x = VIEW, y = NTAPS, colour = SITE, group = PPT)) +
+NTAPS_means$DIAGNOSIS <- factor(NTAPS_means$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(NTAPS_means, aes(x = VIEW, y = NTAPS, colour = SITE, group = PPT)) +
   geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
             position = position_dodge(width = .3)) +
@@ -897,18 +665,16 @@ ggplot(NTAPSav, aes(x = VIEW, y = NTAPS, colour = SITE, group = PPT)) +
                           strip.text = element_text(size = 12)
   ) 
 
-ggsave('RADnTAPSav_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('RAD_NTAPSmean.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 6, height = 4, path = anaPath)
 
 # by eccentricity
-NTAPS_medians$POSITION <- factor(NTAPS_medians$POSITION)
-
 # summary data
 NTAPSecc <- summarySE(NTAPS_medians, measurevar = 'NTAPS', 
-                   groupvar = c('DIAGNOSIS','POSITION','VIEW','SIDE'), na.rm = TRUE)
+                   groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
 NTAPSecc$DIAGNOSIS <- factor(NTAPSecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(NTAPSecc, aes(x = POSITION, y = NTAPS, group = DIAGNOSIS, colour = DIAGNOSIS,
+ggplot(NTAPSecc, aes(x = ECC, y = NTAPS, group = DIAGNOSIS, colour = DIAGNOSIS,
                   shape = DIAGNOSIS)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=NTAPS-ci, ymax=NTAPS+ci), 
@@ -925,22 +691,15 @@ ggplot(NTAPSecc, aes(x = POSITION, y = NTAPS, group = DIAGNOSIS, colour = DIAGNO
   )
 
 
-ggsave('RADnTAPSecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('RAD_NTAPS_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 7.5, height = 5, path = anaPath)
 
 ## ANOVA ##
-# full anova on TAPS by ecc
-NTAPSECCanova <- NTAPS_medians[NTAPS_medians$PPT != 212 & 
-                                 NTAPS_medians$PPT != 302 &
-                                 NTAPS_medians$PPT != 403 &
-                                 NTAPS_medians$PPT != 407,]
-NTAPSECCanova$ECC <- factor(NTAPSECCanova$ECC)
-
 NTAPSECC_ANOVA <- ezANOVA(
-  data = NTAPSECCanova
+  data = NTAPS_ECC
   , dv = .(NTAPS)
   , wid = .(PPT)
-  , within = .(VIEW, DOM, ECC)
+  , within = .(VIEW, ECC)
   , between = .(DIAGNOSIS)
   , between_covariates = .(SITE)
   , type = 3,
@@ -955,37 +714,30 @@ aovNTAPSECC <- aovEffectSize(ezObj = NTAPSECC_ANOVA, effectSize = "pes")
 aovDispTable(aovNTAPSECC)
 
 #pair-wise t-test
-NTAPSttest <- pairwise.t.test(NTAPS_medians$NTAPS, NTAPS_medians$DIAGNOSIS, p.adj = 'bonf')
+NTAPSttest <- pairwise.t.test(NTAPS_ECC$NTAPS, NTAPS_ECC$DIAGNOSIS, p.adj = 'bonf')
 print(NTAPSttest)
 
 ##### CORRELATE ACE #####
 setwd(dataPath)
 patient_demos <- read.csv('patient_demographics.csv')
-PMIdata <- read.csv('radialPMI-filtered.csv')
+setwd(anaPath)
+PMIdata <- read.csv('radialPMI.csv')
 #extracting ACE data into seperate data-frame
 ACEscores <- patient_demos[ ,c(1, 10:15)]
 names(ACEscores)[1] <- 'PPT'
-setwd(anaPath)
 # merging ACE with PMI
 PMIACE <- merge(PMIdata, ACEscores, by = 'PPT')
 PMIACE$ACEall <- as.numeric(as.character(PMIACE$ACEall))
-PMIACE$ACEvisuospatial <- as.numeric(as.character(PMIACE$ACEvisuospatial))
 
 ## aaaand correlate :)
-ggscatter(PMIACE, x = 'ACEall', y = 'PMI', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +
-  ylab('Radial PMI (deg)') + xlab('ACE score (%)') +
-  facet_wrap(~DOM) +
-  theme(text = element_text(size = 10))
-
 # average PMI
-PMIACE <- aggregate(PMI ~ PPT+DIAGNOSIS+ACEall, mean, data = PMIACE)
-ggscatter(PMIACE, x = 'ACEall', y = 'PMI', 
+PMIACE_all <- aggregate(PMI ~ PPT+DIAGNOSIS+ACEall, mean, data = PMIACE)
+ggscatter(PMIACE_all, x = 'ACEall', y = 'PMI', 
           add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
           cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') +
   ylab('Radial PMI (deg)') + xlab('ACE score (%)') +
   theme(text = element_text(size = 10))
 
-ggsave('RADPMI-ACEcorr_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('RAD_PMI-ACE.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 5, height = 5, path = anaPath)
 
