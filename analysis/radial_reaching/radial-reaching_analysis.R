@@ -270,20 +270,20 @@ td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,
 td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 for (l in 1:length(tdUOE_patient$PPT)){
   #left data first
-  leftres <- TD(tdUOE_patient$ND[l], tdUOE_control$PMI[1], tdUOE_control$sd[1], 24, 
+  NDres <- TD(tdUOE_patient$ND[l], tdUOE_control$PMI[1], tdUOE_control$sd[1], 24, 
                 alternative = 'greater', na.rm = FALSE)
-  diff <- t(leftres$estimate)
-  ltmp <- data.frame(tdUOE_patient$ND[l], leftres$statistic, leftres$p.value, 
-                     diff[1], diff[2], t(leftres$interval), 'ND', check.names = FALSE) 
+  diff <- t(NDres$estimate)
+  ltmp <- data.frame(tdUOE_patient$ND[l], NDres$statistic, NDres$p.value, 
+                     diff[1], diff[2], t(NDres$interval), 'ND', check.names = FALSE) 
   ltmp$PPT <- tdUOE_patient$PPT[l]
   ltmp$DIAGNOSIS <- tdUOE_patient$DIAGNOSIS[l]
   td_ndom <- rbind(td_ndom, ltmp)
   #then right data
-  rightres <- TD(tdUOE_patient$D[l], tdUOE_control$PMI[2], tdUOE_control$sd[2], 24, 
+  Dres <- TD(tdUOE_patient$D[l], tdUOE_control$PMI[2], tdUOE_control$sd[2], 24, 
                  alternative = 'greater', na.rm = FALSE)
-  diff <- t(rightres$estimate)
-  rtmp <- data.frame(tdUOE_patient$D[l], rightres$statistic, rightres$p.value, 
-                     diff[1], diff[2], t(rightres$interval), 'D', check.names = FALSE) 
+  diff <- t(Dres$estimate)
+  rtmp <- data.frame(tdUOE_patient$D[l], Dres$statistic, Dres$p.value, 
+                     diff[1], diff[2], t(Dres$interval), 'D', check.names = FALSE) 
   rtmp$PPT <- tdUOE_patient$PPT[l]
   rtmp$DIAGNOSIS <- tdUOE_patient$DIAGNOSIS[l]
   td_dom <- rbind(td_dom, rtmp)
@@ -322,20 +322,20 @@ td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,
 td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 for (l in 1:length(tdUEA_patient$PPT)){
   #left data first
-  leftres <- TD(tdUEA_patient$ND[l], tdUEA_control$PMI[1], tdUEA_control$sd[1], 24, 
+  NDres <- TD(tdUEA_patient$ND[l], tdUEA_control$PMI[1], tdUEA_control$sd[1], 24, 
                 alternative = 'greater', na.rm = FALSE)
-  diff <- t(leftres$estimate)
-  ltmp <- data.frame(tdUEA_patient$ND[l], leftres$statistic, leftres$p.value, 
-                     diff[1], diff[2], t(leftres$interval), 'ND', check.names = FALSE) 
+  diff <- t(NDres$estimate)
+  ltmp <- data.frame(tdUEA_patient$ND[l], NDres$statistic, NDres$p.value, 
+                     diff[1], diff[2], t(NDres$interval), 'ND', check.names = FALSE) 
   ltmp$PPT <- tdUEA_patient$PPT[l]
   ltmp$DIAGNOSIS <- tdUEA_patient$DIAGNOSIS[l]
   td_ndom <- rbind(td_ndom, ltmp)
   #then right data
-  rightres <- TD(tdUEA_patient$D[l], tdUEA_control$PMI[2], tdUEA_control$sd[2], 24, 
+  Dres <- TD(tdUEA_patient$D[l], tdUEA_control$PMI[2], tdUEA_control$sd[2], 24, 
                  alternative = 'greater', na.rm = FALSE)
-  diff <- t(rightres$estimate)
-  rtmp <- data.frame(tdUEA_patient$D[l], rightres$statistic, rightres$p.value, 
-                     diff[1], diff[2], t(rightres$interval), 'D', check.names = FALSE) 
+  diff <- t(Dres$estimate)
+  rtmp <- data.frame(tdUEA_patient$D[l], Dres$statistic, Dres$p.value, 
+                     diff[1], diff[2], t(Dres$interval), 'D', check.names = FALSE) 
   rtmp$PPT <- tdUEA_patient$PPT[l]
   rtmp$DIAGNOSIS <- tdUEA_patient$DIAGNOSIS[l]
   td_dom <- rbind(td_dom, rtmp)
@@ -463,31 +463,7 @@ PMIall_ttest <- pairwise.t.test(PMIanova_all$PMI, PMIanova_all$DIAGNOSIS, p.adj 
 print(PMIall_ttest)
 
 ##### PLOTTING #####
-## PLOT 1: mean AE - 2 targ locs
-AEsummary <- summarySE(res_means, measurevar = 'AEmean', 
-                       groupvar = c('DIAGNOSIS', 'DOM', 'VIEW'), na.rm = TRUE)
-
-AEsummary$DIAGNOSIS <- factor(AEsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
-
-ggplot(AEsummary, aes(x = DOM, y = AEmean, colour = VIEW, group = DIAGNOSIS)) +
-  geom_point(size = 3) +
-  geom_line(aes(group = VIEW), size = 0.7) +
-  geom_errorbar(aes(ymin=AEmean-ci, ymax=AEmean+ci), 
-                width=.3) +
-  scale_color_manual(values = c('black','grey60')) +
-  labs(title = 'Mid target locations', 
-       x = 'Side', y = 'Radial reaching error (mm)') + 
-  facet_wrap(~DIAGNOSIS) +
-  theme_classic() + theme(legend.position = 'bottom', 
-                          legend.title = element_blank(),
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 12),
-                          strip.text = element_text(size = 12))
-
-ggsave('RADmean-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 4.5, height = 6, path = anaPath)
-
-## PLOT 2: PMI 2 targ locs ##
+## PLOT: PMI side + av ##
 # make control data-frame
 control_PMI <- subset(PMIdata, PMIdata$DIAGNOSIS == 'HC')
 control_PMI$TSTAT <- 0

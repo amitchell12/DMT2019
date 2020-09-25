@@ -28,15 +28,18 @@ res <- read.csv('all_radial-reaching_compiled.csv')
 res$ECC <- abs(res$POSITION) #adding eccentricity = absolute target position
 
 ### AE BY ECCENTRICITY ALL TARG LOCS ###
-# converting factor back to numeric keeping values
-res_medians <- a
+# calculating medians
+res_medians <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE, 
+                                                       median, data = res)
+# averaging across side
+AE_ECC <- aggregate(AE ~ PPT*POSITION*VIEW*DIAGNOSIS*GRP*SITE*AGE, 
+                    mean, data = res_medians)
+
 tmp <- as.numeric(levels(res_medians_all$POSITION))[res_medians$POSITION]
 # aggregrating across target locations
 res_medians$ECC <- aggregate(AE ~ PPT*POSITION*VIEW*DOM*DIAGNOSIS*GRP*SITE*AGE, 
                              median, data = res)
-# averaging across side
-absErr <- aggregate(AE ~ PPT*POSITION*VIEW*DIAGNOSIS*GRP*SITE*AGE, 
-                    mean, data = res_medians)
+
   
 ALLECC_ANOVA <- ezANOVA(
   data = ECCanova_all
