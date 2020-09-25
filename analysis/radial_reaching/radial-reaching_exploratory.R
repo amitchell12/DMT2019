@@ -92,7 +92,7 @@ ANG_ECC <- aggregate(ANG_ERR ~ PPT * VIEW * SITE * ECC * DIAGNOSIS * AGE,
                       mean, data = ANGmedians)
 # average across target location
 ANGmeans <- aggregate(ANG_ERR ~ PPT * VIEW * SITE * DIAGNOSIS * AGE, 
-                           mean, data = ANGmedians)
+                           mean, data = ANG_ECC)
 ANGmeans$DIAGNOSIS <- factor(ANGmeans$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
 ### PLOTTING ###
@@ -159,19 +159,88 @@ ANG_ANOVA$`Sphericity Corrections`
 aovANGECC <- aovEffectSize(ezObj = ANG_ANOVA, effectSize = "pes")
 aovDispTable(aovANGECC)
 
-# Median absolute error
-av_ecc <- summarySE(dir_medians, measurevar = 'LANDx', 
-                    groupvar = c('DIAGNOSIS','POSITION','VIEW','SIDE'), na.rm = TRUE)
-av_ecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
-av_ecc$POSITION <- factor(av_ecc$POSITION)
+###### AMPLITUDE ERROR ######
+AMPmedians <- aggregate(AMP_ERR ~ PPT * VIEW * SIDE * ECC * SITE * GRP * DIAGNOSIS * AGE * ECC, 
+                        median, data = res)
+# average across side (-ve = closer to PP, +ve = away from PP)
+AMP_ECC <- aggregate(AMP_ERR ~ PPT * VIEW * SITE * ECC * DIAGNOSIS * AGE, 
+                     mean, data = AMPmedians)
+# average across target location
+AMPmeans <- aggregate(AMP_ERR ~ PPT * VIEW * SITE * DIAGNOSIS * AGE, 
+                      mean, data = AMP_ECC)
+AMPmeans$DIAGNOSIS <- factor(AMPmeans$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-###### ABSOLUTE ERROR ######
+### PLOTTING ###
+## mean all participants
+ggplot(AMPmeans, aes(x = VIEW, y = AMP_ERR, group = PPT, colour = DIAGNOSIS)) +
+  geom_hline(yintercept = 0) +
+  geom_point(size = 3, shape = 1, position = position_dodge(width = .2)) +
+  stat_summary(aes(y = AMP_ERR, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  geom_line(aes(group = PPT), alpha = .4, size = 0.7, position = position_dodge(width = .2)) +
+  scale_color_manual(values = c('grey50','grey50','grey50')) +
+  facet_grid(~DIAGNOSIS) +
+  labs(x = 'Side', y = 'Amplutude error (mm)') + 
+  theme_classic() + theme(legend.position = 'none',
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12)
+  )
+
+ggsave('RAD_AMPERRmeans.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 5, height = 7, path = anaPath)
+
+## plotting data frame
+AMPECC_summary <- summarySE(AMP_ECC, measurevar = 'AMP_ERR', 
+                            groupvar = c('DIAGNOSIS', 'VIEW', 'ECC'), na.rm = TRUE)
+AMPECC_summary$DIAGNOSIS <- factor(AMPECC_summary$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(AMPECC_summary, aes(x = ECC, y = AMP_ERR, colour = DIAGNOSIS, shape = DIAGNOSIS,
+                           group = DIAGNOSIS)) +
+  geom_hline(yintercept = 0) +
+  geom_point(size = 4, position = position_dodge(width = .3)) +
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
+  geom_errorbar(aes(ymin=AMP_ERR-ci, ymax=AMP_ERR+ci), 
+                width=.3, position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(x = 'Side', y = 'Amplitude error (mm)') + 
+  facet_wrap(~VIEW) +
+  theme_classic() + theme(legend.position = 'bottom', 
+                          legend.title = element_blank(),
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12))
+
+ggsave('RAD_AMPERR_ECC.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 5, height = 6, path = anaPath)
+
+### ANOVA ###
+# FULL ANOVA ON ECCENTRICITY DATA
+AMP_ANOVA <- ezANOVA(
+  data = AMP_ECC
+  , dv = .(AMP_ERR)
+  , wid = .(PPT)
+  , within = .(VIEW, ECC)
+  , between = .(DIAGNOSIS)
+  , between_covariates = .(SITE, AGE)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+AMP_ANOVA$ANOVA
+AMP_ANOVA$`Mauchly's Test for Sphericity`
+AMP_ANOVA$`Sphericity Corrections`
+aovAMPECC <- aovEffectSize(ezObj = AMP_ANOVA, effectSize = "pes")
+aovDispTable(aovAMPECC)
 
 ###### MOVEMENT TIME #######
-MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * GRP * DIAGNOSIS, 
+MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * ECC * SITE * DIAGNOSIS, 
                         median, data = res)
-MT_means <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
-                      mean, data = MT_medians)
+MT_medians <- aggregate(MT ~ PPT * VIEW * DOM * ECC * SITE * DIAGNOSIS, 
+                        median, data = MT_medians)
+MT_means <- aggregate(MT ~ PPT * VIEW * DOM * SITE * DIAGNOSIS,
+                      mean, data = MT_ECC)
 # average across side
 MTav <- aggregate(MT ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
                   mean, data = MT_medians)
