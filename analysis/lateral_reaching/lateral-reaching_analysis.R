@@ -1,3 +1,6 @@
+##### LATERAL REACHING ANALYSIS CODE
+## Code for main analysis for Mitchell et al. ....
+
 library(readr)
 library(ggplot2)
 library(Rmisc)
@@ -12,14 +15,12 @@ library(ez)
 library(psychReport)
 
 #set working directory to where data is
-#dataPath <- 'S:/groups/DMT/data'
-#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 # on mac (desktop)
-dataPath <- '/Users/Alex/Documents/DMT/data/'
-anaPath <- '/Users/Alex/Documents/DMT/analysis//lateral_reaching/'
+#dataPath <- '/Users/Alex/Documents/DMT/data/'
+#anaPath <- '/Users/Alex/Documents/DMT/analysis//lateral_reaching/'
 # on mac (laptop)
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/'
 setwd(anaPath)
 
 # load data file
@@ -34,12 +35,11 @@ res$DOM <- factor(res$DOM, labels= c('ND','D'))
 # change order so dominance up-front
 res <- res[, c(1:8,27,9:26)]
 
-# finding total number of valid trials for each patient
-res$VALID <- 1
-valid <- aggregate(VALID ~ GRP * PPT * DOM * VIEW, sum, data = res)
-valid$TOT <- 27
-valid$MISS <- valid$TOT - valid$VALID
-valid_tot <- aggregate(MISS ~ GRP * VIEW * DOM, sum, data = valid)
+# counting total number of valid trials for each patient
+valid <- aggregate(TARGx ~ DIAGNOSIS * PPT * DOM * VIEW, length, data = res)
+# calculate percentage of trials completed in each group
+valid$HITS <- (valid$TARGx/27)*100
+valid_tot <- aggregate(HITS ~ DIAGNOSIS * VIEW, mean, data = valid)
 
 ######### step 1, calculating PMI, all data ############
 res_medians <- aggregate(
@@ -73,10 +73,11 @@ write.csv(PMIdata, 'lateralPMI_all.csv', row.names = FALSE)
 meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'DOM'),
                        na.rm = TRUE)
 write.csv(meanPMI_side, 'lateralPMI_means.csv', row.names = FALSE)
-meanPMI_all <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS'),
-                         na.rm = TRUE)
+# averaged across side
+PMIgrand <- aggregate(PMI~PPT+GRP+SITE+DIAGNOSIS+AGE+ED, mean, data=PMIdata)
+meanPMI_grand <- summarySE(PMIgrand, measurevar = 'PMI', groupvar = c('DIAGNOSIS'))
 
-# plot by eccentricity
+## bit of plotting by eccentricity
 # controls
 res_medians$POSITION <- factor(res_medians$POSITION)
 meds_control <- res_medians[res_medians$GRP == 'Control' ,]
@@ -127,48 +128,6 @@ ggplot(meds_AD, aes(x = POSITION, y = AEmed, colour = DOM)) +
 ggsave('AD_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
        scale = 1, path = anaPath)
 
-# PMI collapsed across side
-PMIav <- aggregate(PMI ~ PPT * SITE * DIAGNOSIS * AGE * ED, mean, data = PMIdata)
-PMIav <- PMIav[order(PMIav$PPT), ]
-
-### tests for age & education ###
-# plot age
-ggplot(res, aes(x = DIAGNOSIS, y = AGE, group = PPT)) +
-  geom_point(position = position_dodge(.2))
-# plot education
-ggplot(res, aes(x = DIAGNOSIS, y = ED, group = PPT)) +
-  geom_point(position = position_dodge(.2))
-
-# create necessary data-frames for ANOVA
-age <- aggregate(AGE ~ PPT*DIAGNOSIS, mean, data = res)
-res$ED <- as.numeric(as.character(res$ED))
-education <- aggregate(ED ~ PPT*DIAGNOSIS, mean, data = res)
-demo_test <- merge(age, education, by = c('PPT', 'DIAGNOSIS'))
-
-# ANOVAS
-AGE_ANOVA <- ezANOVA(
-  data = demo_test
-  , dv = .(AGE)
-  , wid = .(PPT)
-  , between = .(DIAGNOSIS)
-  , type = 3
-)
-
-print(AGE_ANOVA)
-
-# ANOVAS
-ED_ANOVA <- ezANOVA(
-  data = demo_test
-  , dv = .(ED)
-  , wid = .(PPT)
-  , between = .(DIAGNOSIS)
-  , type = 3
-)
-
-print(ED_ANOVA)
-
-## neither age nor education signficantly different between groups, hurrah
-
 #### NOTE: outlier removal stage removed from this analysis - can be found in:
 #### DMT -> analysis -> lateral_reaching -> as-preregistered
 
@@ -192,20 +151,20 @@ td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,
 td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 for (l in 1:length(td_patient$PPT)){
   #left data first
-  leftres <- TD(td_patient$ND[l], td_control$PMI[1], td_control$sd[1], 24, 
+  NDres <- TD(td_patient$ND[l], td_control$PMI[1], td_control$sd[1], td_control$N[1], 
                 alternative = 'greater', na.rm = FALSE)
-  diff <- t(leftres$estimate)
-  ltmp <- data.frame(td_patient$ND[l], leftres$statistic, leftres$p.value, 
-                     diff[1], diff[2], t(leftres$interval), 'ND', check.names = FALSE) 
+  diff <- t(NDres$estimate)
+  ltmp <- data.frame(td_patient$ND[l], NDres$statistic, NDres$p.value, 
+                     diff[1], diff[2], t(NDres$interval), 'ND', check.names = FALSE) 
   ltmp$PPT <- td_patient$PPT[l]
   ltmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
   td_ndom <- rbind(td_ndom, ltmp)
   #then right data
-  rightres <- TD(td_patient$D[l], td_control$PMI[2], td_control$sd[2], 24, 
+  Dres <- TD(td_patient$D[l], td_control$PMI[2], td_control$sd[2], td_control$N[2], 
                  alternative = 'greater', na.rm = FALSE)
-  diff <- t(rightres$estimate)
-  rtmp <- data.frame(td_patient$D[l], rightres$statistic, rightres$p.value, 
-                     diff[1], diff[2], t(rightres$interval), 'D', check.names = FALSE) 
+  diff <- t(Dres$estimate)
+  rtmp <- data.frame(td_patient$D[l], Dres$statistic, Dres$p.value, 
+                     diff[1], diff[2], t(Dres$interval), 'D', check.names = FALSE) 
   rtmp$PPT <- td_patient$PPT[l]
   rtmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
   td_dom <- rbind(td_dom, rtmp)
@@ -283,18 +242,14 @@ print(binAD)
 binALL <- binom.test(sum(td_side$BL), length(td_side$PPT), pval_Bl, alternative = 'greater')
 print(binALL)
 
-###### ANOVAS ######
-# use PMIfilt data-frame to run between-subject ANOVA
-# removing NA values for ANOVA - entire participant (not just side)
-PMIanova <- PMIdata[PMIdata$PPT != 212 & PMIdata$PPT != 407 , ]
-
+###### ANOVA ######
 # FULL ANOVA ON FILTERED DATA
 PMI_ANOVA <- ezANOVA(
-  data = PMIanova
+  data = PMIgrand
   , dv = .(PMI)
   , wid = .(PPT)
-  , within = .(DOM)
   , between = .(DIAGNOSIS)
+  , between_covariates = .(AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -306,131 +261,8 @@ PMI_ANOVA$`Sphericity Corrections`
 aovPMI <- aovEffectSize(ezObj = PMI_ANOVA, effectSize = "pes")
 aovDispTable(aovPMI)
 
-## ANOVA FOR AV PMI
-AV_ANOVA <- ezANOVA(
-  data = PMIav
-  , dv = .(PMI)
-  , wid = .(PPT)
-  , between = .(DIAGNOSIS)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-AV_ANOVA$ANOVA
-AV_ANOVA$`Mauchly's Test for Sphericity`
-AV_ANOVA$`Sphericity Corrections`
-aovPMIAV <- aovEffectSize(ezObj = AV_ANOVA, effectSize = "pes")
-aovDispTable(aovPMIAV)
-
-### ANOVA BY VIEW ###
-# mean AE instead of PMI
-# summary table
-AEsummary <- summarySE(res_means, measurevar = 'AEmean', 
-                       groupvar = c('DIAGNOSIS', 'DOM', 'VIEW'), na.rm = TRUE)
-AEanova <- res_means[res_means$PPT != 212 & res_means$PPT != 407 ,]
-
-AE_ANOVA <- ezANOVA(
-  data = AEanova
-  , dv = .(AEmean)
-  , wid = .(PPT)
-  , within = .(DOM, VIEW)
-  , between = .(DIAGNOSIS)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-AE_ANOVA$ANOVA
-AE_ANOVA$`Mauchly's Test for Sphericity`
-AE_ANOVA$`Sphericity Corrections`
-aovAE <- aovEffectSize(ezObj = AE_ANOVA, effectSize = "pes")
-aovDispTable(aovAE)
-
-### ANOVA BY ECCENTRICITY ###
-# median AE
-# summary table
-ECCsummary <- summarySE(res_medians, measurevar = 'AEmed', 
-                        groupvar = c('DIAGNOSIS', 'DOM', 'VIEW', 'POSITION'), na.rm = TRUE)
-  
-ECCanova <- res_medians[res_medians$PPT != 212 & res_medians$PPT != 407 ,]
-ECCanova <- ECCanova[, c(1:9,11)]
-## create 'eccentricity' variable where left are -ve and right are +ve
-ECCanova$POSITION <- factor(ECCanova$POSITION)
-
-ECC_ANOVA <- ezANOVA(
-  data = ECCanova
-  , dv = .(AEmed)
-  , wid = .(PPT)
-  , within = .(DOM, VIEW, POSITION)
-  , between = .(DIAGNOSIS)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-ECC_ANOVA$ANOVA
-ECC_ANOVA$`Mauchly's Test for Sphericity`
-ECC_ANOVA$`Sphericity Corrections`
-aovECC <- aovEffectSize(ezObj = ECC_ANOVA, effectSize = "pes")
-aovDispTable(aovECC)
-
 ###### PLOTTING ######
-## PLOT 1: median eccentricity ##
-res_medians$ECC <- as.numeric(as.character(res_medians$POSITION))
-#making left side negative
-index <- res_medians$SIDE == 'left'
-res_medians$ECC[index] <- -(res_medians$ECC[index])
-res_medians$ECC <- factor(res_medians$ECC)
-
-## Non-dominant
-# make plot data-frame
-av_ecc <- summarySE(res_medians, measurevar = 'AEmed', 
-                    groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
-av_ecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
-
-# plot 
-ggplot(av_ecc, aes(x = ECC, y = AEmed, group = DIAGNOSIS, colour = DIAGNOSIS, 
-                   shape = DIAGNOSIS)) +
-  geom_point(size = 3, position = position_dodge(width = .4)) +
-  geom_errorbar(aes(ymin=AEmed-ci, ymax=AEmed+ci), 
-                width=.4, position = position_dodge(width = .4)) + 
-  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  labs(x = 'Eccentricity (°)', y = 'Lateral reaching error (mm)') +
-  facet_grid(~VIEW) + theme_classic() +
-  theme(legend.position = 'bottom',
-        legend.title = element_blank(),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12),
-        strip.text = element_text(size = 12)
-  )
-
-ggsave('LATeccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 6, height = 5, path = anaPath)
-
-## PLOT 2: meanAE ##
-# levels
-AEsummary$DIAGNOSIS <- factor(AEsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
-ggplot(AEsummary, aes(x = DOM, y = AEmean, colour = VIEW,
-                      group = DIAGNOSIS)) +
-  geom_point(size = 3) +
-  geom_line(aes(group = VIEW), size = 0.7) +
-  geom_errorbar(aes(ymin=AEmean-ci, ymax=AEmean+ci), 
-                width=.3) +
-  scale_color_manual(values = c('black','grey60')) +
-  labs(x = 'Side', y = 'Lateral reaching error (mm)') + 
-  facet_wrap(~DIAGNOSIS) +
-  theme_classic() + theme(legend.position = 'bottom', 
-                       legend.title = element_blank(),
-                       axis.text = element_text(size = 10),
-                       axis.title = element_text(size = 12),
-                       strip.text = element_text(size = 12))
-
-ggsave('LATmean-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 4.5, height = 6, path = anaPath)
-
-## PLOT 3: PMI ##
+## PMI ## 
 # make control data-frame
 control_PMI <- subset(PMIdata, PMIdata$DIAGNOSIS == 'HC')
 control_PMI$TSTAT <- 0

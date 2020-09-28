@@ -33,16 +33,71 @@ res$DOM <- factor(res$DOM, labels= c('ND','D'))
 res <- res[, c(1:8,27,9:26)]
 
 # changing levels to be more informative
-res$GRP <- factor(res$GRP, labels = c('Control','Patient'))
 levels(res$VIEW) <- c('Free', 'Peripheral')
 res$SITE <- factor(res$SITE, labels = c('UOE','UEA'))
 res$DIAGNOSIS <- factor(res$DIAGNOSIS)
+# to match radial reaching - change name of 'POSITION' to 'ECC'
+colnames(res)[colnames(res)=='POSITION'] <- 'ECC' 
 
-###### DIRECTIONAL ERROR: median, means, PMI ######
-dir_medians <- aggregate(xerr_mm ~ PPT * VIEW * SIDE * POSITION * SITE * GRP * DIAGNOSIS, 
+###### AE BY ECCENTRICITY ######
+res_medians <- aggregate(AE ~ PPT*ECC*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE, 
+                         median, data = res)
+# averaging across side
+resAE <- aggregate(AE ~ PPT*ECC*VIEW*DIAGNOSIS*SITE*AGE, 
+                   mean, data = res_medians)
+
+## ANOVA ##
+ECC_ANOVA <- ezANOVA(
+  data = resAE
+  , dv = .(AEmed)
+  , wid = .(PPT)
+  , within = .(VIEW, ECC)
+  , between = .(DIAGNOSIS)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+ECC_ANOVA$ANOVA
+ECC_ANOVA$`Mauchly's Test for Sphericity`
+ECC_ANOVA$`Sphericity Corrections`
+aovECC <- aovEffectSize(ezObj = ECC_ANOVA, effectSize = "pes")
+aovDispTable(aovECC)
+
+
+## plotting
+# make plot data-frame
+av_ecc <- summarySE(res_medians, measurevar = 'AEmed', 
+                    groupvar = c('DIAGNOSIS','ECC'), na.rm = TRUE)
+
+av_ecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+# plot 
+ggplot(av_ecc, aes(x = ECC, y = AEmed, group = DIAGNOSIS, colour = DIAGNOSIS, 
+                   shape = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(width = .4)) +
+  geom_errorbar(aes(ymin=AEmed-ci, ymax=AEmed+ci), 
+                width=.4, position = position_dodge(width = .4)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(x = 'Eccentricity (°)', y = 'Lateral reaching error (mm)') +
+  facet_grid(~VIEW) + theme_classic() +
+  theme(legend.position = 'bottom',
+        legend.title = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 12)
+  )
+
+ggsave('LATeccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 6, height = 5, path = anaPath)
+
+
+###### DIRECTIONAL ERROR (xAxis) ######
+dir_medians <- aggregate(xerr_mm ~ PPT * VIEW * SIDE * POSITION * SITE * DIAGNOSIS, 
                          median, data = res)
 colnames(dir_medians)[colnames(dir_medians)=='xerr_mm'] <- 'xerr_med' #change name to be more logical
-dir_means <- aggregate(xerr_med ~ PPT* VIEW * SIDE * SITE * GRP * DIAGNOSIS, 
+dir_means <- aggregate(xerr_med ~ PPT* VIEW * SIDE * SITE * DIAGNOSIS, 
                        mean, data = dir_medians)
 colnames(dir_means)[colnames(dir_means) == 'xerr_med'] <- 'xerr_mean'
 
@@ -179,9 +234,6 @@ DECC_ANOVA$`Mauchly's Test for Sphericity`
 DECC_ANOVA$`Sphericity Corrections`
 aovDECC <- aovEffectSize(ezObj = DECC_ANOVA, effectSize = "pes")
 aovDispTable(aovDECC)
-
-##### AMPLITUDE ERROR ######
-# calculate error along the y-axis
 
 ###### MOVEMENT TIME #######
 MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * POSITION * SITE * GRP * DIAGNOSIS, 
