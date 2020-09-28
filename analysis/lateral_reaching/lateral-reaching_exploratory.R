@@ -128,16 +128,15 @@ ggplot(dir_means, aes(x = VIEW, y = xerr_mm, colour = DIAGNOSIS, group = PPT)) +
 ggsave('LAT_DIRmeans.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 5, height = 6, path = anaPath)
 
-#### REACHED HERE KEEP GOING
 ## plotting eccentricity
-av_ecc <- summarySE(dir_medians, measurevar = 'xerr_med', 
-                              groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
-av_ecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
+avDIR <- summarySE(dir_medians, measurevar = 'xerr_mm', 
+                              groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
+avDIR$DIAGNOSIS <- factor(avDIR$DIAGNOSIS, levels = c('HC','MCI','AD'))
 # plot 
-ggplot(av_ecc, aes(x = ECC, y = xerr_med, group = DIAGNOSIS, colour = DIAGNOSIS, 
+ggplot(avDIR, aes(x = ECC, y = xerr_mm, group = DIAGNOSIS, colour = DIAGNOSIS, 
                    shape = DIAGNOSIS)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
-  geom_errorbar(aes(ymin=xerr_med-ci, ymax=xerr_med+ci), 
+  geom_errorbar(aes(ymin=xerr_mm-ci, ymax=xerr_mm+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
   geom_hline(yintercept = 0) + ylim(-25,25) +
@@ -151,20 +150,19 @@ ggplot(av_ecc, aes(x = ECC, y = xerr_med, group = DIAGNOSIS, colour = DIAGNOSIS,
         strip.text = element_text(size = 12)
         )
 
-ggsave('LATxerr_ECC_plot.png', plot = last_plot(), device = NULL, dpi = 300, 
+ggsave('LAT_DIR_ECC.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 6, height = 5, path = anaPath)
 
 ## ANOVA ##
-dECCanova <- dir_medians[dir_medians$PPT != 212 & dir_medians$PPT != 407 ,]
-dECCanova$POSITION <- factor(dECCanova$POSITION)
-
 # FULL ANOVA ON ECCENTRICITY DATA
+dirECC$ECC <- factor(dirECC$ECC)
 DECC_ANOVA <- ezANOVA(
-  data = dECCanova
-  , dv = .(xerr_med)
+  data = dirECC
+  , dv = .(xerr_mm)
   , wid = .(PPT)
-  , within = .(VIEW, SIDE, POSITION)
+  , within = .(VIEW, ECC)
   , between = .(DIAGNOSIS)
+  , between_covariates = .(AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -176,45 +174,108 @@ DECC_ANOVA$`Sphericity Corrections`
 aovDECC <- aovEffectSize(ezObj = DECC_ANOVA, effectSize = "pes")
 aovDispTable(aovDECC)
 
-###### MOVEMENT TIME #######
-MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * POSITION * SITE * GRP * DIAGNOSIS, 
-                        median, data = res)
-MT_means <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
-                      mean, data = MT_medians)
-# average across side
-MTav <- aggregate(MT ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
-                  mean, data = MT_medians)
+###### AMPLITUDE ERROR (Y-axis) ######
+# as OpenSesame [0,0] is in the centre, change sign for lower targets (height = bottom)
+# so when average, all going in same direction
+res_y <- res %>%
+  mutate(yerr_mm = ifelse(height == 'bottom' | height == 'mid', 
+                          -yerr_mm, yerr_mm))
 
-## plotting :)
-# both sides
-MTsummary <- summarySE(MT_means, measurevar = 'MT', 
-                       groupvar = c('DIAGNOSIS','VIEW','DOM'), na.rm = TRUE)
-MTsummary$DIAGNOSIS <- factor(MTsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
-MTsummary$DOM <- factor(MTsummary$DOM, labels = c('Non-dominant','Dominant'))
+AMP_medians <- aggregate(yerr_mm ~ PPT * VIEW * SIDE * ECC * SITE * DIAGNOSIS * AGE, 
+                         median, data = res_y)
 
-ggplot(MTsummary, aes(x = VIEW, y = MT, colour = DIAGNOSIS, group = DIAGNOSIS,
-                      shape = DIAGNOSIS)) +
-  geom_point(size = 3, position = position_dodge(width = .3)) +
-  geom_line(aes(group = DIAGNOSIS), size = 0.5, alpha = .5,
-            position = position_dodge(width = .3)) +
-  geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
-                width=.4, position = position_dodge(width = .3)) +
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~DOM) + ylim(300,900) +
-  labs(x = '', y = 'Movement time (ms)', element_text(size = 12)) +
-  theme_classic() + theme(legend.position = 'bottom', 
-                          legend.title = element_blank(),
+
+# now can average across sides because -ve is towards fix for both R and L trials
+AMP_ECC <- aggregate(yerr_mm ~ PPT * VIEW * SITE * ECC * DIAGNOSIS * AGE, 
+                    mean, data = AMP_medians)
+AMP_ECC$ECC <- factor(AMP_ECC$ECC)
+# average across target location
+AMP_means <- aggregate(yerr_mm ~ PPT * VIEW * SITE * DIAGNOSIS * AGE, 
+                       mean, data = AMP_ECC)
+AMP_means$DIAGNOSIS <- factor(AMP_means$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+## DIRECTIONAL ERROR PLOTS ##
+# mean all participants
+ggplot(AMP_means, aes(x = VIEW, y = yerr_mm, colour = DIAGNOSIS, group = PPT)) +
+  geom_hline(yintercept = 0) +
+  geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
+  stat_summary(aes(y = yerr_mm, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  geom_line(aes(group = PPT), alpha = .4, size = 0.7, position = position_dodge(width = .3)) +
+  facet_grid(~DIAGNOSIS) +
+  scale_color_manual(values = c('grey50','grey50','grey50')) +
+  labs(x = 'Side', y = 'Amplitude error (mm)') + 
+  theme_classic() + theme(legend.position = 'none',
                           axis.text = element_text(size = 10),
                           axis.title = element_text(size = 12),
                           strip.text = element_text(size = 12)
-                     ) 
+  )
 
-ggsave('LATMTmean_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 4, height = 5, path = anaPath)
+ggsave('LAT_AMPmeans.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 5, height = 6, path = anaPath)
 
-# average across sides
-MTav$DIAGNOSIS <- factor(MTav$DIAGNOSIS, levels = c('HC','MCI','AD'))
-ggplot(MTav, aes(x = VIEW, y = MT, colour = DIAGNOSIS, group = PPT)) +
+## plotting eccentricity
+avAMP <- summarySE(AMP_medians, measurevar = 'yerr_mm', 
+                    groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
+avAMP$DIAGNOSIS <- factor(avAMP$DIAGNOSIS, levels = c('HC','MCI','AD'))
+avAMP$ECC <- factor(avAMP$ECC)
+# plot 
+ggplot(avAMP, aes(x = ECC, y = yerr_mm, group = DIAGNOSIS, colour = DIAGNOSIS, 
+                   shape = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(width = .4)) +
+  geom_errorbar(aes(ymin=yerr_mm-ci, ymax=yerr_mm+ci), 
+                width=.4, position = position_dodge(width = .4)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
+  geom_hline(yintercept = 0) + 
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(x = 'Eccentricity (°)', y = 'Lateral reaching error (y-axis, mm)') +
+  facet_grid(~VIEW) + theme_classic() +
+  theme(legend.position = 'bottom',
+        legend.title = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 12)
+  )
+
+ggsave('LAT_AMP_ECC.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 6, height = 5, path = anaPath)
+
+## ANOVA ##
+# FULL ANOVA ON ECCENTRICITY DATA
+AMP_ANOVA <- ezANOVA(
+  data = AMP_ECC
+  , dv = .(yerr_mm)
+  , wid = .(PPT)
+  , within = .(VIEW, ECC)
+  , between = .(DIAGNOSIS)
+  , between_covariates = .(AGE)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+AMP_ANOVA$ANOVA
+AMP_ANOVA$`Mauchly's Test for Sphericity`
+AMP_ANOVA$`Sphericity Corrections`
+aovAMP <- aovEffectSize(ezObj = AMP_ANOVA, effectSize = "pes")
+aovDispTable(aovAMP)
+
+
+###### MOVEMENT TIME #######
+MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * ECC * SITE * DIAGNOSIS * AGE, 
+                        median, data = res)
+# average across side
+MT_ECC <- aggregate(MT ~ PPT * VIEW * SITE * ECC * DIAGNOSIS * AGE, 
+                     mean, data = MT_medians)
+# mean
+MT_means <- aggregate(MT ~ PPT * VIEW * SITE * DIAGNOSIS,
+                      mean, data = MT_ECC)
+
+## plotting :)
+# mean all PP
+MT_means$DIAGNOSIS <- factor(MT_means$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(MT_means, aes(x = VIEW, y = MT, colour = DIAGNOSIS, group = PPT)) +
   geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
             position = position_dodge(width = .3)) +
@@ -229,22 +290,17 @@ ggplot(MTav, aes(x = VIEW, y = MT, colour = DIAGNOSIS, group = PPT)) +
                      strip.text = element_text(size = 12)
                      ) 
 
-ggsave('LATMTav_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('LAT_MTmeans.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 6, height = 4, path = anaPath)
 
 # by eccentricity
-MT_medians$ECC <- dir_medians$POSITION
-#making left side negative
-index <- MT_medians$SIDE == 'left'
-MT_medians$ECC[index] <- -(MT_medians$ECC[index])
-MT_medians$ECC <- factor(MT_medians$ECC)
-
 # summary data
-MTecc <- summarySE(MT_medians, measurevar = 'MT', 
-                    groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
-MTecc$DIAGNOSIS <- factor(MTecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
+MTsum <- summarySE(MT_ECC, measurevar = 'MT', 
+                    groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
+MTsum$DIAGNOSIS <- factor(MTsum$DIAGNOSIS, levels = c('HC','MCI','AD'))
+MTsum$ECC <- factor(MTsum$ECC)
 
-ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
+ggplot(MTsum, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
                   shape = DIAGNOSIS)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
@@ -260,19 +316,19 @@ ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
         strip.text = element_text(size = 12)
   )
 
-ggsave('LATMTecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('LAT_MT_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 7.5, height = 5, path = anaPath)
 
 
 ## ANOVA ## 
-MTanova <- MT_means[MT_means$PPT != 212 & MT_means$PPT != 407 ,]
-# FULL ANOVA ON MOVEMENT TIME DATA
+MT_ECC$ECC <- factor(MT_ECC$ECC)
 MT_ANOVA <- ezANOVA(
-  data = MTanova
+  data = MT_ECC
   , dv = .(MT)
   , wid = .(PPT)
-  , within = .(VIEW, DOM)
+  , within = .(VIEW, ECC)
   , between = .(DIAGNOSIS)
+  , between_covariates = .(AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -284,30 +340,11 @@ MT_ANOVA$`Sphericity Corrections`
 aovMT <- aovEffectSize(ezObj = MT_ANOVA, effectSize = "pes")
 aovDispTable(aovMT)
 
-# FULL ANOVA ON MOVEMENT TIME DATA BY ECCENTRICITY
-MTECCanova <- MT_medians[MT_medians$PPT != 212 & MT_medians$PPT != 407 ,]
-MTECCanova$POSITION <- factor(MTECCanova$POSITION)
-MTECC_ANOVA <- ezANOVA(
-  data = MTECCanova
-  , dv = .(MT)
-  , wid = .(PPT)
-  , within = .(VIEW, DOM, POSITION)
-  , between = .(DIAGNOSIS)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-MTECC_ANOVA$ANOVA
-MTECC_ANOVA$`Mauchly's Test for Sphericity`
-MTECC_ANOVA$`Sphericity Corrections`
-aovMTECC <- aovEffectSize(ezObj = MTECC_ANOVA, effectSize = "pes")
-aovDispTable(aovMTECC)
-
 #pair-wise t-test
 MTttest <- pairwise.t.test(MT_medians$MT, MT_medians$DIAGNOSIS, p.adj = 'bonf')
 print(MTttest)
 
+##### REACHED HERE - KEEP GOING
 ###### REACTION TIME ######
 RT_medians <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * POSITION * SITE * GRP * DIAGNOSIS, 
                         median, data = res)
