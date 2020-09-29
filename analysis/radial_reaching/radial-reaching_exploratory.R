@@ -341,7 +341,7 @@ ggplot(RT_means, aes(x = VIEW, y = RT, colour = SITE, group = PPT)) +
                           strip.text = element_text(size = 12)
   ) 
 
-ggsave('RADRTav_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('RAD_RTmean.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 6, height = 4, path = anaPath)
 
 ## by eccentricity
@@ -367,7 +367,7 @@ ggplot(RTecc, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
   )
 
 
-ggsave('RADRTecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('RAD_RT_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 7.5, height = 5, path = anaPath)
 
 ## ANOVA ##
@@ -435,7 +435,7 @@ ggplot(PSecc, aes(x = ECC, y = PS, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_errorbar(aes(ymin=PS-ci, ymax=PS+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = 'Eccentricity (mm)', y = 'Peak velocity (mm/s2)') +
+  labs(x = 'Eccentricity (mm)', y = 'Peak speed (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() + 
   theme(legend.position = 'bottom',
