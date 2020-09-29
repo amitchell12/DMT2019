@@ -275,11 +275,11 @@ MT_means <- aggregate(MT ~ PPT * VIEW * SITE * DIAGNOSIS,
 # mean all PP
 MT_means$DIAGNOSIS <- factor(MT_means$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(MT_means, aes(x = VIEW, y = MT, colour = DIAGNOSIS, group = PPT)) +
+ggplot(MT_means, aes(x = VIEW, y = MT, colour = SITE, group = PPT)) +
   geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
             position = position_dodge(width = .3)) +
-  scale_color_manual(values = c('grey50','grey50','grey50')) +
+  scale_color_manual(values = c('grey50','dodgerblue3')) +
   stat_summary(aes(y = MT, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   facet_wrap(~DIAGNOSIS) + 
@@ -358,11 +358,11 @@ RT_means <- aggregate(RT ~ PPT * VIEW * SITE * DIAGNOSIS,
 # mean all PP
 RT_means$DIAGNOSIS <- factor(RT_means$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(RT_means, aes(x = VIEW, y = RT, colour = DIAGNOSIS, group = PPT)) +
+ggplot(RT_means, aes(x = VIEW, y = RT, colour = SITE, group = PPT)) +
   geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
             position = position_dodge(width = .3)) +
-  scale_color_manual(values = c('grey50','grey50','grey50')) +
+  scale_color_manual(values = c('grey50','dodgerblue3')) +
   stat_summary(aes(y = RT, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   facet_wrap(~DIAGNOSIS) + 
