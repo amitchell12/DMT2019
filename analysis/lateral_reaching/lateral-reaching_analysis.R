@@ -35,6 +35,9 @@ res$DOM <- factor(res$DOM, labels= c('ND','D'))
 # change order so dominance up-front
 res <- res[, c(1:8,27,9:26)]
 
+## remove trial with widly high RT (> 6000ms)
+res <- res[res$RT < 6000 ,]
+
 # counting total number of valid trials for each patient
 valid <- aggregate(TARGx ~ DIAGNOSIS * PPT * DOM * VIEW, length, data = res)
 # calculate percentage of trials completed in each group

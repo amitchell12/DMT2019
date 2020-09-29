@@ -28,6 +28,8 @@ res$DOM <- as.numeric(res$SIDE == res$HAND) #1 = dominant, 0 = non-dominant
 res$DOM <- factor(res$DOM, labels= c('ND','D'))
 # change order so dominance up-front
 res <- res[, c(1:8,27,9:26)]
+# removing trial with huge RT
+res <- res[res$RT < 6000 ,]
 
 # changing levels to be more informative
 levels(res$VIEW) <- c('Free', 'Peripheral')
@@ -103,6 +105,7 @@ dir_medians <- dir_medians %>%
 # now can average across sides because -ve is towards fix for both R and L trials
 dirECC <- aggregate(xerr_mm ~ PPT * VIEW * SITE * ECC * DIAGNOSIS * AGE, 
                      mean, data = dir_medians)
+dirECC$ECC <- factor(dirECC$ECC)
 # average across target location
 dir_means <- aggregate(xerr_mm ~ PPT * VIEW * SITE * DIAGNOSIS * AGE, 
                       mean, data = dirECC)
@@ -129,7 +132,7 @@ ggsave('LAT_DIRmeans.png', plot = last_plot(), device = NULL, dpi = 300,
        width = 5, height = 6, path = anaPath)
 
 ## plotting eccentricity
-avDIR <- summarySE(dir_medians, measurevar = 'xerr_mm', 
+avDIR <- summarySE(dirECC, measurevar = 'xerr_mm', 
                               groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
 avDIR$DIAGNOSIS <- factor(avDIR$DIAGNOSIS, levels = c('HC','MCI','AD'))
 # plot 
@@ -400,6 +403,15 @@ ggplot(RTsum, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
 
 ggsave('LAT_RT_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
         width = 7.5, height = 5, path = anaPath)
+
+## density plot for RT ##
+ggplot(res) +
+  geom_density(aes(x = RT, colour = SITE, fill = SITE), alpha = .3) +
+  facet_wrap(~DIAGNOSIS) +
+  theme_classic() + theme(legend.position = 'bottom')
+
+ggsave('LAT_RT_density.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 7.5, height = 5, path = anaPath)
 
 ## ANOVA ## 
 RT_ANOVA <- ezANOVA(
