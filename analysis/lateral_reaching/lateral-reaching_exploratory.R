@@ -12,11 +12,11 @@ library(psychReport)
 
 ###### GETTING DATA #######
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
 # on desktop mac
-#anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
-#dataPath <- '/Users/Alex/Documents/DMT/data'
+anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
+dataPath <- '/Users/Alex/Documents/DMT/data'
 setwd(anaPath)
 
 res <- read.csv('lateral-reaching_compiled.csv')
@@ -344,46 +344,21 @@ aovDispTable(aovMT)
 MTttest <- pairwise.t.test(MT_medians$MT, MT_medians$DIAGNOSIS, p.adj = 'bonf')
 print(MTttest)
 
-##### REACHED HERE - KEEP GOING
 ###### REACTION TIME ######
-RT_medians <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * POSITION * SITE * GRP * DIAGNOSIS, 
+RT_medians <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * ECC * SITE * DIAGNOSIS * AGE, 
                         median, data = res)
-RT_means <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * SITE * GRP * DIAGNOSIS,
-                      mean, data = RT_medians)
 # average across side
-RTav <- aggregate(RT ~ PPT * VIEW * SITE * GRP * DIAGNOSIS,
-                  mean, data = RT_medians)
+RT_ECC <- aggregate(RT ~ PPT * VIEW * ECC * SITE * DIAGNOSIS * AGE, 
+                        mean, data = RT_medians)
+RT_ECC$ECC <- factor(RT_ECC$ECC)
+RT_means <- aggregate(RT ~ PPT * VIEW * SITE * DIAGNOSIS,
+                      mean, data = RT_ECC)
 
 ## plotting :)
-# both sides
-RTsummary <- summarySE(RT_means, measurevar = 'RT', 
-                       groupvar = c('DIAGNOSIS','VIEW','DOM'), na.rm = TRUE)
-RTsummary$DIAGNOSIS <- factor(RTsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
-RTsummary$DOM <- factor(RTsummary$DOM, labels = c('Non-dominant','Dominant'))
+# mean all PP
+RT_means$DIAGNOSIS <- factor(RT_means$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(RTsummary, aes(x = VIEW, y = RT, colour = DIAGNOSIS, group = DIAGNOSIS,
-                      shape = DIAGNOSIS)) +
-  geom_point(size = 3, position = position_dodge(width = .3)) +
-  geom_line(aes(group = DIAGNOSIS), size = 0.5, alpha = .5,
-            position = position_dodge(width = .3)) +
-  geom_errorbar(aes(ymin=RT-ci, ymax=RT+ci), 
-                width=.4, position = position_dodge(width = .3)) +
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~DOM) + #ylim(300,900) +
-  labs(x = 'Side', y = 'Reaction time (ms)', element_text(size = 12)) +
-  theme_classic() + theme(legend.position = 'bottom', 
-                          legend.title = element_blank(),
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 12),
-                          strip.text = element_text(size = 12)
-  ) 
-
-ggsave('LATRTmean_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 4, height = 5, path = anaPath)
-
-# average across sides
-RTav$DIAGNOSIS <- factor(RTav$DIAGNOSIS, levels = c('HC','MCI','AD'))
-ggplot(RTav, aes(x = VIEW, y = RT, colour = DIAGNOSIS, group = PPT)) +
+ggplot(RT_means, aes(x = VIEW, y = RT, colour = DIAGNOSIS, group = PPT)) +
   geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
   geom_line(aes(group = PPT), size = 0.5, alpha = .5, 
             position = position_dodge(width = .3)) +
@@ -398,22 +373,16 @@ ggplot(RTav, aes(x = VIEW, y = RT, colour = DIAGNOSIS, group = PPT)) +
                           strip.text = element_text(size = 12)
   ) 
 
-ggsave('LATRTav_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('LAT_RTmean.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 6, height = 4, path = anaPath)
 
 # by eccentricity
-RT_medians$ECC <- dir_medians$POSITION
-#making left side negative
-index <- RT_medians$SIDE == 'left'
-RT_medians$ECC[index] <- -(RT_medians$ECC[index])
-RT_medians$ECC <- factor(RT_medians$ECC)
-
 # summary data
-RTecc <- summarySE(RT_medians, measurevar = 'RT', 
-                   groupvar = c('DIAGNOSIS','ECC','VIEW','SIDE'), na.rm = TRUE)
-RTecc$DIAGNOSIS <- factor(RTecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
+RTsum <- summarySE(RT_ECC, measurevar = 'RT', 
+                   groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
+RTsum$DIAGNOSIS <- factor(RTsum$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggplot(RTecc, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
+ggplot(RTsum, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
                   shape = DIAGNOSIS)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=RT-ci, ymax=RT+ci), 
@@ -429,18 +398,17 @@ ggplot(RTecc, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
         strip.text = element_text(size = 12)
   )
 
-ggsave('LATRTecc_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('LAT_RT_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
         width = 7.5, height = 5, path = anaPath)
 
 ## ANOVA ## 
-RTanova <- RT_means[RT_means$PPT != 212 & RT_means$PPT != 407 ,]
-# FULL ANOVA ON MOVEMENT TIME DATA
 RT_ANOVA <- ezANOVA(
-  data = RTanova
+  data = RT_ECC
   , dv = .(RT)
   , wid = .(PPT)
-  , within = .(VIEW, DOM)
+  , within = .(VIEW, ECC)
   , between = .(DIAGNOSIS)
+  , between_covariates = .(AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -452,32 +420,14 @@ RT_ANOVA$`Sphericity Corrections`
 aovRT <- aovEffectSize(ezObj = RT_ANOVA, effectSize = "pes")
 aovDispTable(aovRT)
 
-# FULL ANOVA ON MOVEMENT TIME DATA BY ECCENTRICITY
-RTECCanova <- RT_medians[RT_medians$PPT != 212 & RT_medians$PPT != 407 ,]
-RTECCanova$POSITION <- factor(RTECCanova$POSITION)
-RTECC_ANOVA <- ezANOVA(
-  data = RTECCanova
-  , dv = .(RT)
-  , wid = .(PPT)
-  , within = .(VIEW, DOM, POSITION)
-  , between = .(DIAGNOSIS)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-RTECC_ANOVA$ANOVA
-RTECC_ANOVA$`Mauchly's Test for Sphericity`
-RTECC_ANOVA$`Sphericity Corrections`
-aovRTECC <- aovEffectSize(ezObj = RTECC_ANOVA, effectSize = "pes")
-aovDispTable(aovRTECC)
-
 ##### CORRELATE PMI + MT, RT ######
 # load PMI data
 PMIdata <- read.csv('lateralPMI_all.csv')
+# average across side
+PMIdata <- aggregate(PMI ~ PPT*DIAGNOSIS*SITE*AGE, mean, data = PMIdata)
 # cast MT and RT
-MT <- dcast(MT_means, PPT+DIAGNOSIS+DOM+SITE ~ VIEW)
-RT <- dcast(RT_means, PPT+DIAGNOSIS+DOM+SITE ~ VIEW)
+MT <- dcast(MT_means, PPT+DIAGNOSIS+SITE ~ VIEW)
+RT <- dcast(RT_means, PPT+DIAGNOSIS+SITE ~ VIEW)
 #renaming for mergings
 colnames(MT)[colnames(MT) == 'Free'] <- 'FreeMT' 
 colnames(MT)[colnames(MT) == 'Peripheral'] <- 'PeripheralMT' 
@@ -485,34 +435,34 @@ colnames(RT)[colnames(RT) == 'Free'] <- 'FreeRT'
 colnames(RT)[colnames(RT) == 'Peripheral'] <- 'PeripheralRT' 
 
 # merging MT with PMI
-corrData <- merge(PMIdata, MT, by = c('PPT','DIAGNOSIS','SITE','DOM'))
+corrData <- merge(PMIdata, MT, by = c('PPT','DIAGNOSIS','SITE'))
 # merging RT with PMI
-corrData <- merge(corrData, RT, by = c('PPT','DIAGNOSIS','SITE','DOM'))
+corrData <- merge(corrData, RT, by = c('PPT','DIAGNOSIS','SITE'))
+corrData$DIAGNOSIS <- factor(corrData$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-## correlate peripheral PMI w peripheral MT
-ggscatter(corrData, x = "Peripheral", y = "PeripheralMT", colour = 'grey50',
+## correlate PMI w peripheral MT
+ggscatter(corrData, x = "PMI", y = "PeripheralMT", colour = 'grey50',
           add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
           cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman')+ 
-  facet_grid(cols = vars(GRP), rows = vars(DOM)) +
+  facet_wrap(~DIAGNOSIS) +
   labs(x = 'PMI (mm)', y = 'Peripheral movement time (ms)') +
   theme_classic() + 
   theme(text = element_text(size = 10)
         )
 
-ggsave('LATMT-PMI_corr_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('LAT_MT_PMIcorr.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 5, height = 5, path = anaPath)
 
-## correlate peripheral PMI w peripheral RT
-ggscatter(corrData, x = "Peripheral", y = "PeripheralRT", colour = 'grey50',
+## correlate PMI w peripheral RT
+ggscatter(corrData, x = "PMI", y = "PeripheralRT", colour = 'grey50',
           add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
           cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman')+ 
-  facet_grid(cols = vars(GRP), rows = vars(DOM)) +
+  facet_wrap(~DIAGNOSIS) +
   labs(x = 'PMI (mm)', y = 'Peripheral reaction time (ms)') +
   theme_classic() + 
-  theme(text = element_text(size = 10)
-        )
+  theme(text = element_text(size = 10))
 
-ggsave('LATRT-PMI_corr_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('LAT_RT_PMIcorr.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 5, height = 5, path = anaPath)
 
 ##### CORRELATE ACE #####
@@ -525,22 +475,13 @@ setwd(anaPath)
 # merging ACE with PMI
 PMIACE <- merge(PMIdata, ACEscores, by = 'PPT')
 PMIACE$ACEall <- as.numeric(as.character(PMIACE$ACEall))
-PMIACE$ACEvisuospatial <- as.numeric(as.character(PMIACE$ACEvisuospatial))
 
 ## aaaand correlate :)
-ggscatter(PMIACE, x = 'ACEall', y = 'PMI', add = 'reg.line', conf.int = TRUE,
-          cor.coef = TRUE, size = 1, cor.coef.size = 3, cor.method = 'spearman') +
-  ylab('PMI (deg)') + xlab('ACE score (%)') +
-  facet_wrap(~DOM) +
-  theme(text = element_text(size = 10))
-
-# average PMI
-PMIACE <- aggregate(PMI ~ PPT+DIAGNOSIS+ACEall, mean, data = PMIACE)
 ggscatter(PMIACE, x = 'ACEall', y = 'PMI', 
           add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
           cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') +
   ylab('PMI (deg)') + xlab('ACE score (%)') +
   theme(text = element_text(size = 10))
 
-ggsave('LATPMI-ACEcorr_plot.png', plot = last_plot(),  device = NULL, dpi = 300, 
+ggsave('LAT_PMI_ACEcorr.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 5, height = 5, path = anaPath)
