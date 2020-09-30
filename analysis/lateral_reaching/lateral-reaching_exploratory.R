@@ -12,11 +12,11 @@ library(psychReport)
 
 ###### GETTING DATA #######
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
 # on desktop mac
-anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
-dataPath <- '/Users/Alex/Documents/DMT/data'
+#anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
+#dataPath <- '/Users/Alex/Documents/DMT/data'
 setwd(anaPath)
 
 res <- read.csv('lateral-reaching_compiled.csv')
