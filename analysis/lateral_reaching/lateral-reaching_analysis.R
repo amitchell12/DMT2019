@@ -16,11 +16,11 @@ library(psychReport)
 
 #set working directory to where data is
 # on mac (desktop)
-dataPath <- '/Users/Alex/Documents/DMT/data/'
-anaPath <- '/Users/Alex/Documents/DMT/analysis//lateral_reaching/'
+#dataPath <- '/Users/Alex/Documents/DMT/data/'
+#anaPath <- '/Users/Alex/Documents/DMT/analysis//lateral_reaching/'
 # on mac (laptop)
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/'
 setwd(anaPath)
 
 # load data file
@@ -33,7 +33,7 @@ res$HAND <- factor(res$HAND, labels = c('left','right'))
 res$DOM <- as.numeric(res$SIDE == res$HAND) #1 = dominant, 0 = non-dominant
 res$DOM <- factor(res$DOM, labels= c('ND','D'))
 # change order so dominance up-front
-res <- res[, c(1:8,27,9:26)]
+res <- res[, c(1:8,26,9:25)]
 
 ## remove trial with widly high RT (> 6000ms)
 res <- res[res$RT < 6000 ,]
@@ -135,6 +135,23 @@ ggsave('AD_ecc.png', plot = last_plot(), device = NULL, dpi = 300,
 #### DMT -> analysis -> lateral_reaching -> as-preregistered
 
 ######## step 2: single case stats, filtered data #########
+## correlate PMI with age
+ggscatter(PMIgrand, x = 'AGE', y = 'PMI', 
+          add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
+          cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') +
+  ylab('PMI (deg)') + xlab('Age (years)') +
+  theme(text = element_text(size = 10))
+
+## correlate PMI with education
+PMIgrand$ED <- as.numeric(as.character(PMIgrand$ED))
+test <- PMIgrand[!(PMIgrand$ED == '.') ,]
+
+ggscatter(test, x = 'ED', y = 'PMI', 
+          add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
+          cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') +
+  ylab('PMI (deg)') + xlab('Education (years)') +
+  theme(text = element_text(size = 10))
+
 # create data-frames (controls and patients) with key information
 td_summary <- summarySE(data = PMIdata, measurevar = 'PMI', 
                         groupvars = c('DIAGNOSIS','DOM'), na.rm = TRUE)
