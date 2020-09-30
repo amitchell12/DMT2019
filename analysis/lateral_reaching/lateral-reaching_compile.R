@@ -87,14 +87,6 @@ for (i in 1:length(res$site)){
 res$group <- factor(res$group)
 res$site <- factor(res$site)
 
-# eye move and void trials
-# counting eye-move per participant
-nEye_move <- aggregate(eye_move ~ subject_nr * group * task, sum, data = res)
-tot_eyeMove <- aggregate(eye_move ~ group * task, sum, data = nEye_move)
-write.csv(tot_eyeMove, 'eye-movements.csv', row.names = FALSE)
-nVoid <- aggregate(void_trial ~ subject_nr * group, sum, data = res)
-tot_void <- aggregate(void_trial ~ group, sum, data = nVoid)
-
 # calculating x and y error for each targ location
 res$xerr_mm = (res$land_x - res$targ_x)*mm_perPix # in mm
 res$yerr_mm = (res$land_y - res$targ_y)*mm_perPix
@@ -104,9 +96,6 @@ res$yerr_deg = visAngle(size= res$yerr_mm, distance= 400)
 #absolute error in mm
 res$AE = sqrt(res$xerr_mm^2 + res$yerr_mm^2)
 res$AEdeg = sqrt(res$xerr_deg^2 + res$yerr_deg^2)
-
-# removing and reorganising
-res <- res[which(res$eye_move == 0 & res$void == 0), c(1,11:15,2:5,18:23,6:8,16:17)]
 
 # add demographic information to this data
 patient_demos <- read.csv('patient_demographics.csv') #loading patient demographics
@@ -120,6 +109,19 @@ demo <- rbind(control_demos, patient_demos)
 #merging demo with res medians
 res <- merge(demo, res, by = 'subject_nr')
 
+# eye move and void trials
+# counting eye-move per participant
+setwd(anaPath)
+nEye_move <- aggregate(eye_move ~ subject_nr * diagnosis * task, sum, data = res)
+tot_eyeMove <- aggregate(eye_move ~ diagnosis * task, sum, data = nEye_move)
+write.csv(tot_eyeMove, 'eye-movements.csv', row.names = FALSE)
+
+nVoid <- aggregate(void_trial ~ subject_nr * diagnosis * task, sum, data = res)
+tot_void <- aggregate(void_trial ~ diagnosis * task, sum, data = nVoid)
+
+# removing and reorganising
+res <- res[which(res$eye_move == 0 & res$void == 0), c(1:6,16:19,7:13,23:28,21,22)]
+
 ## renaming variables to match radial reaching
 names(res)[1] <- 'PPT'
 names(res)[3] <- 'AGE'
@@ -128,16 +130,16 @@ names(res)[6] <- 'DIAGNOSIS'
 names(res)[7] <- 'VIEW'
 names(res)[8] <- 'SIDE'
 names(res)[9] <- 'POSITION'
-names(res)[12] <- 'TARGx'
-names(res)[13] <- 'TARGy'
-names(res)[14] <- 'LANDx'
-names(res)[15] <- 'LANDy'
-names(res)[23] <- 'RT'
-names(res)[24] <- 'MT'
-names(res)[25] <- 'GRP'
-names(res)[26] <- 'SITE'
+names(res)[11] <- 'TARGx'
+names(res)[12] <- 'TARGy'
+names(res)[13] <- 'LANDx'
+names(res)[14] <- 'LANDy'
+names(res)[16] <- 'RT'
+names(res)[17] <- 'MT'
+names(res)[24] <- 'GRP'
+names(res)[25] <- 'SITE'
 
-setwd(anaPath)
+
 write.csv(res, "lateral-reaching_compiled.csv", row.names = FALSE)
 
 res$POSITION <- factor(res$POSITION)

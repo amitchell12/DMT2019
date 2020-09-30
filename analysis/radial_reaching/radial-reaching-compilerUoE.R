@@ -5,14 +5,11 @@ library(ggpubr)
 library(Rmisc)
 
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on mac desktop
-anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching/'
-dataPath <- '/Users/Alex/Documents/DMT/data/'
-#on pc
-#dataPath <- 'S:/groups/DMT/data'
-#anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
+#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching/'
+#dataPath <- '/Users/Alex/Documents/DMT/data/'
 setwd(dataPath)
 
 files <- list.files(path=dataPath, pattern = "*.TRJ", full.names = TRUE, recursive = TRUE)
@@ -79,11 +76,6 @@ res[res == -32768] <- NA
 res$LANDx <- res$mx - res$calx
 res$LANDy <- res$my - res$caly
 
-# counting eye-move and removing eye-move + void
-nEye_move <- aggregate(res$EYE_MOVE == '1', by=list(subject_nr = res$PPT), FUN=sum)
-nVoid <- aggregate(res$EYE_MOVE == '-1', by=list(subject_nr = res$PPT), FUN=sum)
-# removing
-res <- res[res$EYE_MOVE == 0, c(1:10,12:13,17:20)]
 #renaming some stuff
 res$GRP <- factor(substr(res$PPT, 4, 4))
 res$PPT <- substr(res$PPT, 4, 6)
@@ -139,6 +131,13 @@ names(demo)[1] <- 'PPT'
 
 #merging demo with res
 res <- merge(demo, res, by = 'PPT')
+
+# counting eye-move and removing eye-move + void
+nEye_move <- aggregate(EYE_MOVE == 1 ~ diagnosis * VIEW, sum, data = res)
+nVoid <- aggregate(EYE_MOVE == -1 ~ diagnosis * VIEW, sum, data = res)
+# removing
+res <- res[res$EYE_MOVE == 0, c(1:7,17:18,8:15,22:42)]
+
 #do some pre-emptive renaming
 res$VIEW <- factor(res$VIEW, labels = c('Free', 'Peripheral'))
 res$SIDE <- factor(res$SIDE, labels = c('Left','Right'))

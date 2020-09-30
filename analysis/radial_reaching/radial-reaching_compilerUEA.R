@@ -5,10 +5,10 @@ library(ggpubr)
 library(Rmisc)
 
 #desktop mac
-dataPath <- '/Users/Alex/Documents/DMT/norwich_movement_data'
+#dataPath <- '/Users/Alex/Documents/DMT/norwich_movement_data'
 #setwd(dataPath)
 # mac laptop
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data/'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data/'
 setwd(dataPath)
 
 files <- list.files(path=dataPath, pattern = "*.TRJ", full.names = TRUE, recursive = TRUE)
@@ -244,6 +244,9 @@ names(demo)[1] <- 'PPT'
 
 #merging demo with res medians
 res <- merge(res, demo, by = 'PPT')
+res <- res[res$RESP == 32 ,]
+res <- res[complete.cases(res) ,] #removing NA values
+
 res$SITE <- 'UEA'
 
 #save compiled data-set
