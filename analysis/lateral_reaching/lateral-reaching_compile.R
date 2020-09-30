@@ -10,11 +10,11 @@ library(ggpubr)
 
 #set working directory to where data is
 #on mac
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
 # on desktop mac
-anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
-dataPath <- '/Users/Alex/Documents/DMT/data'
+#anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
+#dataPath <- '/Users/Alex/Documents/DMT/data'
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
 #anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
@@ -89,8 +89,9 @@ res$site <- factor(res$site)
 
 # eye move and void trials
 # counting eye-move per participant
-nEye_move <- aggregate(eye_move ~ subject_nr * group, sum, data = res)
-tot_eyeMove <- aggregate(eye_move ~ group, sum, data = nEye_move)
+nEye_move <- aggregate(eye_move ~ subject_nr * group * task, sum, data = res)
+tot_eyeMove <- aggregate(eye_move ~ group * task, sum, data = nEye_move)
+write.csv(tot_eyeMove, 'eye-movements.csv', row.names = FALSE)
 nVoid <- aggregate(void_trial ~ subject_nr * group, sum, data = res)
 tot_void <- aggregate(void_trial ~ group, sum, data = nVoid)
 
