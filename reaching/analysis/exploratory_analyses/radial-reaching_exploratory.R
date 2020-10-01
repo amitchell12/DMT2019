@@ -61,10 +61,10 @@ ECCsummary$DIAGNOSIS <- factor(ECCsummary$DIAGNOSIS, levels = c('HC','MCI','AD')
 
 ggplot(ECCsummary, aes(x = ECC, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS, 
                        shape = DIAGNOSIS)) +
-  geom_point(size = 3, position = position_dodge(-.2)) +
+  geom_point(size = 3, position = position_dodge(.4)) +
   geom_errorbar(aes(ymin=AE-ci, ymax=AE+ci), 
-                width=.4, position = position_dodge(-.2)) + 
-  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(-.2)) +
+                width=.4, position = position_dodge(.4)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(.4)) +
   scale_color_manual(values = c('black','grey30','grey60')) +
   labs(x = 'Eccentricity (mm)', y = 'Radial reaching error (mm)') +
   facet_grid(~VIEW) + theme_classic() +
@@ -76,7 +76,7 @@ ggplot(ECCsummary, aes(x = ECC, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS,
   )
 
 ggsave('RADeccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 7, height = 5, path = anaPath)
+       width = 6, height = 4, path = anaPath)
 
 
 ##### ANGULAR ERROR: median, means, PMI #####
@@ -236,11 +236,11 @@ aovAMPECC <- aovEffectSize(ezObj = AMP_ANOVA, effectSize = "pes")
 aovDispTable(aovAMPECC)
 
 ###### MOVEMENT TIME #######
-MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * ECC * SITE * DIAGNOSIS, 
+MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * ECC * SITE * DIAGNOSIS * AGE, 
                         median, data = res)
-MT_ECC <- aggregate(MT ~ PPT * VIEW * ECC * SITE * DIAGNOSIS, 
+MT_ECC <- aggregate(MT ~ PPT * VIEW * ECC * SITE * DIAGNOSIS *AGE, 
                         median, data = MT_medians)
-MT_means <- aggregate(MT ~ PPT * VIEW * SITE * DIAGNOSIS,
+MT_means <- aggregate(MT ~ PPT * VIEW * SITE * DIAGNOSIS * AGE,
                       mean, data = MT_ECC)
 
 ## plotting :)
@@ -277,15 +277,16 @@ ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = 'Eccentricity (mm)', y = 'Movement time (ms)') +
+  labs(x = '', y = 'Movement time (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_wrap(~VIEW) + theme_classic() + ylim(500,1000) +
+  facet_wrap(~VIEW) + theme_classic() + ylim(300,900) +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
         strip.text = element_text(size = 12)
-  )
+  ) -> MTplot
+MTplot
 
 ggsave('RAD_MT_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 7.5, height = 5, path = anaPath)
@@ -298,7 +299,7 @@ MT_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(VIEW, ECC)
   , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE)
+  , between_covariates = .(SITE, AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -315,11 +316,11 @@ MTttest <- pairwise.t.test(MT_ECC$MT, MT_ECC$DIAGNOSIS, p.adj = 'bonf')
 print(MTttest)
 
 ###### REACTION TIME ######
-RT_medians <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * ECC * SITE * DIAGNOSIS, 
+RT_medians <- aggregate(RT ~ PPT * VIEW * SIDE * DOM * ECC * SITE * DIAGNOSIS * AGE, 
                         median, data = res)
-RT_ECC <- aggregate(RT ~ PPT * VIEW * ECC * SITE * DIAGNOSIS, 
+RT_ECC <- aggregate(RT ~ PPT * VIEW * ECC * SITE * DIAGNOSIS * AGE, 
                     median, data = RT_medians)
-RT_means <- aggregate(RT ~ PPT * VIEW * SITE * DIAGNOSIS,
+RT_means <- aggregate(RT ~ PPT * VIEW * SITE * DIAGNOSIS * AGE,
                       mean, data = RT_ECC)
 
 ## plotting 
@@ -356,15 +357,17 @@ ggplot(RTecc, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_errorbar(aes(ymin=RT-ci, ymax=RT+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = 'Eccentricity (mm)', y = 'Reaction time (ms)') +
+  labs(x = '', y = 'Reaction time (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() +
+  ylim(300,900) +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
         strip.text = element_text(size = 12)
-  )
+  ) -> RTplot
+RTplot
 
 
 ggsave('RAD_RT_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
@@ -377,7 +380,7 @@ RTECC_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(VIEW, ECC)
   , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE)
+  , between_covariates = .(SITE, AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -394,9 +397,9 @@ RTttest <- pairwise.t.test(RT_ECC$RT, RT_ECC$DIAGNOSIS, p.adj = 'bonf')
 print(RTttest)
 
 ##### PEAK SPEED #####
-PS_medians <- aggregate(PS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * DIAGNOSIS, 
+PS_medians <- aggregate(PS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * DIAGNOSIS * AGE, 
                         median, data = res)
-PS_ECC <- aggregate(PS ~ PPT * VIEW * ECC * SITE * DIAGNOSIS, 
+PS_ECC <- aggregate(PS ~ PPT * VIEW * ECC * SITE * DIAGNOSIS *AGE, 
                         median, data = PS_medians)
 PS_means <- aggregate(PS ~ PPT * VIEW * SITE * DIAGNOSIS,
                       mean, data = PS_ECC)
@@ -443,7 +446,8 @@ ggplot(PSecc, aes(x = ECC, y = PS, group = DIAGNOSIS, colour = DIAGNOSIS,
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
         strip.text = element_text(size = 12)
-  )
+  ) -> PSplot
+PSplot
 
 
 ggsave('RAD_PS_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
@@ -456,7 +460,7 @@ PSECC_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(VIEW, ECC)
   , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE)
+  , between_covariates = .(SITE, AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -473,9 +477,9 @@ PSttest <- pairwise.t.test(PS_ECC$PS, PS_ECC$DIAGNOSIS, p.adj = 'bonf')
 print(PSttest)
 
 ##### TIME TO PS #####
-TPS_medians <- aggregate(TPS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * DIAGNOSIS, 
+TPS_medians <- aggregate(TPS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * DIAGNOSIS * AGE, 
                          median, data = res)
-TPS_ECC <- aggregate(TPS ~ PPT * VIEW * ECC * SITE * DIAGNOSIS, 
+TPS_ECC <- aggregate(TPS ~ PPT * VIEW * ECC * SITE * DIAGNOSIS * AGE, 
                          median, data = TPS_medians)
 TPS_means <- aggregate(TPS ~ PPT * VIEW * SITE * DIAGNOSIS,
                         mean, data = TPS_ECC)
@@ -639,9 +643,9 @@ print(TAPSttest)
 # calculating
 res$NTAPS <- (res$MT - res$TPS)/res$MT
 
-NTAPS_medians <- aggregate(NTAPS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * DIAGNOSIS, 
+NTAPS_medians <- aggregate(NTAPS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * DIAGNOSIS * AGE, 
                         median, data = res)
-NTAPS_ECC <- aggregate(NTAPS ~ PPT * VIEW * ECC * SITE * DIAGNOSIS, 
+NTAPS_ECC <- aggregate(NTAPS ~ PPT * VIEW * ECC * SITE * DIAGNOSIS * AGE, 
                        median, data = NTAPS_medians)
 NTAPS_means <- aggregate(NTAPS ~ PPT * VIEW * SITE * DIAGNOSIS,
                       mean, data = NTAPS_ECC)
@@ -680,7 +684,7 @@ ggplot(NTAPSecc, aes(x = ECC, y = NTAPS, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_errorbar(aes(ymin=NTAPS-ci, ymax=NTAPS+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = 'Eccentricity (mm)', y = 'Normalised time after peak velocity') +
+  labs(x = 'Eccentricity (mm)', y = 'Normalised TAPS') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() + ylim(0.6,0.8) +
   theme(legend.position = 'bottom',
@@ -688,7 +692,8 @@ ggplot(NTAPSecc, aes(x = ECC, y = NTAPS, group = DIAGNOSIS, colour = DIAGNOSIS,
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
         strip.text = element_text(size = 12)
-  )
+  ) -> NTAPSplot
+NTAPSplot
 
 
 ggsave('RAD_NTAPS_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
@@ -701,7 +706,7 @@ NTAPSECC_ANOVA <- ezANOVA(
   , wid = .(PPT)
   , within = .(VIEW, ECC)
   , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE)
+  , between_covariates = .(SITE, AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
@@ -716,6 +721,18 @@ aovDispTable(aovNTAPSECC)
 #pair-wise t-test
 NTAPSttest <- pairwise.t.test(NTAPS_ECC$NTAPS, NTAPS_ECC$DIAGNOSIS, p.adj = 'bonf')
 print(NTAPSttest)
+
+#### FOR PUBLICATION: combine key results into 1 plot ####
+TimeFig <- ggarrange(MTplot, RTplot, PSplot, NTAPSplot,
+                     ncol=2, nrow=2,
+                     common.legend = TRUE,
+                     legend = 'bottom',
+                     widths = c(1,1),
+                     labels = c('a','b','c','d'),
+                     hjust = -1)
+TimeFig
+ggsave('RAD_EXPLOR.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 8.5, height = 8, path = anaPath)
 
 ##### CORRELATE ACE #####
 setwd(dataPath)
