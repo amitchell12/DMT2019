@@ -12,11 +12,11 @@ library(psychReport)
 
 ###### GETTING DATA #######
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
 # on desktop mac
-#anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
-#dataPath <- '/Users/Alex/Documents/DMT/data'
+anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
+dataPath <- '/Users/Alex/Documents/DMT/data'
 setwd(anaPath)
 
 res <- read.csv('lateral-reaching_compiled.csv')
@@ -72,7 +72,7 @@ ggplot(av_ecc, aes(x = ECC, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS,
   )
 
 ggsave('LATeccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 6, height = 5, path = anaPath)
+       width = 6, height = 4, path = anaPath)
 
 ## ANOVA ##
 ECC_ANOVA <- ezANOVA(
@@ -129,7 +129,7 @@ ggplot(dir_means, aes(x = VIEW, y = xerr_mm, colour = DIAGNOSIS, group = PPT)) +
                           )
   
 ggsave('LAT_DIRmeans.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 5, height = 6, path = anaPath)
+       width = 5, height = 4, path = anaPath)
 
 ## plotting eccentricity
 avDIR <- summarySE(dirECC, measurevar = 'xerr_mm', 
@@ -311,13 +311,15 @@ ggplot(MTsum, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
   labs(x = 'Eccentricity (°)', y = 'Movement time (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
+  ylim(300,800) +
   facet_wrap(~VIEW) + theme_classic() +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
         strip.text = element_text(size = 12)
-  )
+  ) -> MTplot
+MTplot
 
 ggsave('LAT_MT_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 7.5, height = 5, path = anaPath)
@@ -394,12 +396,14 @@ ggplot(RTsum, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
   labs(x = 'Eccentricity (°)', y = 'Reaction time (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() +
+  ylim(300,800) +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
         strip.text = element_text(size = 12)
-  )
+  ) -> RTplot
+RTplot
 
 ggsave('LAT_RT_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
         width = 7.5, height = 5, path = anaPath)
@@ -431,6 +435,19 @@ RT_ANOVA$`Mauchly's Test for Sphericity`
 RT_ANOVA$`Sphericity Corrections`
 aovRT <- aovEffectSize(ezObj = RT_ANOVA, effectSize = "pes")
 aovDispTable(aovRT)
+
+### FOR PUBLICATION: combine MT + RT plots ####
+
+TimeFig <- ggarrange(MTplot, RTplot,
+                    ncol=2, nrow=1,
+                    common.legend = TRUE,
+                    legend = 'bottom',
+                    widths = c(1,1),
+                    labels = c('a','b'),
+                    hjust = -1)
+TimeFig
+ggsave('LAT_EXPLOR.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 8.5, height = 4, path = anaPath)
 
 ##### CORRELATE PMI + MT, RT ######
 # load PMI data

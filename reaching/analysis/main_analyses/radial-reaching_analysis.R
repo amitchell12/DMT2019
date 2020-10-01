@@ -9,14 +9,14 @@ library(singcar)
 library(tidyverse)
 
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 
 # on desktop mac
-#dataPath <- '/Users/Alex/Documents/DMT/data'
-#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
-#UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
+dataPath <- '/Users/Alex/Documents/DMT/data'
+anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
+UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
 
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
