@@ -9,14 +9,14 @@ library(singcar)
 library(tidyverse)
 
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-#UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 
 # on desktop mac
-dataPath <- '/Users/Alex/Documents/DMT/data'
-anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
-UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
+#dataPath <- '/Users/Alex/Documents/DMT/data'
+#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
+#UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
 
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
@@ -31,7 +31,13 @@ resUEA <- read.csv('radial-reaching_compiledUEA.csv')
 resUOE <- resUOE[, c(1:23,26:38)]
 # UEA data getting rid of not needed values
 resUEA <- resUEA[, c(1:4,10:17,19:42)]
-resUEA <- resUEA[resUEA$PPT != '311' ,]
+
+# remove participants
+resUEA <- resUEA[resUEA$PPT != '311' ,] #participant 311 had TIA
+# first 10 participants did different set-up to UEA patients, also remove
+oldPP <- c(301:310)
+resUEA <- subset(resUEA, ! PPT %in% oldPP)
+
 # change position labelling here too - needs to match UOE (100,200,300,400mm)
 # split into two data-frames (left/right sides) and label, the bind again
 UEAright <- resUEA[resUEA$SIDE == 'Right' ,]
@@ -69,9 +75,6 @@ res$DOM <- factor(res$DOM, labels= c('ND','D'))
 res <- res[, c(1:7,37,16,17,8:15,18:36)]
 
 ##### TRIAL OUTLIERS #####
-# first remove ppt 310, no peripheral data
-res <- res[res$PPT != 310 ,]
-
 # calculating z-score for each participant
 # get PP matrix
 PPT <- count(res, PPT)
@@ -487,12 +490,12 @@ plot_PMI$PPT <- factor(plot_PMI$PPT)
 plot_PMI$DEFICITS <- as.numeric(plot_PMI$DEFICIT) + as.numeric(plot_PMI$BL)
 plot_PMI$DEFICITS <- factor(plot_PMI$DEFICITS)
 
-ggplot(plot_PMI, aes(x = DOM, y = PMI, colour = SITE, group = PPT, shape = DEFICITS)) + 
+ggplot(plot_PMI, aes(x = DOM, y = PMI, colour = DIAGNOSIS, group = PPT, shape = DEFICITS)) + 
   geom_line(aes(group = PPT), alpha = .7, size = 0.7, position = position_dodge(.2)) +
   geom_point(size = 2.5, position = position_dodge(.2)) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  scale_color_manual(values = c('grey45','dodgerblue3')) +
+  scale_color_manual(values = c('grey45','grey45','grey45')) +
   scale_shape_manual(values = c(1,16,18)) +
   facet_wrap(~DIAGNOSIS) +
   labs(x = 'Side', y = 'Radial PMI (mm)') +
@@ -512,12 +515,12 @@ deficit <- deficit[order(deficit$PPT),]
 deficit <- deficit[deficit$PPT != 310 ,]
 PMIav_plot$DEFICITS <- factor(deficit$DEFICITS)
 
-ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = SITE, group = PPT, shape = DEFICITS)) + 
+ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = DIAGNOSIS, group = PPT, shape = DEFICITS)) + 
   geom_point(size = 2.5, position = position_dodge(.2)) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  scale_color_manual(values = c('grey45','dodgerblue3')) +
   scale_shape_manual(values = c(1,16,18)) +
+  scale_colour_manual(values = c('grey45','grey45','grey45')) +
   labs(x = 'Diagnosis', y = '') +
   theme_classic() + theme(legend.position = 'none', 
                           axis.title = element_text(size = 12),
