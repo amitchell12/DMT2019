@@ -135,6 +135,7 @@ colnames(res_means)[colnames(res_means)=='AEmed'] <- 'AEmean'
 # casting by task
 PMIdata <- dcast(res_means, PPT+GRP+DIAGNOSIS+DOM+SIDE+SITE+AGE ~ VIEW)
 PMIdata$PMI <- PMIdata$Peripheral - PMIdata$Free
+PMIgrand <- aggregate(PMI ~ PPT*GRP*DIAGNOSIS*SITE*AGE, mean, data = PMIdata)
 
 write.csv(res_medians, 'radial-medians.csv', row.names = FALSE)
 write.csv(res_means, 'radial-means.csv', row.names = FALSE)
@@ -144,6 +145,12 @@ write.csv(PMIdata, 'radialPMI.csv', row.names = FALSE)
 meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'DOM'),
                           na.rm = TRUE)
 write.csv(meanPMI_side, 'radialPMI_means.csv', row.names = FALSE)
+
+## getting & saving demographics for pub
+AGE <- summarySE(PMIgrand, measurevar = 'AGE', groupvar = c('DIAGNOSIS'), na.rm = TRUE)
+res$ED <- as.numeric(res$ED)
+ED <- aggregate(ED ~ PPT * GRP * DIAGNOSIS, mean, data = res)
+ED <- summarySE(ED, measurevar = 'ED', groupvar = c('DIAGNOSIS'), na.rm = TRUE)
 
 ##### ANOVA - differences between sites #####
 siteANOVA <- na.omit(res_means)

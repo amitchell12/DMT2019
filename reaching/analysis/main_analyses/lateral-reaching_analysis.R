@@ -46,7 +46,7 @@ valid_tot <- aggregate(HITS ~ DIAGNOSIS * VIEW, mean, data = valid)
 
 ######### step 1, calculating PMI, all data ############
 res_medians <- aggregate(
-  AE ~ PPT * DOM * SIDE * VIEW * POSITION * SITE * GRP * DIAGNOSIS * AGE * ED, 
+  AE ~ PPT * DOM * SIDE * VIEW * POSITION * SITE * GRP * DIAGNOSIS * AGE, 
   median, data = res)
 colnames(res_medians)[colnames(res_medians)=='AE'] <- 'AEmed' #change name to be more logical
 
@@ -59,7 +59,7 @@ levels(res_medians$SITE) <- c('UOE', 'UEA')
 res_medians$DIAGNOSIS <- factor(res_medians$DIAGNOSIS)
 res_medians <- res_medians[order(res_medians$PPT), ] 
 
-res_means <- aggregate(AEmed ~ PPT * DOM * SIDE * VIEW * SITE * GRP * DIAGNOSIS * AGE * ED, 
+res_means <- aggregate(AEmed ~ PPT * DOM * SIDE * VIEW * SITE * GRP * DIAGNOSIS * AGE, 
                        mean, data = res_medians)
 res_means <- res_means[order(res_means$PPT), ] 
 colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
@@ -68,7 +68,7 @@ write.csv(res_medians, 'lateral-medians_all.csv', row.names = FALSE)
 write.csv(res_means, 'lateral-means_all.csv', row.names = FALSE)
 
 # to calculate PMI need to cast by task....
-PMIdata <- dcast(res_means, PPT+GRP+SITE+DOM+SIDE+DIAGNOSIS+AGE+ED ~ VIEW) #different data-frame
+PMIdata <- dcast(res_means, PPT+GRP+SITE+DOM+SIDE+DIAGNOSIS+AGE ~ VIEW) #different data-frame
 PMIdata$PMI <- PMIdata$Peripheral - PMIdata$Free
 write.csv(PMIdata, 'lateralPMI_all.csv', row.names = FALSE)
 
@@ -77,8 +77,14 @@ meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS',
                        na.rm = TRUE)
 write.csv(meanPMI_side, 'lateralPMI_means.csv', row.names = FALSE)
 # averaged across side
-PMIgrand <- aggregate(PMI~PPT+GRP+SITE+DIAGNOSIS+AGE+ED, mean, data=PMIdata)
+PMIgrand <- aggregate(PMI~PPT+GRP+SITE+DIAGNOSIS+AGE, mean, data=PMIdata)
 meanPMI_grand <- summarySE(PMIgrand, measurevar = 'PMI', groupvar = c('DIAGNOSIS'))
+
+## getting & saving demographics for pub
+AGE <- summarySE(PMIgrand, measurevar = 'AGE', groupvar = c('DIAGNOSIS'), na.rm = TRUE)
+ED <- aggregate(ED ~ PPT * GRP * DIAGNOSIS, mean, data = res)
+ED <- summarySE(ED, measurevar = 'ED', groupvar = c('DIAGNOSIS'), na.rm = TRUE)
+
 
 ## bit of plotting by eccentricity
 # controls
