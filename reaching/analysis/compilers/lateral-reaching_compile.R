@@ -113,7 +113,18 @@ res <- merge(demo, res, by = 'subject_nr')
 # counting eye-move per participant
 setwd(anaPath)
 nEye_move <- aggregate(eye_move ~ subject_nr * diagnosis * task, sum, data = res)
-tot_eyeMove <- aggregate(eye_move ~ diagnosis * task, sum, data = nEye_move)
+nTrials <- res %>% 
+  group_by(subject_nr,task) %>% 
+  tally()
+
+# getting percentage eye-move for each group, and each condition
+Eye_move <- merge(nEye_move, nTrials)
+sumEye_move <- aggregate(eye_move ~ diagnosis * task, sum, data = Eye_move)
+sumTrials <- aggregate(n ~ diagnosis * task, sum, data = Eye_move)
+totEye_move <- merge(sumEye_move, sumTrials)
+
+totEye_move$per <- (totEye_move$eye_move/totEye_move$n)*100
+
 write.csv(tot_eyeMove, 'eye-movements.csv', row.names = FALSE)
 
 nVoid <- aggregate(void_trial ~ subject_nr * diagnosis * task, sum, data = res)
