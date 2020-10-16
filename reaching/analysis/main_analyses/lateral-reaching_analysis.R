@@ -164,7 +164,7 @@ td_summary <- summarySE(data = PMIdata, measurevar = 'PMI',
 # isolating control data for analysis
 td_control <- td_summary[td_summary$DIAGNOSIS == 'HC', ]
 #patient data for test of deficit
-td_patient <- PMIdata[, c(1,4,6,11)]
+td_patient <- PMIdata[, c(1,4,6,10)]
 td_patient <- td_patient[td_patient$DIAGNOSIS != 'HC' ,] #removing controls
 td_patient <- dcast(td_patient, PPT+DIAGNOSIS ~ DOM)
 # NA values  = -1, so t-value is negative and can remove later
@@ -299,7 +299,7 @@ control_PMI$BL <- 0
 plot_PMI <- merge(PMIdata, td_results, by = c('PPT','DOM','DIAGNOSIS'))
 # include only relevant info
 plot_PMI$PMI <- plot_PMI$PMI.x
-plot_PMI <- plot_PMI[, c(1:10,13:14,22:24)]
+plot_PMI <- plot_PMI[, c(1:9,12:13,21:23)]
 
 # make plot data frame
 plot_PMI <- rbind(control_PMI, plot_PMI)
@@ -329,7 +329,7 @@ ggplot(plot_PMI, aes(x = DOM, y = PMI, colour = DIAGNOSIS, group = PPT, shape = 
 pPMI
 
 ## PLOT 4: average PMI across sides - combine with PLOT 2
-PMIav_plot <- aggregate(PMI ~ PPT*DIAGNOSIS*AGE*ED*SITE, mean, data = plot_PMI)
+PMIav_plot <- aggregate(PMI ~ PPT*DIAGNOSIS*AGE*SITE, mean, data = plot_PMI)
 PMIav_plot <- PMIav_plot[order(PMIav_plot$PPT),]
 plot_PMI$DEFICITS <- as.numeric(plot_PMI$DEFICITS)
 deficit <- aggregate(DEFICITS ~ PPT*DIAGNOSIS, max, data = plot_PMI)
