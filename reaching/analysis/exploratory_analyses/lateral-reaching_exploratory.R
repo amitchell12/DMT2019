@@ -38,61 +38,6 @@ res$DIAGNOSIS <- factor(res$DIAGNOSIS)
 # to match radial reaching - change name of 'POSITION' to 'ECC'
 colnames(res)[colnames(res)=='POSITION'] <- 'ECC' 
 
-###### AE BY ECCENTRICITY ######
-res_medians <- aggregate(AE ~ PPT*ECC*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE, 
-                         median, data = res)
-# averaging across side
-resAE <- aggregate(AE ~ PPT*ECC*VIEW*DIAGNOSIS*SITE*AGE, 
-                   mean, data = res_medians)
-resAE$ECC <- factor(resAE$ECC)
-
-## plotting
-# make plot data-frame
-av_ecc <- summarySE(res_medians, measurevar = 'AE', 
-                    groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
-
-av_ecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
-av_ecc$ECC <- factor(av_ecc$ECC)
-
-# plot 
-ggplot(av_ecc, aes(x = ECC, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS, 
-                   shape = DIAGNOSIS)) +
-  geom_point(size = 3, position = position_dodge(width = .4)) +
-  geom_errorbar(aes(ymin=AE-ci, ymax=AE+ci), 
-                width=.4, position = position_dodge(width = .4)) + 
-  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  labs(x = 'Eccentricity (°)', y = 'Lateral reaching error (mm)') +
-  facet_wrap(~VIEW) + theme_classic() +
-  theme(legend.position = 'bottom',
-        legend.title = element_blank(),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12),
-        strip.text = element_text(size = 12)
-  )
-
-ggsave('LATeccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 6, height = 4, path = anaPath)
-
-## ANOVA ##
-ECC_ANOVA <- ezANOVA(
-  data = resAE
-  , dv = .(AE)
-  , wid = .(PPT)
-  , within = .(VIEW, ECC)
-  , between = .(DIAGNOSIS)
-  , between_covariates = .(AGE)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-ECC_ANOVA$ANOVA
-ECC_ANOVA$`Mauchly's Test for Sphericity`
-ECC_ANOVA$`Sphericity Corrections`
-aovECC <- aovEffectSize(ezObj = ECC_ANOVA, effectSize = "pes")
-aovDispTable(aovECC)
-
 
 ###### DIRECTIONAL ERROR (xAxis) ######
 dir_medians <- aggregate(xerr_mm ~ PPT * VIEW * SIDE * ECC * SITE * DIAGNOSIS * AGE, 

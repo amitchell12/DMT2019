@@ -16,11 +16,11 @@ library(psychReport)
 
 #set working directory to where data is
 # on mac (desktop)
-#dataPath <- '/Users/Alex/Documents/DMT/data/'
-#anaPath <- '/Users/Alex/Documents/DMT/analysis//lateral_reaching/'
+dataPath <- '/Users/Alex/Documents/DMT/data/'
+anaPath <- '/Users/Alex/Documents/DMT/analysis//lateral_reaching/'
 # on mac (laptop)
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/'
 setwd(anaPath)
 
 # load data file
@@ -33,7 +33,7 @@ res$HAND <- factor(res$HAND, labels = c('left','right'))
 res$DOM <- as.numeric(res$SIDE == res$HAND) #1 = dominant, 0 = non-dominant
 res$DOM <- factor(res$DOM, labels= c('ND','D'))
 # change order so dominance up-front
-res <- res[, c(1:8,26,9:25)]
+res <- res[, c(1:8,27,9:26)]
 
 ## remove trial with widly high RT (> 6000ms)
 res <- res[res$RT < 6000 ,]
@@ -158,15 +158,41 @@ ggscatter(test, x = 'ED', y = 'PMI',
   ylab('PMI (deg)') + xlab('Education (years)') +
   theme(text = element_text(size = 10))
 
+## correlation matrix of age and PMI - for BTD_cov
+## non-dominant
+PMIcorr <- na.omit(PMIdata)
+PMIcorr <- PMIcorr[PMIcorr$DOM == 'ND', c(10,7)]
+PMIcorr$AGE <- as.numeric(PMIcorr$AGE)
+corr <- rcorr(as.matrix(PMIcorr))
+# relabelling, non-dominant correlation matrix
+NDCM <- corr[["r"]]
+
+## dominant
+PMIcorr <- na.omit(PMIdata)
+PMIcorr <- PMIcorr[PMIcorr$DOM == 'D', c(10,7)]
+PMIcorr$AGE <- as.numeric(PMIcorr$AGE)
+corr <- rcorr(as.matrix(PMIcorr))
+# relabelling, non-dominant correlation matrix
+DCM <- corr[["r"]]
+
 # create data-frames (controls and patients) with key information
 td_summary <- summarySE(data = PMIdata, measurevar = 'PMI', 
                         groupvars = c('DIAGNOSIS','DOM'), na.rm = TRUE)
+age <- summarySE(data = PMIdata, measurevar = 'AGE', 
+                        groupvars = c('DIAGNOSIS','DOM'), na.rm = TRUE)
+age <- age[, c(1,2,4)]
+td_summary <- merge(td_summary, age)
+
 # isolating control data for analysis
 td_control <- td_summary[td_summary$DIAGNOSIS == 'HC', ]
+# matrices for input into BTD_cov function
+td_controlND <- td_control[td_control$DOM == 'ND', c(4,5)]
+td_controlD <- td_control[td_control$DOM == 'D', c(4,5)]
+
 #patient data for test of deficit
-td_patient <- PMIdata[, c(1,4,6,10)]
+td_patient <- PMIdata[, c(1,4,6,7,10)]
 td_patient <- td_patient[td_patient$DIAGNOSIS != 'HC' ,] #removing controls
-td_patient <- dcast(td_patient, PPT+DIAGNOSIS ~ DOM)
+td_patient <- dcast(td_patient, PPT+DIAGNOSIS+AGE ~ DOM)
 # NA values  = -1, so t-value is negative and can remove later
 td_patient[is.na(td_patient$D), "D"] <- -1 
 
@@ -177,8 +203,9 @@ td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,
 td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 for (l in 1:length(td_patient$PPT)){
   #left data first
-  NDres <- TD(td_patient$ND[l], td_control$PMI[1], td_control$sd[1], td_control$N[1], 
-                alternative = 'greater', na.rm = FALSE)
+  NDres <- BTD_cov(td_patient$ND[l], td_patient$AGE[l], td_controlND, td_control$AGE[1], 
+                alternative = 'greater', int_level = 0.95, iter = 10000,
+                use_sumstats = TRUE, cor_mat = NDCM, sample_size = td_control$N[1])
   diff <- t(NDres$estimate)
   ltmp <- data.frame(td_patient$ND[l], NDres$statistic, NDres$p.value, 
                      diff[1], diff[2], t(NDres$interval), 'ND', check.names = FALSE) 
@@ -186,8 +213,9 @@ for (l in 1:length(td_patient$PPT)){
   ltmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
   td_ndom <- rbind(td_ndom, ltmp)
   #then right data
-  Dres <- TD(td_patient$D[l], td_control$PMI[2], td_control$sd[2], td_control$N[2], 
-                 alternative = 'greater', na.rm = FALSE)
+  Dres <- BTD_cov(td_patient$D[l], td_patient$AGE[l], td_controlD, td_control$AGE[2], 
+                  alternative = 'greater', int_level = 0.95, iter = 10000,
+                  use_sumstats = TRUE, cor_mat = DCM, sample_size = td_control$N[2])
   diff <- t(Dres$estimate)
   rtmp <- data.frame(td_patient$D[l], Dres$statistic, Dres$p.value, 
                      diff[1], diff[2], t(Dres$interval), 'D', check.names = FALSE) 
@@ -287,6 +315,32 @@ PMI_ANOVA$`Sphericity Corrections`
 aovPMI <- aovEffectSize(ezObj = PMI_ANOVA, effectSize = "pes")
 aovDispTable(aovPMI)
 
+##### ABSOLUTE ERROR, ANOVA #####
+# averaging across side
+resAE <- aggregate(AEmed ~ PPT*POSITION*VIEW*DIAGNOSIS*SITE*AGE, 
+                   mean, data = res_medians)
+resAE$POSITION <- factor(resAE$POSITION)
+
+## ANOVA ##
+ECC_ANOVA <- ezANOVA(
+  data = resAE
+  , dv = .(AEmed)
+  , wid = .(PPT)
+  , within = .(VIEW, POSITION)
+  , between = .(DIAGNOSIS)
+  , between_covariates = .(AGE)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+ECC_ANOVA$ANOVA
+ECC_ANOVA$`Mauchly's Test for Sphericity`
+ECC_ANOVA$`Sphericity Corrections`
+aovECC <- aovEffectSize(ezObj = ECC_ANOVA, effectSize = "pes")
+aovDispTable(aovECC)
+
+
 ###### PLOTTING ######
 ## PMI ## 
 # make control data-frame
@@ -350,10 +404,37 @@ ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = DIAGNOSIS, group = PPT, 
   ) -> avPMI
 avPMI
 
-PMIfig <- ggarrange(pPMI, avPMI,
-                    ncol=2, nrow=1,
+## AE plot by eccentricity
+# make plot data-frame
+av_ecc <- summarySE(res_medians, measurevar = 'AEmed', 
+                    groupvar = c('DIAGNOSIS','POSITION','VIEW'), na.rm = TRUE)
+
+av_ecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
+av_ecc$POSITION <- factor(av_ecc$POSITION)
+
+# plot 
+ggplot(av_ecc, aes(x = POSITION, y = AEmed, group = DIAGNOSIS, colour = DIAGNOSIS, 
+                   shape = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(width = .4)) +
+  geom_errorbar(aes(ymin=AEmed-ci, ymax=AEmed+ci), 
+                width=.4, position = position_dodge(width = .4)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(x = 'Eccentricity (°)', y = 'Lateral reaching error (mm)') +
+  facet_wrap(~VIEW) + theme_classic() +
+  theme(legend.position = c(.12,.79),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 8),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 10)
+  ) -> AEecc
+AEecc
+
+PMIfig <- ggarrange(pPMI, avPMI, AEecc,
+                    ncol=2, nrow=2,
                     widths = c(1.5,1),
-                    labels = c('a','b'),
+                    labels = c('a','b','c'),
                     hjust = -1)
 PMIfig
 ggsave('LATPMI-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
