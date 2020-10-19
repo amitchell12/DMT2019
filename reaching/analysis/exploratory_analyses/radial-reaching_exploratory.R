@@ -15,15 +15,27 @@ library(psychReport)
 
 ###### GETTING DATA ######
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #desktop mac
-#anaPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
-#dataPath <- '/Users/Alex/Documents/DMT/data'
+anaPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
+dataPath <- '/Users/Alex/Documents/DMT/data'
 setwd(anaPath)
 
 res <- read.csv('all_radial-reaching_compiled.csv')
 res$ECC <- factor(abs(res$POSITION)) #adding eccentricity = absolute target position
+
+# remove 301-310 from UEA data, reach distance = different
+res <- res[res$PPT != 301 &
+              res$PPT != 302 &
+              res$PPT != 303 &
+              res$PPT != 304 &
+              res$PPT != 305 &
+              res$PPT != 306 &
+              res$PPT != 307 &
+              res$PPT != 308 &
+              res$PPT != 309 &
+              res$PPT != 310 ,]
 
 ##### AE BY ECCENTRICITY ALL TARG LOCS #####
 # calculating medians
@@ -341,6 +353,10 @@ ggplot(RT_means, aes(x = VIEW, y = RT, colour = SITE, group = PPT)) +
 
 ggsave('RAD_RTmean.png', plot = last_plot(),  device = NULL, dpi = 300, 
        width = 6, height = 4, path = anaPath)
+
+## density
+ggplot(RT_means, aes(x=RT)) +
+  geom_density(aes(fill = SITE), alpha = .5) + facet_wrap(~DIAGNOSIS)
 
 ## by eccentricity
 # summary data
