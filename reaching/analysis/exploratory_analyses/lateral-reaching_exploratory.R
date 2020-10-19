@@ -258,11 +258,11 @@ ggplot(MTsum, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
   scale_color_manual(values = c('black','grey30','grey60')) +
   ylim(300,800) +
   facet_wrap(~VIEW) + theme_classic() +
-  theme(legend.position = 'bottom',
+  theme(legend.position = 'none',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
-        strip.text = element_text(size = 12)
+        strip.text = element_text(size = 10)
   ) -> MTplot
 MTplot
 
@@ -342,11 +342,11 @@ ggplot(RTsum, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() +
   ylim(300,800) +
-  theme(legend.position = 'bottom',
+  theme(legend.position = c(.12,.85),
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
-        strip.text = element_text(size = 12)
+        strip.text = element_text(size = 10)
   ) -> RTplot
 RTplot
 
@@ -385,14 +385,12 @@ aovDispTable(aovRT)
 
 TimeFig <- ggarrange(MTplot, RTplot,
                     ncol=2, nrow=1,
-                    common.legend = TRUE,
-                    legend = 'bottom',
                     widths = c(1,1),
                     labels = c('a','b'),
                     hjust = -1)
 TimeFig
 ggsave('LAT_EXPLOR.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 8.5, height = 4, path = anaPath)
+       width = 8, height = 4, path = anaPath)
 
 ##### CORRELATE PMI + MT, RT ######
 # load PMI data

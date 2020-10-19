@@ -422,7 +422,7 @@ ggplot(av_ecc, aes(x = POSITION, y = AEmed, group = DIAGNOSIS, colour = DIAGNOSI
   scale_color_manual(values = c('black','grey30','grey60')) +
   labs(x = 'Eccentricity (°)', y = 'Lateral reaching error (mm)') +
   facet_wrap(~VIEW) + theme_classic() +
-  theme(legend.position = c(.12,.79),
+  theme(legend.position = c(.1,.85),
         legend.title = element_blank(),
         legend.text = element_text(size = 8),
         axis.text = element_text(size = 10),
@@ -431,13 +431,17 @@ ggplot(av_ecc, aes(x = POSITION, y = AEmed, group = DIAGNOSIS, colour = DIAGNOSI
   ) -> AEecc
 AEecc
 
+# combining AE figures together
 PMIfig <- ggarrange(pPMI, avPMI, AEecc,
                     ncol=2, nrow=2,
                     widths = c(1.5,1),
                     labels = c('a','b','c'),
                     hjust = -1)
+
+
 PMIfig
-ggsave('LATPMI-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 8, height = 4, path = anaPath)
+
+ggsave('LATAE-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 8, height = 8, path = anaPath)
 
 
