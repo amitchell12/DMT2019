@@ -9,14 +9,14 @@ library(singcar)
 library(tidyverse)
 
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 
 # on desktop mac
-#dataPath <- '/Users/Alex/Documents/DMT/data'
-#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
-#UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
+dataPath <- '/Users/Alex/Documents/DMT/data'
+anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
+UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
 
 #on pc
 #dataPath <- 'S:/groups/DMT/data'
@@ -260,17 +260,44 @@ ggscatter(PMIdata, x = "AGE", y = "PMI",
 # create data-frames (controls and patients) with key information
 td_summary <- summarySE(data = PMIdata, measurevar = 'PMI', 
                         groupvars = c('DIAGNOSIS','DOM','SITE'), na.rm = TRUE)
+age <- summarySE(data = PMIdata, measurevar = 'AGE', 
+                 groupvars = c('DIAGNOSIS','DOM','SITE'), na.rm = TRUE)
+age <- age[, c(1:3,5)]
+td_summary <- merge(td_summary, age)
+
 #patient data for test of deficit
-td_patient <- PMIdata[, c(1,3,4,6,10)]
+td_patient <- PMIdata[, c(1,3,4,6,7,10)]
 td_patient <- td_patient[td_patient$DIAGNOSIS != 'HC' ,] #removing controls
 # next, run case-control independently for each site - different set ups
 
 ## UOE CASE CONTROL ##
+## correlation matrix of age and PMI - for BTD_cov
+## non-dominant
+PMIcorr <- na.omit(PMIdata)
+PMIcorr <- PMIcorr[PMIcorr$DOM == 'ND' & PMIcorr$SITE == 'UOE', c(10,7)]
+PMIcorr$AGE <- as.numeric(PMIcorr$AGE)
+corr <- rcorr(as.matrix(PMIcorr))
+# relabelling, non-dominant correlation matrix
+NDCM_UOE <- corr[["r"]]
+
+## dominant
+PMIcorr <- na.omit(PMIdata)
+PMIcorr <- PMIcorr[PMIcorr$DOM == 'D' & PMIcorr$SITE == 'UOE', c(10,7)]
+PMIcorr$AGE <- as.numeric(PMIcorr$AGE)
+corr <- rcorr(as.matrix(PMIcorr))
+# relabelling, non-dominant correlation matrix
+DCM_UOE <- corr[["r"]]
+
 # isolating control data for analysis
 tdUOE_control <- td_summary[td_summary$DIAGNOSIS == 'HC' 
                             & td_summary$SITE == 'UOE' ,]
+# matrices for input into BTD_cov function
+tdUOE_controlND <- tdUOE_control[tdUOE_control$DOM == 'ND', c(5,6)]
+tdUOE_controlD <- tdUOE_control[tdUOE_control$DOM == 'D', c(5,6)]
+
+# patient data
 tdUOE_patient <- td_patient[td_patient$SITE == 'UOE' ,]
-tdUOE_patient <- dcast(tdUOE_patient, PPT+DIAGNOSIS ~ DOM)
+tdUOE_patient <- dcast(tdUOE_patient, PPT+DIAGNOSIS+AGE ~ DOM)
 # NA values  = -1, so t-value is negative and can remove later
 tdUOE_patient[is.na(tdUOE_patient$D), "D"] <- -1 
 
@@ -280,8 +307,9 @@ td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,
 td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 for (l in 1:length(tdUOE_patient$PPT)){
   #left data first
-  NDres <- TD(tdUOE_patient$ND[l], tdUOE_control$PMI[1], tdUOE_control$sd[1], 24, 
-                alternative = 'greater', na.rm = FALSE)
+  NDres <- BTD_cov(tdUOE_patient$ND[l], tdUOE_patient$AGE[l], tdUOE_controlND, tdUOE_control$AGE[1], 
+                   alternative = 'greater', int_level = 0.95, iter = 10000,
+                   use_sumstats = TRUE, cor_mat = NDCM, sample_size = tdUOE_control$N[1])
   diff <- t(NDres$estimate)
   ltmp <- data.frame(tdUOE_patient$ND[l], NDres$statistic, NDres$p.value, 
                      diff[1], diff[2], t(NDres$interval), 'ND', check.names = FALSE) 
@@ -289,8 +317,9 @@ for (l in 1:length(tdUOE_patient$PPT)){
   ltmp$DIAGNOSIS <- tdUOE_patient$DIAGNOSIS[l]
   td_ndom <- rbind(td_ndom, ltmp)
   #then right data
-  Dres <- TD(tdUOE_patient$D[l], tdUOE_control$PMI[2], tdUOE_control$sd[2], 24, 
-                 alternative = 'greater', na.rm = FALSE)
+  Dres <- BTD_cov(tdUOE_patient$D[l], tdUOE_patient$AGE[l], tdUOE_controlD, tdUOE_control$AGE[2], 
+                  alternative = 'greater', int_level = 0.95, iter = 10000,
+                  use_sumstats = TRUE, cor_mat = DCM, sample_size = tdUOE_control$N[2])
   diff <- t(Dres$estimate)
   rtmp <- data.frame(tdUOE_patient$D[l], Dres$statistic, Dres$p.value, 
                      diff[1], diff[2], t(Dres$interval), 'D', check.names = FALSE) 
@@ -320,11 +349,33 @@ tdUOE_results$DEFICIT <- as.numeric(tdUOE_results$DEFICIT)
 tdUOE_results$BL <- as.numeric(tdUOE_results$BL)
 
 ## UEA CASE CONTROL ##
+## correlation matrix of age and PMI - for BTD_cov
+## non-dominant
+PMIcorr <- na.omit(PMIdata)
+PMIcorr <- PMIcorr[PMIcorr$DOM == 'ND' & PMIcorr$SITE == 'UEA', c(10,7)]
+PMIcorr$AGE <- as.numeric(PMIcorr$AGE)
+corr <- rcorr(as.matrix(PMIcorr))
+# relabelling, non-dominant correlation matrix
+NDCM_UEA <- corr[["r"]]
+
+## dominant
+PMIcorr <- na.omit(PMIdata)
+PMIcorr <- PMIcorr[PMIcorr$DOM == 'D' & PMIcorr$SITE == 'UEA', c(10,7)]
+PMIcorr$AGE <- as.numeric(PMIcorr$AGE)
+corr <- rcorr(as.matrix(PMIcorr))
+# relabelling, non-dominant correlation matrix
+DCM_UEA <- corr[["r"]]
+
 # isolating control data for analysis
 tdUEA_control <- td_summary[td_summary$DIAGNOSIS == 'HC' 
                             & td_summary$SITE == 'UEA' ,]
+# matrices for input into BTD_cov function
+tdUEA_controlND <- tdUEA_control[tdUEA_control$DOM == 'ND', c(5,6)]
+tdUEA_controlD <- tdUEA_control[tdUEA_control$DOM == 'D', c(5,6)]
+
+#patient data
 tdUEA_patient <- td_patient[td_patient$SITE == 'UEA' ,]
-tdUEA_patient <- dcast(tdUEA_patient, PPT+DIAGNOSIS ~ DOM)
+tdUEA_patient <- dcast(tdUEA_patient, PPT+DIAGNOSIS+AGE ~ DOM)
 
 # time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
 # using Crawford's (1998) test of deficit
@@ -332,8 +383,9 @@ td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,
 td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 for (l in 1:length(tdUEA_patient$PPT)){
   #left data first
-  NDres <- TD(tdUEA_patient$ND[l], tdUEA_control$PMI[1], tdUEA_control$sd[1], 24, 
-                alternative = 'greater', na.rm = FALSE)
+  NDres <- BTD_cov(tdUEA_patient$ND[l], tdUEA_patient$AGE[l], tdUEA_controlND, tdUEA_control$AGE[1], 
+              alternative = 'greater', int_level = 0.95, iter = 10000,
+              use_sumstats = TRUE, cor_mat = NDCM, sample_size = tdUEA_control$N[1])
   diff <- t(NDres$estimate)
   ltmp <- data.frame(tdUEA_patient$ND[l], NDres$statistic, NDres$p.value, 
                      diff[1], diff[2], t(NDres$interval), 'ND', check.names = FALSE) 
@@ -341,8 +393,9 @@ for (l in 1:length(tdUEA_patient$PPT)){
   ltmp$DIAGNOSIS <- tdUEA_patient$DIAGNOSIS[l]
   td_ndom <- rbind(td_ndom, ltmp)
   #then right data
-  Dres <- TD(tdUEA_patient$D[l], tdUEA_control$PMI[2], tdUEA_control$sd[2], 24, 
-                 alternative = 'greater', na.rm = FALSE)
+  Dres <- BTD_cov(tdUEA_patient$D[l], tdUEA_patient$AGE[l], tdUEA_controlD, tdUEA_control$AGE[2], 
+                  alternative = 'greater', int_level = 0.95, iter = 10000,
+                  use_sumstats = TRUE, cor_mat = DCM, sample_size = tdUEA_control$N[2])
   diff <- t(Dres$estimate)
   rtmp <- data.frame(tdUEA_patient$D[l], Dres$statistic, Dres$p.value, 
                      diff[1], diff[2], t(Dres$interval), 'D', check.names = FALSE) 
