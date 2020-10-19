@@ -3,13 +3,15 @@ library(ggplot2)
 library(reshape2)
 library(ggpubr)
 library(Rmisc)
+library(dplyr, warn.conflicts = FALSE)
+library(forcats)
 
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on mac desktop
-#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching/'
-#dataPath <- '/Users/Alex/Documents/DMT/data/'
+anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching/'
+dataPath <- '/Users/Alex/Documents/DMT/data/'
 setwd(dataPath)
 
 files <- list.files(path=dataPath, pattern = "*.TRJ", full.names = TRUE, recursive = TRUE)
@@ -133,8 +135,25 @@ names(demo)[1] <- 'PPT'
 res <- merge(demo, res, by = 'PPT')
 
 # counting eye-move and removing eye-move + void
-nEye_move <- aggregate(EYE_MOVE == 1 ~ diagnosis * VIEW, sum, data = res)
+nEye_move <- aggregate(EYE_MOVE == 1 ~ PPT * diagnosis * VIEW, sum, data = res)
 nVoid <- aggregate(EYE_MOVE == -1 ~ diagnosis * VIEW, sum, data = res)
+
+nTrials <- res %>% 
+  group_by(PPT,VIEW) %>% 
+  tally()
+nTrials <- na.omit(nTrials)
+
+# getting percentage eye-move for each group, and each condition
+Eye_move <- merge(nEye_move, nTrials)
+names(Eye_move)[4] <- 'eye_move'
+sumEye_move <- aggregate(eye_move ~ diagnosis * VIEW, sum, data = Eye_move)
+sumTrials <- aggregate(n ~ diagnosis * VIEW, sum, data = Eye_move)
+totEye_move <- merge(sumEye_move, sumTrials)
+
+# save this to combine with UEA data
+setwd(anaPath)
+write.csv(totEye_move, 'edinburgh_eye-move.csv', row.names = FALSE)
+
 # removing
 res <- res[res$EYE_MOVE == 0, c(1:7,17:18,8:15,22:42)]
 
@@ -143,5 +162,4 @@ res$VIEW <- factor(res$VIEW, labels = c('Free', 'Peripheral'))
 res$SIDE <- factor(res$SIDE, labels = c('Left','Right'))
 
 #save compiled data-set
-setwd(anaPath)
 write.csv(res, "radial-reaching_compiled.csv", row.names = FALSE)
