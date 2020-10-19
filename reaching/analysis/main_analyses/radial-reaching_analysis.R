@@ -525,6 +525,33 @@ aovDispTable(aovPMI_all)
 PMIall_ttest <- pairwise.t.test(PMIanova_all$PMI, PMIanova_all$DIAGNOSIS, p.adj = 'bonf')
 print(PMIall_ttest)
 
+##### AE BY ECCENTRICITY ALL TARG LOCS #####
+# calculating medians
+# averaging across side
+res_medians_all$ECC <- abs(as.numeric(as.character(res_medians_all$POSITION)))
+resAE <- aggregate(AE ~ PPT*ECC*VIEW*DIAGNOSIS*SITE*AGE, 
+                   mean, data = res_medians_all)
+resAE$ECC <- factor(resAE$ECC)
+
+## CALCULATING ANOVA ##
+ALLECC_ANOVA <- ezANOVA(
+  data = resAE
+  , dv = .(AE)
+  , wid = .(PPT)
+  , within = .(VIEW, ECC)
+  , between = .(DIAGNOSIS)
+  , between_covariates = .(SITE, AGE)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+ALLECC_ANOVA$ANOVA
+ALLECC_ANOVA$`Mauchly's Test for Sphericity`
+ALLECC_ANOVA$`Sphericity Corrections`
+aovECCall <- aovEffectSize(ezObj = ALLECC_ANOVA, effectSize = "pes")
+aovDispTable(aovECCall)
+
 ##### PLOTTING #####
 ## PLOT: PMI side + av ##
 # make control data-frame
@@ -556,7 +583,7 @@ ggplot(plot_PMI, aes(x = DOM, y = PMI, colour = DIAGNOSIS, group = PPT, shape = 
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   scale_color_manual(values = c('grey45','grey45','grey45')) +
-  scale_shape_manual(values = c(1,16,18)) +
+  scale_shape_manual(values = c(1,18,18)) +
   facet_wrap(~DIAGNOSIS) +
   labs(x = 'Side', y = 'Radial PMI (mm)') +
   theme_classic() + theme(legend.position = 'none', 
@@ -579,7 +606,7 @@ ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = DIAGNOSIS, group = PPT, 
   geom_point(size = 2.5, position = position_dodge(.2)) +
   stat_summary(aes(y = PMI, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  scale_shape_manual(values = c(1,16,18)) +
+  scale_shape_manual(values = c(1,18,18)) +
   scale_colour_manual(values = c('grey45','grey45','grey45')) +
   labs(x = 'Diagnosis', y = '') +
   theme_classic() + theme(legend.position = 'none', 
@@ -589,11 +616,35 @@ ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = DIAGNOSIS, group = PPT, 
   ) -> avPMI
 avPMI
 
-PMIfig <- ggarrange(pPMI, avPMI,
-                    ncol=2, nrow=1,
+## PLOT: eccentricity ##
+ECCsummary <- summarySE(resAE, measurevar = 'AE', 
+                        groupvar = c('DIAGNOSIS', 'VIEW', 'ECC'), na.rm = TRUE)
+ECCsummary$DIAGNOSIS <- factor(ECCsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(ECCsummary, aes(x = ECC, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS, 
+                       shape = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(.4)) +
+  geom_errorbar(aes(ymin=AE-ci, ymax=AE+ci), 
+                width=.4, position = position_dodge(.4)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(.4)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(x = 'Eccentricity (mm)', y = 'Radial reaching error (mm)') +
+  facet_grid(~VIEW) + theme_classic() +
+  theme(legend.position = c(.1,.85),
+        legend.title = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 12)
+  ) -> AEecc
+AEecc
+
+# combining in to main plot for AE
+PMIfig <- ggarrange(pPMI, avPMI, AEecc,
+                    ncol=2, nrow=2,
                     widths = c(1.5,1),
-                    labels = c('a','b'),
+                    labels = c('a','b','c'),
                     hjust = -1)
 PMIfig
-ggsave('RADPMI-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 8, height = 4, path = anaPath)
+
+ggsave('RADAE-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 8, height = 8, path = anaPath)

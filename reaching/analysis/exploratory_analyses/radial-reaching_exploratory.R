@@ -25,69 +25,6 @@ setwd(anaPath)
 res <- read.csv('all_radial-reaching_compiled.csv')
 res$ECC <- factor(abs(res$POSITION)) #adding eccentricity = absolute target position
 
-# remove 301-310 from UEA data, reach distance = different
-res <- res[res$PPT != 301 &
-              res$PPT != 302 &
-              res$PPT != 303 &
-              res$PPT != 304 &
-              res$PPT != 305 &
-              res$PPT != 306 &
-              res$PPT != 307 &
-              res$PPT != 308 &
-              res$PPT != 309 &
-              res$PPT != 310 ,]
-
-##### AE BY ECCENTRICITY ALL TARG LOCS #####
-# calculating medians
-res_medians <- aggregate(AE ~ PPT*ECC*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE, 
-                                                       median, data = res)
-# averaging across side
-resAE <- aggregate(AE ~ PPT*ECC*VIEW*DIAGNOSIS*SITE*AGE, 
-                    mean, data = res_medians)
-## CALCULATING ANOVA ##
-ALLECC_ANOVA <- ezANOVA(
-  data = resAE
-  , dv = .(AE)
-  , wid = .(PPT)
-  , within = .(VIEW, ECC)
-  , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE, AGE)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-ALLECC_ANOVA$ANOVA
-ALLECC_ANOVA$`Mauchly's Test for Sphericity`
-ALLECC_ANOVA$`Sphericity Corrections`
-aovECCall <- aovEffectSize(ezObj = ALLECC_ANOVA, effectSize = "pes")
-aovDispTable(aovECCall)
-
-## PLOT: eccentricity ##
-ECCsummary <- summarySE(resAE, measurevar = 'AE', 
-                        groupvar = c('DIAGNOSIS', 'VIEW', 'ECC'), na.rm = TRUE)
-ECCsummary$DIAGNOSIS <- factor(ECCsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
-
-ggplot(ECCsummary, aes(x = ECC, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS, 
-                       shape = DIAGNOSIS)) +
-  geom_point(size = 3, position = position_dodge(.4)) +
-  geom_errorbar(aes(ymin=AE-ci, ymax=AE+ci), 
-                width=.4, position = position_dodge(.4)) + 
-  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(.4)) +
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  labs(x = 'Eccentricity (mm)', y = 'Radial reaching error (mm)') +
-  facet_grid(~VIEW) + theme_classic() +
-  theme(legend.position = 'bottom',
-        legend.title = element_blank(),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12),
-        strip.text = element_text(size = 12)
-  )
-
-ggsave('RADeccentricity-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 6, height = 4, path = anaPath)
-
-
 ##### ANGULAR ERROR: median, means, PMI #####
 ANGmedians <- aggregate(ANG_ERR ~ PPT * VIEW * SIDE * ECC * SITE * GRP * DIAGNOSIS * AGE * ECC, 
                          median, data = res)
@@ -289,7 +226,7 @@ ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
   labs(x = '', y = 'Movement time (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_wrap(~VIEW) + theme_classic() + ylim(300,900) +
-  theme(legend.position = 'bottom',
+  theme(legend.position = 'none',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
@@ -374,7 +311,7 @@ ggplot(RTecc, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() +
   ylim(300,900) +
-  theme(legend.position = 'bottom',
+  theme(legend.position = c(.15,.85),
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
@@ -454,7 +391,7 @@ ggplot(PSecc, aes(x = ECC, y = PS, group = DIAGNOSIS, colour = DIAGNOSIS,
   labs(x = 'Eccentricity (mm)', y = 'Peak speed (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() + 
-  theme(legend.position = 'bottom',
+  theme(legend.position = 'none',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
@@ -593,7 +530,7 @@ ggplot(TAPS_means, aes(x = VIEW, y = TAPS, colour = SITE, group = PPT)) +
   stat_summary(aes(y = TAPS, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   facet_wrap(~DIAGNOSIS) + #ylim(0.5,0.8) +
-  labs(x = '', y = 'Time after peak velocity (ms)', element_text(size = 12)) +
+  labs(x = '', y = 'Time after peak speed (ms)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'bottom', 
                           axis.text = element_text(size = 10),
                           axis.title = element_text(size = 12),
@@ -615,15 +552,16 @@ ggplot(TAPSecc, aes(x = ECC, y = TAPS, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_errorbar(aes(ymin=TAPS-ci, ymax=TAPS+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = 'Eccentricity (mm)', y = 'Time after peak velocity (ms)') +
+  labs(x = 'Eccentricity (mm)', y = 'Time after peak speed (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~VIEW) + theme_classic() + #ylim(0.6,0.8) +
-  theme(legend.position = 'bottom',
+  facet_grid(~VIEW) + theme_classic() + ylim(300,900) +
+  theme(legend.position = 'none',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
         strip.text = element_text(size = 12)
-  )
+  ) -> TAPSplot
+TAPSplot
 
 
 ggsave('RAD_TAPS_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
@@ -736,16 +674,14 @@ NTAPSttest <- pairwise.t.test(NTAPS_ECC$NTAPS, NTAPS_ECC$DIAGNOSIS, p.adj = 'bon
 print(NTAPSttest)
 
 #### FOR PUBLICATION: combine key results into 1 plot ####
-TimeFig <- ggarrange(MTplot, RTplot, PSplot, NTAPSplot,
+TimeFig <- ggarrange(MTplot, RTplot, PSplot, TAPSplot,
                      ncol=2, nrow=2,
-                     common.legend = TRUE,
-                     legend = 'bottom',
                      widths = c(1,1),
                      labels = c('a','b','c','d'),
                      hjust = -1)
 TimeFig
 ggsave('RAD_EXPLOR.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 8.5, height = 8, path = anaPath)
+       width = 8, height = 8, path = anaPath)
 
 ##### CORRELATE ACE #####
 setwd(dataPath)
