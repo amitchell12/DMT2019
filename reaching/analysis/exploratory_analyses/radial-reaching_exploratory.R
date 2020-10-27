@@ -15,11 +15,11 @@ library(psychReport)
 
 ###### GETTING DATA ######
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #desktop mac
-anaPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
-dataPath <- '/Users/Alex/Documents/DMT/data'
+#anaPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
+#dataPath <- '/Users/Alex/Documents/DMT/data'
 setwd(anaPath)
 
 res <- read.csv('all_radial-reaching_compiled.csv')
