@@ -9,11 +9,11 @@ library(reshape2)
 
 #set working directory to where data is
 # on desktop mac
-latPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
-radPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
+#latPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
+#radPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
 # on laptop
-#radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-#latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
 
 
 ###### LATERAL REACHING FIGURES ######
@@ -125,6 +125,11 @@ MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * ECC * SITE * DIAGNOSIS * AGE,
 # average across side
 MT_ECC <- aggregate(MT ~ PPT * VIEW * SITE * ECC * DIAGNOSIS * AGE, 
                     mean, data = MT_medians)
+# mean
+MT_means <- aggregate(MT ~ PPT * VIEW * SITE * DIAGNOSIS,
+                      mean, data = MT_ECC)
+
+
 # summary data
 MTsum <- summarySE(MT_ECC, measurevar = 'MT', 
                    groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
@@ -152,6 +157,86 @@ ggplot(MTsum, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
         strip.text = element_text(size = 14)
   ) -> latMT
 latMT
+
+## MT grand means
+## plotting :)
+# mean all PP
+MT_means$DIAGNOSIS <- factor(MT_means$DIAGNOSIS, levels = c('HC','MCI','AD'))
+MT_means$PPT <- factor(MT_means$PPT)
+MT_means$VIEW <- factor(MT_means$VIEW, labels = c('Free','Peripheral'))
+
+ggplot(MT_means, aes(x = DIAGNOSIS, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS)) +
+  geom_boxplot(size = 0.7) +
+  geom_jitter(size = 2, shape=16, position=position_jitter(0.2), alpha = .5) +
+  facet_wrap(~VIEW) +
+  scale_color_manual(values = c('grey50','darkorange2','dodgerblue4')) +
+  ylim(250,1050) +
+  labs(title = 'Lateral reaching', x = '', y = 'Movement time (ms)') +
+  theme_classic() + theme(legend.position = 'none', 
+                          title = element_text(size = 18),
+                          axis.title = element_text(size = 16),
+                          axis.text = element_text(size = 12),
+                          strip.text = element_text(size = 14) 
+  ) -> latMT_means
+latMT_means
+
+##### LAT RT #####
+RT_medians <- aggregate(RT ~ PPT * VIEW * SIDE * ECC * SITE * DIAGNOSIS * AGE, 
+                        median, data = res)
+# average across side
+RT_ECC <- aggregate(RT ~ PPT * VIEW * SITE * ECC * DIAGNOSIS * AGE, 
+                    mean, data = RT_medians)
+# mean
+RT_means <- aggregate(RT ~ PPT * VIEW * SITE * DIAGNOSIS,
+                      mean, data = RT_ECC)
+
+# summary data
+RTsum <- summarySE(RT_ECC, measurevar = 'RT', 
+                   groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
+RTsum$DIAGNOSIS <- factor(RTsum$DIAGNOSIS, levels = c('HC','MCI','AD'))
+RTsum$ECC <- factor(RTsum$ECC)
+RTsum$VIEW <- factor(RTsum$VIEW, labels = c('Free','Peripheral'))
+
+# plot
+ggplot(RTsum, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
+                  shape = DIAGNOSIS)) +
+  geom_point(size = 4.5, position = position_dodge(width = .4)) +
+  geom_errorbar(aes(ymin=RT-ci, ymax=RT+ci), 
+                width=.4, position = position_dodge(width = .4)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 1, position = position_dodge(width = .4)) +
+  labs(title = 'Lateral reaching', x = 'Eccentricity (°)', y = 'Reaction time (ms)') +
+  scale_color_manual(values = c('grey50','darkorange2','dodgerblue4')) +
+  ylim(300,800) +
+  facet_wrap(~VIEW) + theme_classic() +
+  theme(legend.position = 'bottom',
+        legend.title = element_blank(),
+        legend.text = element_text(size = 10),
+        title = element_text(size = 18),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 16),
+        strip.text = element_text(size = 14)
+  ) -> latRT
+latRT
+
+# mean all PP
+RT_means$DIAGNOSIS <- factor(RT_means$DIAGNOSIS, levels = c('HC','MCI','AD'))
+RT_means$PPT <- factor(RT_means$PPT)
+RT_means$VIEW <- factor(RT_means$VIEW, labels = c('Free','Peripheral'))
+
+ggplot(RT_means, aes(x = DIAGNOSIS, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS)) +
+  geom_boxplot(size = 0.7) +
+  geom_jitter(size = 2, shape=16, position=position_jitter(0.2), alpha = .5) +
+  facet_wrap(~VIEW) +
+  scale_color_manual(values = c('grey50','darkorange2','dodgerblue4')) +
+  ylim(150,850) +
+  labs(title = 'Lateral reaching', x = '', y = 'Reaction time (ms)') +
+  theme_classic() + theme(legend.position = 'none', 
+                          title = element_text(size = 18),
+                          axis.title = element_text(size = 16),
+                          axis.text = element_text(size = 12),
+                          strip.text = element_text(size = 14) 
+  ) -> latRT_means
+latRT_means
 
 ###### RADIAL REACHING FIGURES ######
 setwd(radPath)
@@ -272,6 +357,10 @@ MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * ECC * SITE * DIAGNOSIS * AGE,
 # average across side
 MT_ECC <- aggregate(MT ~ PPT * VIEW * SITE * ECC * DIAGNOSIS * AGE, 
                     mean, data = MT_medians)
+# mean
+MT_means <- aggregate(MT ~ PPT * VIEW * SITE * DIAGNOSIS,
+                      mean, data = MT_ECC)
+
 # summary data
 MTsum <- summarySE(MT_ECC, measurevar = 'MT', 
                    groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
@@ -289,7 +378,7 @@ ggplot(MTsum, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
   labs(title = 'Radial reaching', x = 'Eccentricity (mm)', y = 'Movement time (ms)') +
   scale_color_manual(values = c('grey50','goldenrod1','darkgreen')) +
   facet_wrap(~VIEW) + theme_classic() +
-  ylim(300,900) +
+  ylim(250,900) +
   theme(legend.position = 'bottom',
         legend.title = element_blank(),
         legend.text = element_text(size = 10),
@@ -300,6 +389,83 @@ ggplot(MTsum, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
   ) -> radMT
 radMT
 
+## grand mean MT
+MT_means$DIAGNOSIS <- factor(MT_means$DIAGNOSIS, levels = c('HC','MCI','AD'))
+MT_means$PPT <- factor(MT_means$PPT)
+MT_means$VIEW <- factor(MT_means$VIEW, labels = c('Free','Peripheral'))
+
+ggplot(MT_means, aes(x = DIAGNOSIS, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS)) +
+  geom_boxplot(size = 0.7) +
+  geom_jitter(shape=16, size = 2, position=position_jitter(0.2), alpha = .5) +
+  facet_wrap(~VIEW) +
+  scale_color_manual(values = c('grey50','goldenrod1','darkgreen')) +
+  ylim(300,1050) +
+  labs(title = 'Radial reaching', x = '', y = 'Movement time (ms)') +
+  theme_classic() + theme(legend.position = 'none',
+                          title = element_text(size = 18),
+                          axis.title = element_text(size = 16),
+                          axis.text = element_text(size = 12),
+                          strip.text = element_text(size = 14) 
+  ) -> radMT_means
+radMT_means
+
+##### RAD RT #####
+RT_medians <- aggregate(RT ~ PPT * VIEW * SIDE * ECC * SITE * DIAGNOSIS * AGE, 
+                        median, data = res)
+# average across side
+RT_ECC <- aggregate(RT ~ PPT * VIEW * SITE * ECC * DIAGNOSIS * AGE, 
+                    mean, data = RT_medians)
+# mean
+RT_means <- aggregate(RT ~ PPT * VIEW * SITE * DIAGNOSIS,
+                      mean, data = RT_ECC)
+
+# summary data
+RTsum <- summarySE(RT_ECC, measurevar = 'RT', 
+                   groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
+RTsum$DIAGNOSIS <- factor(RTsum$DIAGNOSIS, levels = c('HC','MCI','AD'))
+RTsum$ECC <- factor(RTsum$ECC)
+RTsum$VIEW <- factor(RTsum$VIEW, labels = c('Free','Peripheral'))
+
+# plot
+ggplot(RTsum, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
+                  shape = DIAGNOSIS)) +
+  geom_point(size = 4.5, position = position_dodge(width = .4)) +
+  geom_errorbar(aes(ymin=RT-ci, ymax=RT+ci), 
+                width=.4, position = position_dodge(width = .4)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 1, position = position_dodge(width = .4)) +
+  labs(title = 'Radial reaching', x = 'Eccentricity (mm)', y = 'Reaction time (ms)') +
+  scale_color_manual(values = c('grey50','goldenrod1','darkgreen')) +
+  facet_wrap(~VIEW) + theme_classic() +
+  ylim(300,800) +
+  theme(legend.position = 'bottom',
+        legend.title = element_blank(),
+        legend.text = element_text(size = 10),
+        title = element_text(size = 18),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 16),
+        strip.text = element_text(size = 14)
+  ) -> radRT
+radRT
+
+# mean all PP
+RT_means$DIAGNOSIS <- factor(RT_means$DIAGNOSIS, levels = c('HC','MCI','AD'))
+RT_means$PPT <- factor(RT_means$PPT)
+RT_means$VIEW <- factor(RT_means$VIEW, labels = c('Free','Peripheral'))
+
+ggplot(RT_means, aes(x = DIAGNOSIS, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS)) +
+  geom_boxplot(size = 0.7) +
+  geom_jitter(size = 2, shape=16, position=position_jitter(0.2), alpha = .5) +
+  facet_wrap(~VIEW) +
+  scale_color_manual(values = c('grey50','goldenrod1','darkgreen')) +
+  ylim(150,850) +
+  labs(title = 'Radial reaching', x = '', y = 'Reaction time (ms)') +
+  theme_classic() + theme(legend.position = 'none', 
+                          title = element_text(size = 18),
+                          axis.title = element_text(size = 16),
+                          axis.text = element_text(size = 12),
+                          strip.text = element_text(size = 14) 
+  ) -> radRT_means
+radRT_means
 
 ###### COMBINE & SAVE ######
 ## PMI
@@ -309,7 +475,8 @@ PMIfig <- ggarrange(latPMI, radPMI,
                     hjust = -1)
 PMIfig
 
-plotPath <- '/Users/Alex/Documents/DMT/analysis/'
+#plotPath <- '/Users/Alex/Documents/DMT/analysis/'
+plotPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/'
 ggsave('PMIboth-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 9.5, height = 5.5, path = plotPath)
 
@@ -332,3 +499,32 @@ MTfig
 
 ggsave('MTboth-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 10, height = 5.5, path = plotPath)
+# mean
+MTmean_fig <- ggarrange(latMT_means, radMT_means,
+                   ncol=2, nrow=1,
+                   widths = c(1,1),
+                   hjust = -1)
+MTmean_fig
+
+ggsave('MTboth_means-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 10, height = 5, path = plotPath)
+
+## RT
+RTfig <- ggarrange(latRT, radRT,
+                   ncol=2, nrow=1,
+                   widths = c(1,1),
+                   hjust = -1)
+RTfig
+
+ggsave('RTboth-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 10, height = 5.5, path = plotPath)
+
+# means
+RTmean_fig <- ggarrange(latRT_means, radRT_means,
+                        ncol=2, nrow=1,
+                        widths = c(1,1),
+                        hjust = -1)
+RTmean_fig
+
+ggsave('RTboth_means-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 10, height = 5, path = plotPath)
