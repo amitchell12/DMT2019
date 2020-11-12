@@ -31,7 +31,7 @@ PMIgrand <- aggregate(PMI ~ DIAGNOSIS*PPT*SITE*AGE*GRP, mean, data = PMIdata)
 # make control data-frame
 control_PMI <- subset(PMIdata, PMIdata$DIAGNOSIS == 'HC')
 control_PMI$TSTAT <- 0
-control_PMI$PVALUE <- 1
+control_PMI$PVALUE <- 1a
 control_PMI$DEFICIT <- 0
 control_PMI$BL <- 0
 # get deficit data for patients
