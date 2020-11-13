@@ -27,7 +27,7 @@ res$HAND <- factor(res$HAND, labels = c('left','right'))
 res$DOM <- as.numeric(res$SIDE == res$HAND) #1 = dominant, 0 = non-dominant
 res$DOM <- factor(res$DOM, labels= c('ND','D'))
 # change order so dominance up-front
-res <- res[, c(1:8,27,9:26)]
+res <- res[, c(1:8,26,9:25)]
 # removing trial with huge RT
 res <- res[res$RT < 6000 ,]
 
