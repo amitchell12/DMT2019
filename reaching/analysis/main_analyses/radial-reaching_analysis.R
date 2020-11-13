@@ -77,7 +77,7 @@ res <- res[, c(1:7,37,16,17,8:15,18:36)]
 ##### TRIAL OUTLIERS #####
 # calculating z-score for each participant
 # get PP matrix
-PPT <- count(res, PPT)
+PPT <- count(res, 'PPT')
 Z <- read.csv(text = 'AEZ,AE,PPT,VIEW')
 
 # first for free reaching

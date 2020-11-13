@@ -468,15 +468,15 @@ ggplot(TPSecc, aes(x = ECC, y = TPS, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_errorbar(aes(ymin=TPS-ci, ymax=TPS+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = 'Eccentricity (mm)', y = 'Time to peak velocity (ms)') +
+  labs(x = '', y = 'Time to peak speed (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() + ylim(150,280) +
-  theme(legend.position = 'bottom',
+  theme(legend.position = 'none',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
         strip.text = element_text(size = 12)
-  )
+  ) -> TPSplot
 
 
 ggsave('RAD_TPS_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
@@ -674,14 +674,14 @@ NTAPSttest <- pairwise.t.test(NTAPS_ECC$NTAPS, NTAPS_ECC$DIAGNOSIS, p.adj = 'bon
 print(NTAPSttest)
 
 #### FOR PUBLICATION: combine key results into 1 plot ####
-TimeFig <- ggarrange(MTplot, RTplot, PSplot, TAPSplot,
-                     ncol=2, nrow=2,
+TimeFig <- ggarrange(MTplot, RTplot, TPSplot, TAPSplot, PSplot,
+                     ncol=2, nrow=3,
                      widths = c(1,1),
-                     labels = c('a','b','c','d'),
+                     labels = c('a','b','c','d','e'),
                      hjust = -1)
 TimeFig
 ggsave('RAD_EXPLOR.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 8, height = 8, path = anaPath)
+       width = 8, height = 12, path = anaPath)
 
 ##### CORRELATE ACE #####
 setwd(dataPath)
