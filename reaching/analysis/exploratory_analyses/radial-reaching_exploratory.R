@@ -15,11 +15,11 @@ library(psychReport)
 
 ###### GETTING DATA ######
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #desktop mac
-#anaPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
-#dataPath <- '/Users/Alex/Documents/DMT/data'
+anaPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
+dataPath <- '/Users/Alex/Documents/DMT/data'
 setwd(anaPath)
 
 res <- read.csv('all_radial-reaching_compiled.csv')
@@ -223,7 +223,7 @@ ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = '', y = 'Movement time (ms)') +
+  labs(x = 'Eccentricity (mm)', y = 'Movement time (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_wrap(~VIEW) + theme_classic() + ylim(300,900) +
   theme(legend.position = 'none',
@@ -307,7 +307,7 @@ ggplot(RTecc, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_errorbar(aes(ymin=RT-ci, ymax=RT+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = '', y = 'Reaction time (ms)') +
+  labs(x = 'Eccentricity (mm)', y = 'Reaction time (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() +
   ylim(300,900) +
@@ -470,13 +470,14 @@ ggplot(TPSecc, aes(x = ECC, y = TPS, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
   labs(x = '', y = 'Time to peak speed (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~VIEW) + theme_classic() + ylim(150,280) +
-  theme(legend.position = 'none',
+  facet_grid(~VIEW) + theme_classic() + ylim(0,300) +
+  theme(legend.position = c(.15,.20),
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
         strip.text = element_text(size = 12)
   ) -> TPSplot
+TPSplot
 
 
 ggsave('RAD_TPS_ECC.png', plot = last_plot(),  device = NULL, dpi = 300, 
@@ -506,7 +507,7 @@ aovDispTable(aovTPSECC)
 TPSttest <- pairwise.t.test(TPS_ECC$TPS, TPS_ECC$DIAGNOSIS, p.adj = 'bonf')
 print(TPSttest)
 
-##### TIME AFTER PV #####
+##### TIME AFTER PS #####
 # calculating
 res$TAPS <- res$MT - res$TPS
 
@@ -529,7 +530,7 @@ ggplot(TAPS_means, aes(x = VIEW, y = TAPS, colour = SITE, group = PPT)) +
   scale_color_manual(values = c('dodgerblue3','grey50')) +
   stat_summary(aes(y = TAPS, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  facet_wrap(~DIAGNOSIS) + #ylim(0.5,0.8) +
+  facet_wrap(~DIAGNOSIS) +
   labs(x = '', y = 'Time after peak speed (ms)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'bottom', 
                           axis.text = element_text(size = 10),
@@ -554,7 +555,7 @@ ggplot(TAPSecc, aes(x = ECC, y = TAPS, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
   labs(x = 'Eccentricity (mm)', y = 'Time after peak speed (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
-  facet_grid(~VIEW) + theme_classic() + ylim(300,900) +
+  facet_grid(~VIEW) + theme_classic() + ylim(300,700) +
   theme(legend.position = 'none',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
@@ -674,14 +675,23 @@ NTAPSttest <- pairwise.t.test(NTAPS_ECC$NTAPS, NTAPS_ECC$DIAGNOSIS, p.adj = 'bon
 print(NTAPSttest)
 
 #### FOR PUBLICATION: combine key results into 1 plot ####
-TimeFig <- ggarrange(MTplot, RTplot, TPSplot, TAPSplot, PSplot,
-                     ncol=2, nrow=3,
+TimeFig <- ggarrange(MTplot, RTplot,
+                     ncol=2, nrow=1,
                      widths = c(1,1),
-                     labels = c('a','b','c','d','e'),
+                     labels = c('a','b'),
                      hjust = -1)
 TimeFig
 ggsave('RAD_EXPLOR.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 8, height = 12, path = anaPath)
+       width = 8, height = 4, path = anaPath)
+
+SuppFig <- ggarrange(TPSplot, TAPSplot, PSplot,
+                     ncol=2, nrow=2,
+                     widths = c(1,1),
+                     labels = c('a','b','c'),
+                     hjust = -1)
+SuppFig
+ggsave('RAD_SUPP.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 8, height = 8, path = anaPath)
 
 ##### CORRELATE ACE #####
 setwd(dataPath)
