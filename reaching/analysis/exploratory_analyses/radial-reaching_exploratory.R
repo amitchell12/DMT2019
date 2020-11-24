@@ -188,6 +188,7 @@ MT_ECC <- aggregate(MT ~ PPT * VIEW * ECC * SITE * DIAGNOSIS *AGE,
                         median, data = MT_medians)
 MT_means <- aggregate(MT ~ PPT * VIEW * SITE * DIAGNOSIS * AGE,
                       mean, data = MT_ECC)
+MTgrp_means <- summarySE(MT_means, measurevar = 'MT', groupvars = c('DIAGNOSIS','VIEW'))
 
 ## plotting :)
 # means for all PP
@@ -518,6 +519,7 @@ TAPS_ECC <- aggregate(TAPS ~ PPT * VIEW * ECC * SITE * DIAGNOSIS,
                           median, data = TAPS_medians)
 TAPS_means <- aggregate(TAPS ~ PPT * VIEW * SITE * DIAGNOSIS,
                         mean, data = TAPS_ECC)
+TAPSgrp_means <- summarySE(TAPS_means, measurevar = 'TAPS', groupvars = c('DIAGNOSIS','VIEW'))
 
 ## plotting :)
 # means all PP
@@ -590,6 +592,18 @@ aovDispTable(aovTAPSECC)
 #pair-wise t-test
 TAPSttest <- pairwise.t.test(TAPS_ECC$TAPS, TAPS_ECC$DIAGNOSIS, p.adj = 'bonf')
 print(TAPSttest)
+
+## calculating % of total MT is TAPS ##
+# remove extra bits from summary stats
+MTgrp_means <- MTgrp_means[, c(1:4)]
+TAPSgrp_means <- TAPSgrp_means[, c(1:4)]
+# both in same DF
+reachDur <- merge(MTgrp_means, TAPSgrp_means)
+# calculating percentage
+reachDur$PER <- (reachDur$TAPS/reachDur$MT)*100
+
+# save the percentages
+write.csv(reachDur, 'reachDuration_TAPS.csv', row.names = FALSE)
 
 ##### NORM TIME AFTER PV #####
 # calculating
