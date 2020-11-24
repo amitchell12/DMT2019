@@ -3,6 +3,7 @@ library(readr)
 library(ggplot2)
 library(reshape2)
 library(ggpubr)
+library(plyr)
 
 ##### correlations #####
 #anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/task-correlations' #mac
@@ -13,13 +14,13 @@ anaPath <- "/Users/Alex/Documents/DMT/analysis/task-correlations/"
 #latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 latPath <- "/Users/Alex/Documents/DMT/analysis/lateral_reaching/"
 setwd(latPath)
-latData <- read.csv('lateralPMI-filtered.csv')
+latData <- read.csv('lateralPMI_all.csv')
 # loading radial reaching data
 #radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
 #radPath <- 'S:/groups/DMT/analysis/radial_reaching'
 radPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
 setwd(radPath)
-radData <- read.csv('radialPMI-filtered.csv')
+radData <- read.csv('radialPMI.csv')
 # TVA path
 #TVApath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/all/'
 TVApath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
@@ -29,60 +30,50 @@ TVAData <- read.csv('tva_values.csv')
 # adding extra info necessary to merge
 latData$TASK <- 'Lateral'
 radData$TASK <- 'Radial'
-latData_dir$TASK <- 'Lateral'
-radData_dir$TASK <- 'Radial'
 # changing labels of 'left/right' in rad data so they match lateral
 latData$SIDE <- factor(latData$SIDE, labels = c('Left', 'Right'))
-latData_dir$SIDE <- factor(latData_dir$SIDE, labels = c('Left', 'Right'))
-
-## not now
-#adding directional PMI into data-frame (along x-axis only)
-#latData$dPMI <- latData_dir$PMI
-#radData$dPMI <- radData_dir$PMI
-
-##### PMI data ######
 latData <- latData[, c(1:7,9:12)]
+# labelling groups in rad data
+radData$GRP <- factor(radData$GRP)
+# revalue UEA numbering system to match EDB
+radData$GRP <- revalue(radData$GRP, c("3"="1", "4"="2"))
+radData$GRP <- factor(radData$GRP, labels = c('Control','Patient'))
 
-dat_side <- rbind(latData, radData)
-corrDat_PMI <- dcast(dat_side, PPT+GRP+DOM ~ TASK, value.var = 'PMI')
-dat <- aggregate(PMI ~ TASK * GRP * PPT, mean, data = dat_side) 
-corrDat <- dcast(dat, PPT+GRP ~ TASK, value.var = 'PMI')
+##### PMI CORRELATIONS ######
+allDat <- rbind(latData, radData)
+# average across side
+allDat <- aggregate(PMI ~ TASK*PPT*GRP*DIAGNOSIS*SITE*AGE, mean, data = allDat)
+# cast across task
+corrPMI <- dcast(allDat, PPT+GRP+DIAGNOSIS ~ TASK, value.var = 'PMI')
+corrPMI$DIAGNOSIS <- factor(corrPMI$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
-ggscatter(corrDat_PMI, x = 'Lateral', y = 'Radial', 
-          add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
-          cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') + 
-  facet_wrap(~GRP*DOM) + 
-  ylab('Radial reaching PMI (deg)') + xlab('Lateral reaching PMI (deg)')
+## running correlation - split between patients
+corrPMI_patients <- corrPMI[corrPMI$GRP == 'Patient' ,]
+corrPMI_controls <- corrPMI[corrPMI$GRP == 'Control' ,]
 
-ggsave('reaching_correlations_spearman.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
+res_control <- cor.test(corrPMI_controls$Lateral, corrPMI_controls$Radial, 
+                method = "spearman")
+res_patients <- cor.test(corrPMI_patients$Lateral, corrPMI_patients$Radial, 
+                        method = "spearman")
 
-##### dPMI data ######
-datDir <- rbind(latData_dir, radData_dir)
-corrDat_dir <- dcast(dat_side, PPT+GRP+SIDE ~ TASK, value.var = 'PMI')
+ggplot(corrPMI, aes(x = Lateral, y = Radial)) + 
+  geom_point(aes(shape = DIAGNOSIS, colour = DIAGNOSIS), size = 2.5) +
+  geom_smooth(method=lm, se=FALSE, colour = 'black') +
+  scale_colour_manual(values = c('black','grey30','grey60')) +
+  facet_wrap(~GRP) + 
+  xlim(0,50) +
+  ylab('Radial reaching PMI (mm)') + xlab('Lateral reaching PMI (mm)') +
+  theme_classic() + theme(legend.position = 'bottom',
+                          legend.title = element_blank(),
+                          legend.text = element_text(size = 10),
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12))
 
-ggscatter(corrDat_dir, x = 'Lateral', y = 'Radial', 
-          add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
-          cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') + 
-  facet_wrap(~GRP*SIDE)+ 
-  ylab('Radial reaching PMI (deg)') + xlab('Lateral reaching PMI (deg)')
+ggsave('reach_correlations.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 8, height = 5, path = anaPath)
 
-ggsave('dir_reaching_correlations_spearman.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-
-#file with data organised by participant
-colnames(latData)[which(names(latData) == "Free")] <- "LAT_FREE"
-colnames(latData)[which(names(latData) == "Peripheral")] <- "LAT_PER"
-colnames(latData)[which(names(latData) == "PMI")] <- "LAT_PMI"
-#names(latData)[8] <- 'dPMI_lat'
-colnames(radData)[which(names(radData) == "Free")] <- "RAD_FREE"
-colnames(radData)[which(names(radData) == "Peripheral")] <- "RAD_PER"
-colnames(radData)[which(names(radData) == "PMI")] <- "RAD_PMI"
-#names(radData)[8] <- 'dPMI_rad'
-allDat <- merge(latData, radData, by = c('PPT', 'GRP', 'DOM'), all = TRUE)
-colnames(allDat)[which(names(allDat) == "DIAGNOSIS.x")] <- "DIAGNOSIS"
-
+#### NOT FINALISED 
 ###### TVA data ######
 # ranaming to match reaching data-frame
 names(TVAData)[1] <- 'PPT'
