@@ -14,14 +14,12 @@ anaPath <- "/Users/Alex/Documents/DMT/analysis/task-correlations/"
 latPath <- "/Users/Alex/Documents/DMT/analysis/lateral_reaching/"
 setwd(latPath)
 latData <- read.csv('lateralPMI-filtered.csv')
-latData_dir <- read.csv('lateral-reaching_dirPMI.csv')
 # loading radial reaching data
 #radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
 #radPath <- 'S:/groups/DMT/analysis/radial_reaching'
 radPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
 setwd(radPath)
 radData <- read.csv('radialPMI-filtered.csv')
-radData_dir <- read.csv('radial-reaching_dirPMI.csv')
 # TVA path
 #TVApath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/all/'
 TVApath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
