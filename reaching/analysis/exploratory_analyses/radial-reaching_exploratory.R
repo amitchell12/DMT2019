@@ -15,40 +15,65 @@ library(psychReport)
 
 ###### GETTING DATA ######
 #on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
+anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #desktop mac
-anaPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
-dataPath <- '/Users/Alex/Documents/DMT/data'
+#dataPath <- '/Users/Alex/Documents/DMT/data'
+#anaPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
 setwd(anaPath)
 
 res <- read.csv('all_radial-reaching_compiled.csv')
 res$ECC <- factor(abs(res$POSITION)) #adding eccentricity = absolute target position
 
-#### ABSOLUTE ERROR #####
+##### AE BY ECCENTRICITY #####
+# calculating medians
 # averaging across side
-res <- aggregate(AEmed ~ PPT*ECC*VIEW*DIAGNOSIS*SITE*AGE, 
+res_medians <- aggregate(AE ~ PPT * VIEW * SIDE * ECC * SITE * GRP * DIAGNOSIS * AGE * ECC, 
+                       median, data = res)
+resAE <- aggregate(AE ~ PPT*ECC*VIEW*DIAGNOSIS*SITE*AGE, 
                    mean, data = res_medians)
+resAE$ECC <- factor(resAE$ECC)
 
-## ANOVA ##
-ECC_ANOVA <- ezANOVA(
+## PLOT: eccentricity ##
+ECCsummary <- summarySE(resAE, measurevar = 'AE', 
+                        groupvar = c('DIAGNOSIS', 'VIEW', 'ECC'), na.rm = TRUE)
+ECCsummary$DIAGNOSIS <- factor(ECCsummary$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(ECCsummary, aes(x = ECC, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS, 
+                       shape = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(.4)) +
+  geom_errorbar(aes(ymin=AE-ci, ymax=AE+ci), 
+                width=.4, position = position_dodge(.4)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(.4)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(x = '', y = 'Radial reaching error (mm)') +
+  facet_grid(~VIEW) + theme_classic() +
+  theme(legend.position = c(.15,.85),
+        legend.title = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 12)
+  ) -> AEecc
+AEecc
+
+## CALCULATING ANOVA ##
+ALLECC_ANOVA <- ezANOVA(
   data = resAE
-  , dv = .(AEmed)
+  , dv = .(AE)
   , wid = .(PPT)
-  , within = .(VIEW, POSITION)
+  , within = .(VIEW, ECC)
   , between = .(DIAGNOSIS)
-  , between_covariates = .(AGE)
+  , between_covariates = .(SITE, AGE)
   , type = 3,
   return_aov = TRUE,
   detailed = TRUE
 )
 
-ECC_ANOVA$ANOVA
-ECC_ANOVA$`Mauchly's Test for Sphericity`
-ECC_ANOVA$`Sphericity Corrections`
-aovECC <- aovEffectSize(ezObj = ECC_ANOVA, effectSize = "pes")
-aovDispTable(aovECC)
-
+ALLECC_ANOVA$ANOVA
+ALLECC_ANOVA$`Mauchly's Test for Sphericity`
+ALLECC_ANOVA$`Sphericity Corrections`
+aovECCall <- aovEffectSize(ezObj = ALLECC_ANOVA, effectSize = "pes")
+aovDispTable(aovECCall)
 
 ##### ANGULAR ERROR: median, means, PMI #####
 ANGmedians <- aggregate(ANG_ERR ~ PPT * VIEW * SIDE * ECC * SITE * GRP * DIAGNOSIS * AGE * ECC, 
@@ -337,7 +362,7 @@ ggplot(RTecc, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() +
   ylim(300,900) +
-  theme(legend.position = c(.15,.85),
+  theme(legend.position = 'none',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
@@ -714,14 +739,14 @@ NTAPSttest <- pairwise.t.test(NTAPS_ECC$NTAPS, NTAPS_ECC$DIAGNOSIS, p.adj = 'bon
 print(NTAPSttest)
 
 #### FOR PUBLICATION: combine key results into 1 plot ####
-TimeFig <- ggarrange(MTplot, RTplot,
-                     ncol=2, nrow=1,
+TimeFig <- ggarrange(AEecc, RTplot, MTplot,
+                     ncol=2, nrow=2,
                      widths = c(1,1),
-                     labels = c('a','b'),
+                     labels = c('a','b','c'),
                      hjust = -1)
 TimeFig
 ggsave('RAD_EXPLOR.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 8, height = 4, path = anaPath)
+       width = 8, height = 8, path = anaPath)
 
 SuppFig <- ggarrange(TPSplot, TAPSplot, PSplot,
                      ncol=2, nrow=2,
