@@ -315,30 +315,6 @@ PMI_ANOVA$`Sphericity Corrections`
 aovPMI <- aovEffectSize(ezObj = PMI_ANOVA, effectSize = "pes")
 aovDispTable(aovPMI)
 
-##### ABSOLUTE ERROR, ANOVA #####
-# averaging across side
-resAE <- aggregate(AEmed ~ PPT*POSITION*VIEW*DIAGNOSIS*SITE*AGE, 
-                   mean, data = res_medians)
-resAE$POSITION <- factor(resAE$POSITION)
-
-## ANOVA ##
-ECC_ANOVA <- ezANOVA(
-  data = resAE
-  , dv = .(AEmed)
-  , wid = .(PPT)
-  , within = .(VIEW, POSITION)
-  , between = .(DIAGNOSIS)
-  , between_covariates = .(AGE)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-ECC_ANOVA$ANOVA
-ECC_ANOVA$`Mauchly's Test for Sphericity`
-ECC_ANOVA$`Sphericity Corrections`
-aovECC <- aovEffectSize(ezObj = ECC_ANOVA, effectSize = "pes")
-aovDispTable(aovECC)
 
 
 ###### PLOTTING ######
@@ -374,7 +350,7 @@ ggplot(plot_PMI, aes(x = DOM, y = PMI, colour = DIAGNOSIS, group = PPT, shape = 
   scale_color_manual(values = c('grey45','grey45','grey45')) +
   scale_shape_manual(values = c(1,18)) +
   facet_wrap(~DIAGNOSIS) +
-  labs(x = 'Side', y = 'Lateral PMI (mm)') +
+  labs(x = 'Side', y = 'PMI (mm)') +
   theme_classic() + theme(legend.position = 'none', 
                           axis.title = element_text(size = 12),
                           axis.text = element_text(size = 10),
@@ -404,44 +380,18 @@ ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = DIAGNOSIS, group = PPT, 
   ) -> avPMI
 avPMI
 
-## AE plot by eccentricity
-# make plot data-frame
-av_ecc <- summarySE(res_medians, measurevar = 'AEmed', 
-                    groupvar = c('DIAGNOSIS','POSITION','VIEW'), na.rm = TRUE)
-
-av_ecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
-av_ecc$POSITION <- factor(av_ecc$POSITION)
-
-# plot 
-ggplot(av_ecc, aes(x = POSITION, y = AEmed, group = DIAGNOSIS, colour = DIAGNOSIS, 
-                   shape = DIAGNOSIS)) +
-  geom_point(size = 3, position = position_dodge(width = .4)) +
-  geom_errorbar(aes(ymin=AEmed-ci, ymax=AEmed+ci), 
-                width=.4, position = position_dodge(width = .4)) + 
-  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  labs(x = 'Eccentricity (°)', y = 'Lateral reaching error (mm)') +
-  facet_wrap(~VIEW) + theme_classic() +
-  theme(legend.position = c(.1,.85),
-        legend.title = element_blank(),
-        legend.text = element_text(size = 8),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12),
-        strip.text = element_text(size = 10)
-  ) -> AEecc
-AEecc
 
 # combining AE figures together
-PMIfig <- ggarrange(pPMI, avPMI, AEecc,
-                    ncol=2, nrow=2,
+PMIfig <- ggarrange(pPMI, avPMI,
+                    ncol=2, nrow=1,
                     widths = c(1.5,1),
-                    labels = c('a','b','c'),
+                    labels = c('a','b'),
                     hjust = -1)
 
 
 PMIfig
 
 ggsave('LATAE-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 8, height = 8, path = anaPath)
+       width = 8, height = 4, path = anaPath)
 
 

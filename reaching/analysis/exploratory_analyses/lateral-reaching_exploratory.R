@@ -38,6 +38,61 @@ res$DIAGNOSIS <- factor(res$DIAGNOSIS)
 # to match radial reaching - change name of 'POSITION' to 'ECC'
 colnames(res)[colnames(res)=='POSITION'] <- 'ECC' 
 
+#### ABSOLUTE ERROR #####
+# averaging across side
+res_medians <- aggregate(AE ~ PPT * VIEW * SIDE * ECC * SITE * DIAGNOSIS * AGE, 
+                         median, data = res)
+
+resAE <- aggregate(AE ~ PPT*ECC*VIEW*DIAGNOSIS*SITE*AGE, 
+                 mean, data = res_medians)
+
+## AE plot by eccentricity
+# make plot data-frame
+av_ecc <- summarySE(resAE, measurevar = 'AE', 
+                    groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
+
+av_ecc$DIAGNOSIS <- factor(av_ecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
+av_ecc$ECC <- factor(av_ecc$ECC)
+
+# plot 
+ggplot(av_ecc, aes(x = ECC, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS, 
+                   shape = DIAGNOSIS)) +
+  geom_point(size = 3, position = position_dodge(width = .4)) +
+  geom_errorbar(aes(ymin=AE-ci, ymax=AE+ci), 
+                width=.4, position = position_dodge(width = .4)) + 
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(x = '', y = 'Absolute error (mm)') +
+  facet_wrap(~VIEW) + theme_classic() +
+  theme(legend.position = c(.12,.85),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 8),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12),
+        strip.text = element_text(size = 10)
+  ) -> AEecc
+AEecc
+
+## ANOVA ##
+resAE$ECC <- factor(resAE$ECC)
+
+ECC_ANOVA <- ezANOVA(
+  data = resAE
+  , dv = .(AE)
+  , wid = .(PPT)
+  , within = .(VIEW, ECC)
+  , between = .(DIAGNOSIS)
+  , between_covariates = .(AGE)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+ECC_ANOVA$ANOVA
+ECC_ANOVA$`Mauchly's Test for Sphericity`
+ECC_ANOVA$`Sphericity Corrections`
+aovECC <- aovEffectSize(ezObj = ECC_ANOVA, effectSize = "pes")
+aovDispTable(aovECC)
 
 ###### DIRECTIONAL ERROR (xAxis) ######
 dir_medians <- aggregate(xerr_mm ~ PPT * VIEW * SIDE * ECC * SITE * DIAGNOSIS * AGE, 
@@ -342,7 +397,7 @@ ggplot(RTsum, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() +
   ylim(300,800) +
-  theme(legend.position = c(.12,.85),
+  theme(legend.position = 'none',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
@@ -383,14 +438,14 @@ aovDispTable(aovRT)
 
 ### FOR PUBLICATION: combine MT + RT plots ####
 
-TimeFig <- ggarrange(MTplot, RTplot,
-                    ncol=2, nrow=1,
+TimeFig <- ggarrange(AEecc, RTplot, MTplot,
+                    ncol=2, nrow=2,
                     widths = c(1,1),
-                    labels = c('a','b'),
+                    labels = c('a','b','c'),
                     hjust = -1)
 TimeFig
 ggsave('LAT_EXPLOR.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 8, height = 4, path = anaPath)
+       width = 8, height = 8, path = anaPath)
 
 ##### CORRELATE PMI + MT, RT ######
 # load PMI data

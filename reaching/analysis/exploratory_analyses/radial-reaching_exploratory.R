@@ -25,6 +25,31 @@ setwd(anaPath)
 res <- read.csv('all_radial-reaching_compiled.csv')
 res$ECC <- factor(abs(res$POSITION)) #adding eccentricity = absolute target position
 
+#### ABSOLUTE ERROR #####
+# averaging across side
+res <- aggregate(AEmed ~ PPT*ECC*VIEW*DIAGNOSIS*SITE*AGE, 
+                   mean, data = res_medians)
+
+## ANOVA ##
+ECC_ANOVA <- ezANOVA(
+  data = resAE
+  , dv = .(AEmed)
+  , wid = .(PPT)
+  , within = .(VIEW, POSITION)
+  , between = .(DIAGNOSIS)
+  , between_covariates = .(AGE)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+ECC_ANOVA$ANOVA
+ECC_ANOVA$`Mauchly's Test for Sphericity`
+ECC_ANOVA$`Sphericity Corrections`
+aovECC <- aovEffectSize(ezObj = ECC_ANOVA, effectSize = "pes")
+aovDispTable(aovECC)
+
+
 ##### ANGULAR ERROR: median, means, PMI #####
 ANGmedians <- aggregate(ANG_ERR ~ PPT * VIEW * SIDE * ECC * SITE * GRP * DIAGNOSIS * AGE * ECC, 
                          median, data = res)
