@@ -7,115 +7,15 @@ library(ez)
 library(psychReport)
 library(singcar)
 library(tidyverse)
+library(Hmisc)
 
-#on mac
+#PATHS: will need changing
+# path for data & analysis
 anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-UEAPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/norwich_movement_data'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 
-# on desktop mac
-#dataPath <- '/Users/Alex/Documents/DMT/data'
-#UEAPath <- '/Users/Alex/Documents/DMT/norwich_movement_data/'
-#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching'
-
-#on pc
-#dataPath <- 'S:/groups/DMT/data'
-#anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
-setwd(anaPath) #for Edinburgh data 
-resUOE <- read.csv('radial-reaching_compiledUOE.csv')
-setwd(UEAPath) #for Norwich data
-resUEA <- read.csv('radial-reaching_compiledUEA.csv') 
-
-##### DATA ORGANISE #####
-# UOE data, getting rid of 'deg' values - just use mm
-resUOE <- resUOE[, c(1:23,26:38)]
-# UEA data getting rid of not needed values
-resUEA <- resUEA[, c(1:4,10:17,19:42)]
-
-# remove participants
-resUEA <- resUEA[resUEA$PPT != '311' ,] #participant 311 had TIA
-# first 10 participants did different set-up to UEA patients, also remove
-oldPP <- c(301:310)
-resUEA <- subset(resUEA, ! PPT %in% oldPP)
-
-# change position labelling here too - needs to match UOE (100,200,300,400mm)
-# split into two data-frames (left/right sides) and label, the bind again
-UEAright <- resUEA[resUEA$SIDE == 'Right' ,]
-UEAleft <- resUEA[resUEA$SIDE == 'Left' ,]
-# for right 1= closest, 4= furthest away
-UEAright$POSITION <- factor(UEAright$POSITION, labels = c('100','200','300','400'))
-# for left 1=furthest, 4= nearest
-UEAleft$POSITION <- factor(UEAleft$POSITION, labels = c('-400','-300','-200','-100'))
-# bind back together!
-resUEA <- rbind(UEAright, UEAleft)
-
-# now let's bind! & order by participant
-res <- rbind(resUOE, resUEA)
-res <- res[order(res$PPT),]
-
-# changing levelsfor plotting
-res$VIEW <- factor(res$VIEW) #changing so only 2 levels recorded
-res$GRP <- factor(res$GRP)
-#levels(res$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
-res$diagnosis <- factor(res$diagnosis)
-res$POSITION <- factor(res$POSITION)
-# capitalising names of demographics to match rest
-colnames(res)[colnames(res) == 'gender'] <- 'GENDER'
-colnames(res)[colnames(res) == 'age'] <- 'AGE'
-colnames(res)[colnames(res) == 'hand'] <- 'HAND'
-colnames(res)[colnames(res) == 'education'] <- 'ED'
-colnames(res)[colnames(res) == 'diagnosis'] <- 'DIAGNOSIS'
-
-## getting dominant + non-dominant sides, for analysis
-res$HAND <- factor(res$HAND, labels = c('Left','Right'))
-# if hand = side, dominant; else non dominant
-res$DOM <- as.numeric(res$SIDE == res$HAND) #1 = dominant, 0 = non-dominant
-res$DOM <- factor(res$DOM, labels= c('ND','D'))
-# change order so important var up-front
-res <- res[, c(1:7,37,16,17,8:15,18:36)]
-
-##### TRIAL OUTLIERS #####
-# calculating z-score for each participant
-# get PP matrix
-PPT <- count(res, PPT)
-Z <- read.csv(text = 'AEZ,AE,PPT,VIEW')
-
-# first for free reaching
-resFree <- res[res$VIEW == 'Free' ,]
-for (p in PPT$PPT){
-  tmp <- resFree[resFree$PPT == p ,]
-   # temporary matrix to save data to
-  Zscore <- data.frame(matrix(ncol = 0, nrow = length(tmp$PPT)))
-  Zscore$AEZ <- abs(scale(tmp$AE))
-  Zscore$AE <- tmp$AE
-  Zscore$PPT <- p
-  Zscore$VIEW <- 'Free'
-    
-  Z <- rbind(Z, Zscore)
-}
-# then for peripheral reaching
-resPeriph <- res[res$VIEW == 'Peripheral' ,]
-for (p in PPT$PPT){
-  tmp <- resPeriph[resPeriph$PPT == p ,]
-  # temporary matrix to save data to
-  Zscore <- data.frame(matrix(ncol = 0, nrow = length(tmp$PPT)))
-  Zscore$AEZ <- abs(scale(tmp$AE))
-  Zscore$AE <- tmp$AE
-  Zscore$PPT <- p
-  Zscore$VIEW <- 'Peripheral'
-  
-  Z <- rbind(Z, Zscore)
-}
-
-# merge data-frames
-res <- merge(res,Z)
-## remove trials where absolute z-score is > 4
-XCLUDE <- res[res$AEZ > 4 ,]
-res <- res[!(res$AEZ %in% XCLUDE$AEZ), ]
-
-# save Edinburgh & UEA compiled data
+# load data
 setwd(anaPath)
-write.csv(res, 'all_radial-reaching_compiled.csv', row.names = FALSE)
+res <- read.csv('all_radial-reaching_compiled.csv')
 
 # summary data
 # extracting data from furthest two target locs
@@ -170,89 +70,6 @@ SITE_ANOVA <- ezANOVA(
 print(SITE_ANOVA)
 # no difference across sites! Hooray!
 
-ggplot(siteANOVA, aes(x = VIEW, y = AEmean, colour = DIAGNOSIS)) +
-  geom_point(size =2, position = position_dodge(.3)) +
-  facet_wrap(~SITE)
-
-ggsave('site_comparison.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-# Eccentricity plots
-# creating another data-frame with all position data, for plotting eccentricity info
-res_medians_all <- aggregate(AE ~ PPT*POSITION*VIEW*SIDE*DOM*DIAGNOSIS*GRP*SITE*AGE, 
-                             median, data = res)
-# removing free + peripheral trails at 100mm left for 101, error
-res_medians_all <- res_medians_all[order(res_medians_all$PPT) ,]
-res_medians_all <- res_medians_all[!(res_medians_all$PPT == '101' & res_medians_all$AE > 50) ,]
-
-# controls
-#re-ordering position data to fit correct order
-res_medians_all$POSITION <- as.numeric(as.character(res_medians_all$POSITION))
-res_medians_all$POSITION <- factor(res_medians_all$POSITION)
-meds_control <- res_medians_all[res_medians_all$DIAGNOSIS == 'HC' ,]
-
-ggplot(meds_control, aes(x = POSITION, y = AE, colour = DOM)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_wrap(~VIEW) + 
-  labs(title = 'Control', x = 'Eccentricity (mm)', 
-       y = 'Mean AE (mm)', element_text(size = 12)) +
-  scale_colour_manual(values = c('black', 'grey50')) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) 
-
-
-ggsave('control_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-# patients - MCI
-meds_MCI <- res_medians_all[res_medians_all$DIAGNOSIS == 'MCI' ,]
-
-ggplot(meds_MCI, aes(x = POSITION, y = AE, colour = SIDE)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_wrap(~VIEW) +
-  labs(title = 'MCI', x = 'Eccentricity (mm)', 
-       y = 'Mean AE (mm)', element_text(size = 12)) +
-  scale_colour_manual(values = c('black', 'grey50')) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) 
-
-ggsave('MCI_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-# patients - AD
-meds_AD <- res_medians_all[res_medians_all$DIAGNOSIS == 'AD' ,]
-
-ggplot(meds_AD, aes(x = POSITION, y = AE, colour = SIDE)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_wrap(~VIEW) + 
-  labs(title = 'Alzheimers', x = 'Eccentricity (deg)', 
-       y = 'Mean AE (mm)', element_text(size = 12)) +
-  scale_colour_manual(values = c('black', 'grey50')) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) 
-
-ggsave('AD_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-# correlate PMI with possible co-variates, age + education
-agecov <- cor.test(PMIdata$AGE, PMIdata$PMI, method = 'pearson')
-ggscatter(PMIdata, x = "AGE", y = "PMI", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "spearman",
-          xlab = "Age", ylab = "PMI (mm)")
-
-# correlate PMI with years of education
-#PMIdata$ED <- as.numeric(PMIdata$ED)
-#edcov <- cor.test(PMIdata$ED, PMIdata$PMI, method = 'pearson')
-#ggscatter(PMIdata, x = "ED", y = "PMI", 
- #         add = "reg.line", conf.int = TRUE, 
-#          cor.coef = TRUE, cor.method = "spearman",
-#          xlab = "Years of Education", ylab = "PMI (mm)")
-
-
 #### outlier removal step has been removed from this analysis - code with this in can be found:
 #### DMT -> analysis -> radial_reaching -> as-preregistered
 
@@ -302,7 +119,7 @@ tdUOE_patient <- dcast(tdUOE_patient, PPT+DIAGNOSIS+AGE ~ DOM)
 tdUOE_patient[is.na(tdUOE_patient$D), "D"] <- -1 
 
 # time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
-# using Crawford's (1998) test of deficit
+# using Crawford et al.'s (2011) Bayesian test of covariates
 td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 for (l in 1:length(tdUOE_patient$PPT)){
