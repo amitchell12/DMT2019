@@ -12,12 +12,6 @@ library(ggpubr)
 #on mac
 dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-# on desktop mac
-#anaPath <- '/Users/Alex/Documents/DMT/analysis/lateral_reaching'
-#dataPath <- '/Users/Alex/Documents/DMT/data'
-#on pc
-#dataPath <- 'S:/groups/DMT/data'
-#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
 setwd(dataPath)
 
 ########### variable info ###########
@@ -125,7 +119,7 @@ totEye_move <- merge(sumEye_move, sumTrials)
 
 totEye_move$per <- (totEye_move$eye_move/totEye_move$n)*100
 
-write.csv(tot_eyeMove, 'eye-movements.csv', row.names = FALSE)
+write.csv(totEye_move, 'eye-movements.csv', row.names = FALSE)
 
 nVoid <- aggregate(void_trial ~ subject_nr * diagnosis * task, sum, data = res)
 tot_void <- aggregate(void_trial ~ diagnosis * task, sum, data = nVoid)
@@ -136,6 +130,7 @@ res <- res[which(res$eye_move == 0 & res$void == 0), c(1:6,16:19,7:13,23:28,21,2
 ## renaming variables to match radial reaching
 names(res)[1] <- 'PPT'
 names(res)[3] <- 'AGE'
+names(res)[4] <- 'HAND'
 names(res)[5] <- 'ED'
 names(res)[6] <- 'DIAGNOSIS'
 names(res)[7] <- 'VIEW'
@@ -150,15 +145,16 @@ names(res)[17] <- 'MT'
 names(res)[24] <- 'GRP'
 names(res)[25] <- 'SITE'
 
+## getting dominant + non-dominant sides, for analysis
+res$HAND <- factor(res$HAND, labels = c('right','left'))
+# if hand = side, dominant; else non dominant
+res$DOM <- as.numeric(res$SIDE == res$HAND) #1 = dominant, 0 = non-dominant
+res$DOM <- factor(res$DOM, labels= c('ND','D'))
+# change order so dominance up-front
+res <- res[, c(1:8,26,9:25)]
+
+## remove trial with wildly high RT (> 6000ms)
+res <- res[res$RT < 6000 ,]
 
 write.csv(res, "lateral-reaching_compiled.csv", row.names = FALSE)
-
-res$POSITION <- factor(res$POSITION)
-ggplot(res) + geom_point(aes(x = TARGx, y = TARGy), shape = 4, size = 3) +
-  geom_point(aes(x = LANDx, y = LANDy, colour = POSITION), shape = 1, size = 2) +
-  facet_wrap(. ~PPT*VIEW) 
-ggsave('lateral-reach_err.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, width = 15, height = 10, units = 'in', path = anaPath)
-
-
 

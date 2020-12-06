@@ -14,29 +14,12 @@ library(singcar)
 library(ez)
 library(psychReport)
 
-#set working directory to where data is
-# on mac (desktop)
-#dataPath <- '/Users/Alex/Documents/DMT/data/'
-#anaPath <- '/Users/Alex/Documents/DMT/analysis//lateral_reaching/'
-# on mac (laptop)
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/'
+#set working directory to where data is -> might need to change
 anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/'
 setwd(anaPath)
 
 # load data file
 res <- read.csv('lateral-reaching_compiled.csv')
-
-## getting dominant + non-dominant sides, for analysis
-names(res)[4] <- 'HAND'
-res$HAND <- factor(res$HAND, labels = c('left','right'))
-# if hand = side, dominant; else non dominant
-res$DOM <- as.numeric(res$SIDE == res$HAND) #1 = dominant, 0 = non-dominant
-res$DOM <- factor(res$DOM, labels= c('ND','D'))
-# change order so dominance up-front
-res <- res[, c(1:8,27,9:26)]
-
-## remove trial with widly high RT (> 6000ms)
-res <- res[res$RT < 6000 ,]
 
 # counting total number of valid trials for each patient
 valid <- aggregate(TARGx ~ DIAGNOSIS * PPT * DOM * VIEW, length, data = res)
@@ -45,6 +28,7 @@ valid$HITS <- (valid$TARGx/27)*100
 valid_tot <- aggregate(HITS ~ DIAGNOSIS * VIEW, mean, data = valid)
 
 ######### step 1, calculating PMI, all data ############
+# median within target locations
 res_medians <- aggregate(
   AE ~ PPT * DOM * SIDE * VIEW * POSITION * SITE * GRP * DIAGNOSIS * AGE, 
   median, data = res)
@@ -59,106 +43,37 @@ levels(res_medians$SITE) <- c('UOE', 'UEA')
 res_medians$DIAGNOSIS <- factor(res_medians$DIAGNOSIS)
 res_medians <- res_medians[order(res_medians$PPT), ] 
 
+# getting mean across targ locations
 res_means <- aggregate(AEmed ~ PPT * DOM * SIDE * VIEW * SITE * GRP * DIAGNOSIS * AGE, 
                        mean, data = res_medians)
 res_means <- res_means[order(res_means$PPT), ] 
 colnames(res_means)[colnames(res_means) == 'AEmed'] <- 'AEmean'
+
 # save data
 write.csv(res_medians, 'lateral-medians_all.csv', row.names = FALSE)
 write.csv(res_means, 'lateral-means_all.csv', row.names = FALSE)
 
 # to calculate PMI need to cast by task....
 PMIdata <- dcast(res_means, PPT+GRP+SITE+DOM+SIDE+DIAGNOSIS+AGE ~ VIEW) #different data-frame
+# PMI:
 PMIdata$PMI <- PMIdata$Peripheral - PMIdata$Free
 write.csv(PMIdata, 'lateralPMI_all.csv', row.names = FALSE)
 
-# summary
+# summary of PMI data
 meanPMI_side <- summarySE(PMIdata, measurevar = 'PMI', groupvar = c('DIAGNOSIS', 'DOM'),
                        na.rm = TRUE)
 write.csv(meanPMI_side, 'lateralPMI_means.csv', row.names = FALSE)
+
+
 # averaged across side
 PMIgrand <- aggregate(PMI~PPT+GRP+SITE+DIAGNOSIS+AGE, mean, data=PMIdata)
 meanPMI_grand <- summarySE(PMIgrand, measurevar = 'PMI', groupvar = c('DIAGNOSIS'))
-
-## getting & saving demographics for pub
-AGE <- summarySE(PMIgrand, measurevar = 'AGE', groupvar = c('DIAGNOSIS'), na.rm = TRUE)
-ED <- aggregate(ED ~ PPT * GRP * DIAGNOSIS, mean, data = res)
-ED <- summarySE(ED, measurevar = 'ED', groupvar = c('DIAGNOSIS'), na.rm = TRUE)
-
-
-## bit of plotting by eccentricity
-# controls
-res_medians$POSITION <- factor(res_medians$POSITION)
-meds_control <- res_medians[res_medians$GRP == 'Control' ,]
-  
-ggplot(meds_control, aes(x = POSITION, y = AEmed, colour = DOM)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(DOM), rows = vars(VIEW)) + 
-  labs(title = 'Control', x = 'Eccentricity (deg)', 
-       y = 'Mean AE (mm)', element_text(size = 12)) +
-  scale_colour_manual(values = c('black', 'grey50')) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                    strip.text.x = element_text(size = 10)) 
-
-
-ggsave('control_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-# patients - MCI
-meds_MCI <- res_medians[res_medians$DIAGNOSIS == 'MCI' ,]
-
-ggplot(meds_MCI, aes(x = POSITION, y = AEmed, colour = DOM)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(DOM), rows = vars(VIEW)) +
-  labs(title = 'MCI', x = 'Eccentricity (deg)', 
-       y = 'Mean AE (mm)', element_text(size = 12)) +
-  scale_colour_manual(values = c('black', 'grey50')) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) 
-
-ggsave('MCI_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
-
-# patients - AD
-meds_AD <- res_medians[res_medians$DIAGNOSIS == 'AD' ,]
-
-ggplot(meds_AD, aes(x = POSITION, y = AEmed, colour = DOM)) +
-  geom_point(shape = 1, size = 2) +
-  geom_line(aes(group = PPT), size = 0.5, alpha = .5) +
-  facet_grid(cols = vars(DOM), rows = vars(VIEW)) + 
-  labs(title = 'Alzheimers', x = 'Eccentricity (deg)', 
-       y = 'Mean AE (mm)', element_text(size = 12)) +
-  scale_colour_manual(values = c('black', 'grey50')) +
-  theme_bw() + theme(legend.position = 'none', text = element_text(size = 10),
-                     strip.text.x = element_text(size = 10)) 
-
-ggsave('AD_ecc.png', plot = last_plot(), device = NULL, dpi = 300, 
-       scale = 1, path = anaPath)
 
 #### NOTE: outlier removal stage removed from this analysis - can be found in:
 #### DMT -> analysis -> lateral_reaching -> as-preregistered
 
 ######## step 2: single case stats, filtered data #########
-## correlate PMI with age
-ggscatter(PMIgrand, x = 'AGE', y = 'PMI', 
-          add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
-          cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') +
-  ylab('PMI (deg)') + xlab('Age (years)') +
-  theme(text = element_text(size = 10))
-
-## correlate PMI with education
-PMIgrand$ED <- as.numeric(as.character(PMIgrand$ED))
-test <- PMIgrand[!(PMIgrand$ED == '.') ,]
-
-ggscatter(test, x = 'ED', y = 'PMI', 
-          add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
-          cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') +
-  ylab('PMI (deg)') + xlab('Education (years)') +
-  theme(text = element_text(size = 10))
-
-## correlation matrix of age and PMI - for BTD_cov
+## correlation matrix of age and PMI - for BTD_cov (singcar)
 ## non-dominant
 PMIcorr <- na.omit(PMIdata)
 PMIcorr <- PMIcorr[PMIcorr$DOM == 'ND', c(10,7)]
@@ -315,8 +230,6 @@ PMI_ANOVA$`Sphericity Corrections`
 aovPMI <- aovEffectSize(ezObj = PMI_ANOVA, effectSize = "pes")
 aovDispTable(aovPMI)
 
-
-
 ###### PLOTTING ######
 ## PMI ## 
 # make control data-frame
@@ -358,7 +271,7 @@ ggplot(plot_PMI, aes(x = DOM, y = PMI, colour = DIAGNOSIS, group = PPT, shape = 
   ) -> pPMI
 pPMI
 
-## PLOT 4: average PMI across sides - combine with PLOT 2
+## PLOT 2: average PMI across sides - combine with PLOT 2
 PMIav_plot <- aggregate(PMI ~ PPT*DIAGNOSIS*AGE*SITE, mean, data = plot_PMI)
 PMIav_plot <- PMIav_plot[order(PMIav_plot$PPT),]
 plot_PMI$DEFICITS <- as.numeric(plot_PMI$DEFICITS)
@@ -380,8 +293,7 @@ ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = DIAGNOSIS, group = PPT, 
   ) -> avPMI
 avPMI
 
-
-# combining AE figures together
+# combining AE figures together for pub
 PMIfig <- ggarrange(pPMI, avPMI,
                     ncol=2, nrow=1,
                     widths = c(1.5,1),
