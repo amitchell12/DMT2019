@@ -16,10 +16,6 @@ library(psychReport)
 ###### GETTING DATA ######
 #on mac
 anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
-#desktop mac
-#dataPath <- '/Users/Alex/Documents/DMT/data'
-#anaPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
 setwd(anaPath)
 
 res <- read.csv('all_radial-reaching_compiled.csv')
@@ -74,162 +70,6 @@ ALLECC_ANOVA$`Mauchly's Test for Sphericity`
 ALLECC_ANOVA$`Sphericity Corrections`
 aovECCall <- aovEffectSize(ezObj = ALLECC_ANOVA, effectSize = "pes")
 aovDispTable(aovECCall)
-
-##### ANGULAR ERROR: median, means, PMI #####
-ANGmedians <- aggregate(ANG_ERR ~ PPT * VIEW * SIDE * ECC * SITE * GRP * DIAGNOSIS * AGE * ECC, 
-                         median, data = res)
-## need to average across side to translate values so -ve = close to fixation
-# change sign for left-sided ang-err - use dlpyr funct for this
-ANGmedians <- ANGmedians %>%
-  mutate(ANG_ERR = ifelse(SIDE == 'Left', -ANG_ERR, ANG_ERR))
-
-# now can average across sides because -ve is towards fix for both R and L trials
-ANG_ECC <- aggregate(ANG_ERR ~ PPT * VIEW * SITE * ECC * DIAGNOSIS * AGE, 
-                      mean, data = ANGmedians)
-# average across target location
-ANGmeans <- aggregate(ANG_ERR ~ PPT * VIEW * SITE * DIAGNOSIS * AGE, 
-                           mean, data = ANG_ECC)
-ANGmeans$DIAGNOSIS <- factor(ANGmeans$DIAGNOSIS, levels = c('HC','MCI','AD'))
-
-### PLOTTING ###
-## mean all participants
-ggplot(ANGmeans, aes(x = VIEW, y = ANG_ERR, group = PPT, colour = SITE)) +
-  geom_hline(yintercept = 0) +
-  geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
-  stat_summary(aes(y = ANG_ERR, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  geom_line(aes(group = PPT), alpha = .4, size = 0.7, position = position_dodge(width = .3)) +
-  scale_color_manual(values = c('dodgerblue3','grey50')) + 
-  facet_grid(~DIAGNOSIS) +
-  labs(x = 'Side', y = 'Angular error (°)') + 
-  theme_classic() + theme(legend.position = 'bottom',
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 12),
-                          strip.text = element_text(size = 12)
-                          )
-
-ggsave('RAD_ANGERRmeans.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 5, height = 7, path = anaPath)
-
-## eccentricity
-# plotting data frame
-ANGECC_summary <- summarySE(ANG_ECC, measurevar = 'ANG_ERR', 
-                         groupvar = c('DIAGNOSIS', 'VIEW', 'ECC'), na.rm = TRUE)
-ANGECC_summary$DIAGNOSIS <- factor(ANGECC_summary$DIAGNOSIS, levels = c('HC','MCI','AD'))
-
-ggplot(ANGECC_summary, aes(x = ECC, y = ANG_ERR, colour = DIAGNOSIS, shape = DIAGNOSIS,
-                        group = DIAGNOSIS)) +
-  geom_hline(yintercept = 0) +
-  geom_point(size = 4, position = position_dodge(width = .3)) +
-  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
-  geom_errorbar(aes(ymin=ANG_ERR-ci, ymax=ANG_ERR+ci), 
-                width=.3, position = position_dodge(width = .3)) +
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  labs(x = 'Eccentricity (mm)', y = 'Angular error (°)') + 
-  facet_wrap(~VIEW) +
-  theme_classic() + theme(legend.position = 'bottom', 
-                          legend.title = element_blank(),
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 12),
-                          strip.text = element_text(size = 12))
-
-ggsave('RAD_ANGERR_ECC.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 5, height = 6, path = anaPath)
-
-### ANOVA ###
-# FULL ANOVA ON ECCENTRICITY DATA
-ANG_ANOVA <- ezANOVA(
-  data = ANG_ECC
-  , dv = .(ANG_ERR)
-  , wid = .(PPT)
-  , within = .(VIEW, ECC)
-  , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE, AGE)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-ANG_ANOVA$ANOVA
-ANG_ANOVA$`Mauchly's Test for Sphericity`
-ANG_ANOVA$`Sphericity Corrections`
-aovANGECC <- aovEffectSize(ezObj = ANG_ANOVA, effectSize = "pes")
-aovDispTable(aovANGECC)
-
-###### AMPLITUDE ERROR ######
-AMPmedians <- aggregate(AMP_ERR ~ PPT * VIEW * SIDE * ECC * SITE * GRP * DIAGNOSIS * AGE * ECC, 
-                        median, data = res)
-# average across side (-ve = closer to PP, +ve = away from PP)
-AMP_ECC <- aggregate(AMP_ERR ~ PPT * VIEW * SITE * ECC * DIAGNOSIS * AGE, 
-                     mean, data = AMPmedians)
-# average across target location
-AMPmeans <- aggregate(AMP_ERR ~ PPT * VIEW * SITE * DIAGNOSIS * AGE, 
-                      mean, data = AMP_ECC)
-AMPmeans$DIAGNOSIS <- factor(AMPmeans$DIAGNOSIS, levels = c('HC','MCI','AD'))
-
-### PLOTTING ###
-## mean all participants
-ggplot(AMPmeans, aes(x = VIEW, y = AMP_ERR, group = PPT, colour = SITE)) +
-  geom_hline(yintercept = 0) +
-  geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
-  stat_summary(aes(y = AMP_ERR, group = 1), fun.y = mean, colour = "black", 
-               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
-  geom_line(aes(group = PPT), alpha = .4, size = 0.7, position = position_dodge(width = .3)) +
-  scale_color_manual(values = c('dodgerblue3','grey50')) +
-  facet_grid(~DIAGNOSIS) +
-  labs(x = 'Side', y = 'Amplutude error (mm)') + 
-  theme_classic() + theme(legend.position = 'bottom',
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 12),
-                          strip.text = element_text(size = 12)
-  )
-
-ggsave('RAD_AMPERRmeans.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 5, height = 7, path = anaPath)
-
-## plotting data frame
-AMPECC_summary <- summarySE(AMP_ECC, measurevar = 'AMP_ERR', 
-                            groupvar = c('DIAGNOSIS', 'VIEW', 'ECC'), na.rm = TRUE)
-AMPECC_summary$DIAGNOSIS <- factor(AMPECC_summary$DIAGNOSIS, levels = c('HC','MCI','AD'))
-
-ggplot(AMPECC_summary, aes(x = ECC, y = AMP_ERR, colour = DIAGNOSIS, shape = DIAGNOSIS,
-                           group = DIAGNOSIS)) +
-  geom_hline(yintercept = 0) +
-  geom_point(size = 4, position = position_dodge(width = .3)) +
-  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
-  geom_errorbar(aes(ymin=AMP_ERR-ci, ymax=AMP_ERR+ci), 
-                width=.3, position = position_dodge(width = .3)) +
-  scale_color_manual(values = c('black','grey30','grey60')) +
-  labs(x = 'Eccentricity (mm)', y = 'Amplitude error (mm)') + 
-  facet_wrap(~VIEW) +
-  theme_classic() + theme(legend.position = 'bottom', 
-                          legend.title = element_blank(),
-                          axis.text = element_text(size = 10),
-                          axis.title = element_text(size = 12),
-                          strip.text = element_text(size = 12))
-
-ggsave('RAD_AMPERR_ECC.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 5, height = 6, path = anaPath)
-
-### ANOVA ###
-# FULL ANOVA ON ECCENTRICITY DATA
-AMP_ANOVA <- ezANOVA(
-  data = AMP_ECC
-  , dv = .(AMP_ERR)
-  , wid = .(PPT)
-  , within = .(VIEW, ECC)
-  , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE, AGE)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-AMP_ANOVA$ANOVA
-AMP_ANOVA$`Mauchly's Test for Sphericity`
-AMP_ANOVA$`Sphericity Corrections`
-aovAMPECC <- aovEffectSize(ezObj = AMP_ANOVA, effectSize = "pes")
-aovDispTable(aovAMPECC)
 
 ###### MOVEMENT TIME #######
 MT_medians <- aggregate(MT ~ PPT * VIEW * SIDE * DOM * ECC * SITE * DIAGNOSIS * AGE, 
@@ -397,6 +237,17 @@ aovDispTable(aovRTECC)
 RTttest <- pairwise.t.test(RT_ECC$RT, RT_ECC$DIAGNOSIS, p.adj = 'bonf')
 print(RTttest)
 
+#### FOR PUBLICATION: combine key results into 1 plot ####
+TimeFig <- ggarrange(AEecc, RTplot, MTplot,
+                     ncol=2, nrow=2,
+                     widths = c(1,1),
+                     labels = c('A','B','C'),
+                     hjust = -1)
+TimeFig
+ggsave('RAD_EXPLOR.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 8, height = 8, path = anaPath)
+
+###### ANALYSES PRESENTED IN SUPPLEMENTARY ######
 ##### PEAK SPEED #####
 PS_medians <- aggregate(PS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * DIAGNOSIS * AGE, 
                         median, data = res)
@@ -655,16 +506,183 @@ reachDur$PER <- (reachDur$TAPS/reachDur$MT)*100
 # save the percentages
 write.csv(reachDur, 'reachDuration_TAPS.csv', row.names = FALSE)
 
+#### FOR PUBLICATION: combine figures ####
+SuppFig <- ggarrange(TPSplot, TAPSplot, PSplot,
+                     ncol=2, nrow=2,
+                     widths = c(1,1),
+                     labels = c('A','B','C'),
+                     hjust = -1)
+SuppFig
+ggsave('RAD_SUPP.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 8, height = 8, path = anaPath)
+
+###### ANALYSES NOT INCLUDED IN MANUSCRIPT ######
+##### ANGULAR ERROR: median, means, PMI #####
+ANGmedians <- aggregate(ANG_ERR ~ PPT * VIEW * SIDE * ECC * SITE * GRP * DIAGNOSIS * AGE * ECC, 
+                        median, data = res)
+## need to average across side to translate values so -ve = close to fixation
+# change sign for left-sided ang-err - use dlpyr funct for this
+ANGmedians <- ANGmedians %>%
+  mutate(ANG_ERR = ifelse(SIDE == 'Left', -ANG_ERR, ANG_ERR))
+
+# now can average across sides because -ve is towards fix for both R and L trials
+ANG_ECC <- aggregate(ANG_ERR ~ PPT * VIEW * SITE * ECC * DIAGNOSIS * AGE, 
+                     mean, data = ANGmedians)
+# average across target location
+ANGmeans <- aggregate(ANG_ERR ~ PPT * VIEW * SITE * DIAGNOSIS * AGE, 
+                      mean, data = ANG_ECC)
+ANGmeans$DIAGNOSIS <- factor(ANGmeans$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+### PLOTTING ###
+## mean all participants
+ggplot(ANGmeans, aes(x = VIEW, y = ANG_ERR, group = PPT, colour = SITE)) +
+  geom_hline(yintercept = 0) +
+  geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
+  stat_summary(aes(y = ANG_ERR, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  geom_line(aes(group = PPT), alpha = .4, size = 0.7, position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('dodgerblue3','grey50')) + 
+  facet_grid(~DIAGNOSIS) +
+  labs(x = 'Side', y = 'Angular error (°)') + 
+  theme_classic() + theme(legend.position = 'bottom',
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12)
+  )
+
+ggsave('RAD_ANGERRmeans.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 5, height = 7, path = anaPath)
+
+## eccentricity
+# plotting data frame
+ANGECC_summary <- summarySE(ANG_ECC, measurevar = 'ANG_ERR', 
+                            groupvar = c('DIAGNOSIS', 'VIEW', 'ECC'), na.rm = TRUE)
+ANGECC_summary$DIAGNOSIS <- factor(ANGECC_summary$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(ANGECC_summary, aes(x = ECC, y = ANG_ERR, colour = DIAGNOSIS, shape = DIAGNOSIS,
+                           group = DIAGNOSIS)) +
+  geom_hline(yintercept = 0) +
+  geom_point(size = 4, position = position_dodge(width = .3)) +
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
+  geom_errorbar(aes(ymin=ANG_ERR-ci, ymax=ANG_ERR+ci), 
+                width=.3, position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(x = 'Eccentricity (mm)', y = 'Angular error (°)') + 
+  facet_wrap(~VIEW) +
+  theme_classic() + theme(legend.position = 'bottom', 
+                          legend.title = element_blank(),
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12))
+
+ggsave('RAD_ANGERR_ECC.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 5, height = 6, path = anaPath)
+
+### ANOVA ###
+# FULL ANOVA ON ECCENTRICITY DATA
+ANG_ANOVA <- ezANOVA(
+  data = ANG_ECC
+  , dv = .(ANG_ERR)
+  , wid = .(PPT)
+  , within = .(VIEW, ECC)
+  , between = .(DIAGNOSIS)
+  , between_covariates = .(SITE, AGE)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+ANG_ANOVA$ANOVA
+ANG_ANOVA$`Mauchly's Test for Sphericity`
+ANG_ANOVA$`Sphericity Corrections`
+aovANGECC <- aovEffectSize(ezObj = ANG_ANOVA, effectSize = "pes")
+aovDispTable(aovANGECC)
+
+###### AMPLITUDE ERROR ######
+AMPmedians <- aggregate(AMP_ERR ~ PPT * VIEW * SIDE * ECC * SITE * GRP * DIAGNOSIS * AGE * ECC, 
+                        median, data = res)
+# average across side (-ve = closer to PP, +ve = away from PP)
+AMP_ECC <- aggregate(AMP_ERR ~ PPT * VIEW * SITE * ECC * DIAGNOSIS * AGE, 
+                     mean, data = AMPmedians)
+# average across target location
+AMPmeans <- aggregate(AMP_ERR ~ PPT * VIEW * SITE * DIAGNOSIS * AGE, 
+                      mean, data = AMP_ECC)
+AMPmeans$DIAGNOSIS <- factor(AMPmeans$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+### PLOTTING ###
+## mean all participants
+ggplot(AMPmeans, aes(x = VIEW, y = AMP_ERR, group = PPT, colour = SITE)) +
+  geom_hline(yintercept = 0) +
+  geom_point(shape = 16, size = 2, position = position_dodge(width = .3)) +
+  stat_summary(aes(y = AMP_ERR, group = 1), fun.y = mean, colour = "black", 
+               geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
+  geom_line(aes(group = PPT), alpha = .4, size = 0.7, position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('dodgerblue3','grey50')) +
+  facet_grid(~DIAGNOSIS) +
+  labs(x = 'Side', y = 'Amplutude error (mm)') + 
+  theme_classic() + theme(legend.position = 'bottom',
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12)
+  )
+
+ggsave('RAD_AMPERRmeans.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 5, height = 7, path = anaPath)
+
+## plotting data frame
+AMPECC_summary <- summarySE(AMP_ECC, measurevar = 'AMP_ERR', 
+                            groupvar = c('DIAGNOSIS', 'VIEW', 'ECC'), na.rm = TRUE)
+AMPECC_summary$DIAGNOSIS <- factor(AMPECC_summary$DIAGNOSIS, levels = c('HC','MCI','AD'))
+
+ggplot(AMPECC_summary, aes(x = ECC, y = AMP_ERR, colour = DIAGNOSIS, shape = DIAGNOSIS,
+                           group = DIAGNOSIS)) +
+  geom_hline(yintercept = 0) +
+  geom_point(size = 4, position = position_dodge(width = .3)) +
+  geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .3)) +
+  geom_errorbar(aes(ymin=AMP_ERR-ci, ymax=AMP_ERR+ci), 
+                width=.3, position = position_dodge(width = .3)) +
+  scale_color_manual(values = c('black','grey30','grey60')) +
+  labs(x = 'Eccentricity (mm)', y = 'Amplitude error (mm)') + 
+  facet_wrap(~VIEW) +
+  theme_classic() + theme(legend.position = 'bottom', 
+                          legend.title = element_blank(),
+                          axis.text = element_text(size = 10),
+                          axis.title = element_text(size = 12),
+                          strip.text = element_text(size = 12))
+
+ggsave('RAD_AMPERR_ECC.png', plot = last_plot(), device = NULL, dpi = 300, 
+       width = 5, height = 6, path = anaPath)
+
+### ANOVA ###
+# FULL ANOVA ON ECCENTRICITY DATA
+AMP_ANOVA <- ezANOVA(
+  data = AMP_ECC
+  , dv = .(AMP_ERR)
+  , wid = .(PPT)
+  , within = .(VIEW, ECC)
+  , between = .(DIAGNOSIS)
+  , between_covariates = .(SITE, AGE)
+  , type = 3,
+  return_aov = TRUE,
+  detailed = TRUE
+)
+
+AMP_ANOVA$ANOVA
+AMP_ANOVA$`Mauchly's Test for Sphericity`
+AMP_ANOVA$`Sphericity Corrections`
+aovAMPECC <- aovEffectSize(ezObj = AMP_ANOVA, effectSize = "pes")
+aovDispTable(aovAMPECC)
+
 ##### NORM TIME AFTER PV #####
 # calculating
 res$NTAPS <- (res$MT - res$TPS)/res$MT
 
 NTAPS_medians <- aggregate(NTAPS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * DIAGNOSIS * AGE, 
-                        median, data = res)
+                           median, data = res)
 NTAPS_ECC <- aggregate(NTAPS ~ PPT * VIEW * ECC * SITE * DIAGNOSIS * AGE, 
                        median, data = NTAPS_medians)
 NTAPS_means <- aggregate(NTAPS ~ PPT * VIEW * SITE * DIAGNOSIS,
-                      mean, data = NTAPS_ECC)
+                         mean, data = NTAPS_ECC)
 
 ## plotting :)
 # average across sides
@@ -691,11 +709,11 @@ ggsave('RAD_NTAPSmean.png', plot = last_plot(),  device = NULL, dpi = 300,
 # by eccentricity
 # summary data
 NTAPSecc <- summarySE(NTAPS_medians, measurevar = 'NTAPS', 
-                   groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
+                      groupvar = c('DIAGNOSIS','ECC','VIEW'), na.rm = TRUE)
 NTAPSecc$DIAGNOSIS <- factor(NTAPSecc$DIAGNOSIS, levels = c('HC','MCI','AD'))
 
 ggplot(NTAPSecc, aes(x = ECC, y = NTAPS, group = DIAGNOSIS, colour = DIAGNOSIS,
-                  shape = DIAGNOSIS)) +
+                     shape = DIAGNOSIS)) +
   geom_point(size = 3, position = position_dodge(width = .4)) +
   geom_errorbar(aes(ymin=NTAPS-ci, ymax=NTAPS+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
@@ -737,47 +755,3 @@ aovDispTable(aovNTAPSECC)
 #pair-wise t-test
 NTAPSttest <- pairwise.t.test(NTAPS_ECC$NTAPS, NTAPS_ECC$DIAGNOSIS, p.adj = 'bonf')
 print(NTAPSttest)
-
-#### FOR PUBLICATION: combine key results into 1 plot ####
-TimeFig <- ggarrange(AEecc, RTplot, MTplot,
-                     ncol=2, nrow=2,
-                     widths = c(1,1),
-                     labels = c('A','B','C'),
-                     hjust = -1)
-TimeFig
-ggsave('RAD_EXPLOR.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 8, height = 8, path = anaPath)
-
-SuppFig <- ggarrange(TPSplot, TAPSplot, PSplot,
-                     ncol=2, nrow=2,
-                     widths = c(1,1),
-                     labels = c('A','B','C'),
-                     hjust = -1)
-SuppFig
-ggsave('RAD_SUPP.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 8, height = 8, path = anaPath)
-
-##### CORRELATE ACE #####
-setwd(dataPath)
-patient_demos <- read.csv('patient_demographics.csv')
-setwd(anaPath)
-PMIdata <- read.csv('radialPMI.csv')
-#extracting ACE data into seperate data-frame
-ACEscores <- patient_demos[ ,c(1, 10:15)]
-names(ACEscores)[1] <- 'PPT'
-# merging ACE with PMI
-PMIACE <- merge(PMIdata, ACEscores, by = 'PPT')
-PMIACE$ACEall <- as.numeric(as.character(PMIACE$ACEall))
-
-## aaaand correlate :)
-# average PMI
-PMIACE_all <- aggregate(PMI ~ PPT+DIAGNOSIS+ACEall, mean, data = PMIACE)
-ggscatter(PMIACE_all, x = 'ACEall', y = 'PMI', 
-          add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
-          cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') +
-  ylab('Radial PMI (deg)') + xlab('ACE score (%)') +
-  theme(text = element_text(size = 10))
-
-ggsave('RAD_PMI-ACE.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 5, height = 5, path = anaPath)
-

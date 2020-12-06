@@ -62,3 +62,28 @@ ggplot(corrPMI, aes(x = Lateral, y = Radial)) +
 
 ggsave('reach_correlations.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 8, height = 5, path = anaPath)
+
+## will not be able to run if downloaded data from OSF ##
+##### CORRELATE ACE #####
+setwd(dataPath)
+patient_demos <- read.csv('patient_demographics.csv')
+setwd(anaPath)
+PMIdata <- read.csv('radialPMI.csv')
+#extracting ACE data into seperate data-frame
+ACEscores <- patient_demos[ ,c(1, 10:15)]
+names(ACEscores)[1] <- 'PPT'
+# merging ACE with PMI
+PMIACE <- merge(PMIdata, ACEscores, by = 'PPT')
+PMIACE$ACEall <- as.numeric(as.character(PMIACE$ACEall))
+
+## aaaand correlate :)
+# average PMI
+PMIACE_all <- aggregate(PMI ~ PPT+DIAGNOSIS+ACEall, mean, data = PMIACE)
+ggscatter(PMIACE_all, x = 'ACEall', y = 'PMI', 
+          add = 'reg.line', conf.int = FALSE, add.params = list(color = "black"),
+          cor.coef = TRUE, size = 1.5, cor.coef.size = 3, cor.method = 'spearman') +
+  ylab('Radial PMI (deg)') + xlab('ACE score (%)') +
+  theme(text = element_text(size = 10))
+
+ggsave('RAD_PMI-ACE.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 5, height = 5, path = anaPath)
