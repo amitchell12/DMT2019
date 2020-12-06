@@ -7,25 +7,14 @@ library(plyr)
 
 ##### correlations #####
 anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/task-correlations' #mac
-#anaPath <- 'S:/groups/DMT/analysis/task-correlations' #pc
-#anaPath <- "/Users/Alex/Documents/DMT/analysis/task-correlations/"
 # loading lateral reaching data
 latPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
-#latPath <- 'S:/groups/DMT/analysis/lateral_reaching'
-#latPath <- "/Users/Alex/Documents/DMT/analysis/lateral_reaching/"
 setwd(latPath)
 latData <- read.csv('lateralPMI_all.csv')
 # loading radial reaching data
 radPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-#radPath <- 'S:/groups/DMT/analysis/radial_reaching'
-#radPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
 setwd(radPath)
 radData <- read.csv('radialPMI.csv')
-# TVA path
-#TVApath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/TVA/all/'
-TVApath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
-setwd(TVApath)
-TVAData <- read.csv('tva_values.csv')
 
 # adding extra info necessary to merge
 latData$TASK <- 'Lateral'
