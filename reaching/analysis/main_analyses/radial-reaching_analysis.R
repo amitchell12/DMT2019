@@ -119,7 +119,7 @@ tdUOE_patient <- dcast(tdUOE_patient, PPT+DIAGNOSIS+AGE ~ DOM)
 tdUOE_patient[is.na(tdUOE_patient$D), "D"] <- -1 
 
 # time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
-# using Crawford et al.'s (2011) Bayesian test of covariates
+# using Crawford et al.'s (2011) Bayesian test of covariates (with singcar package)
 td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 for (l in 1:length(tdUOE_patient$PPT)){
@@ -195,7 +195,7 @@ tdUEA_patient <- td_patient[td_patient$SITE == 'UEA' ,]
 tdUEA_patient <- dcast(tdUEA_patient, PPT+DIAGNOSIS+AGE ~ DOM)
 
 # time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
-# using Crawford's (1998) test of deficit
+# using Crawford et al's (2011) Bayesian test of covariates (with singcar package)
 td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 for (l in 1:length(tdUEA_patient$PPT)){
@@ -289,7 +289,7 @@ print(binALL)
 PMIanova <- aggregate(PMI ~ PPT+DIAGNOSIS+SITE+AGE, mean, data = PMIdata)
 
 # FULL ANOVA ON FILTERED DATA
-FILT_ANOVA <- ezANOVA(
+PMI_ANOVA <- ezANOVA(
   data = PMIanova
   , dv = .(PMI)
   , wid = .(PPT)
@@ -300,47 +300,15 @@ FILT_ANOVA <- ezANOVA(
   detailed = TRUE
 )
 
-FILT_ANOVA$ANOVA
-FILT_ANOVA$`Mauchly's Test for Sphericity`
-FILT_ANOVA$`Sphericity Corrections`
-aovPMI <- aovEffectSize(ezObj = FILT_ANOVA, effectSize = "pes")
+PMI_ANOVA$ANOVA
+PMI_ANOVA$`Mauchly's Test for Sphericity`
+PMI_ANOVA$`Sphericity Corrections`
+aovPMI <- aovEffectSize(ezObj = PMI_ANOVA, effectSize = "pes")
 aovDispTable(aovPMI)
 
 #pair-wise t-test
 PMIttest <- pairwise.t.test(PMIanova$PMI, PMIanova$DIAGNOSIS, p.adj = 'bonf')
 print(PMIttest)
-
-### PMI ANOVA - ALL TARG LOCS ###
-res_means_all <- aggregate(AE ~ PPT*VIEW*SIDE*DOM*GRP*DIAGNOSIS*SITE*AGE, 
-                            mean, data = res_medians_all)
-PMIall <- dcast(res_means_all, PPT+GRP+DIAGNOSIS+DOM+SIDE+SITE+AGE ~ VIEW)
-PMIall$PMI <- PMIall$Peripheral - PMIall$Free
-PMIall$PPT <- factor(PMIall$PPT)
-PMIall$DIAGNOSIS <- factor(PMIall$DIAGNOSIS)
-# collapsing across side
-PMIanova_all <- aggregate(PMI ~ PPT+DIAGNOSIS+SITE+AGE, mean, data = PMIall)
-
-# FULL ANOVA ON FILTERED DATA, all targ locs
-ALLFILT_ANOVA <- ezANOVA(
-  data = PMIanova_all
-  , dv = .(PMI)
-  , wid = .(PPT)
-  , between = .(DIAGNOSIS)
-  , between_covariates = .(SITE, AGE)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
-
-ALLFILT_ANOVA$ANOVA
-ALLFILT_ANOVA$`Mauchly's Test for Sphericity`
-ALLFILT_ANOVA$`Sphericity Corrections`
-aovPMI_all <- aovEffectSize(ezObj = ALLFILT_ANOVA, effectSize = "pes")
-aovDispTable(aovPMI_all)
-
-# pairwise comparisons
-PMIall_ttest <- pairwise.t.test(PMIanova_all$PMI, PMIanova_all$DIAGNOSIS, p.adj = 'bonf')
-print(PMIall_ttest)
 
 ##### PLOTTING #####
 ## PLOT: PMI side + av ##
@@ -406,9 +374,7 @@ ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = DIAGNOSIS, group = PPT, 
   ) -> avPMI
 avPMI
 
-
-
-# combining in to main plot for AE
+# combining in to main plot for publication
 PMIfig <- ggarrange(pPMI, avPMI,
                     ncol=2, nrow=1,
                     widths = c(1.5,1),
