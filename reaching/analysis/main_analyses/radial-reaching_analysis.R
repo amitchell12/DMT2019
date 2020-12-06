@@ -595,7 +595,7 @@ avPMI
 PMIfig <- ggarrange(pPMI, avPMI,
                     ncol=2, nrow=1,
                     widths = c(1.5,1),
-                    labels = c('a','b'),
+                    labels = c('A','B'),
                     hjust = -1)
 PMIfig
 

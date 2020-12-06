@@ -441,7 +441,7 @@ aovDispTable(aovRT)
 TimeFig <- ggarrange(AEecc, RTplot, MTplot,
                     ncol=2, nrow=2,
                     widths = c(1,1),
-                    labels = c('a','b','c'),
+                    labels = c('A','B','C'),
                     hjust = -1)
 TimeFig
 ggsave('LAT_EXPLOR.png', plot = last_plot(),  device = NULL, dpi = 300, 

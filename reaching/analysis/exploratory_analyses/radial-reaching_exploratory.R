@@ -742,7 +742,7 @@ print(NTAPSttest)
 TimeFig <- ggarrange(AEecc, RTplot, MTplot,
                      ncol=2, nrow=2,
                      widths = c(1,1),
-                     labels = c('a','b','c'),
+                     labels = c('A','B','C'),
                      hjust = -1)
 TimeFig
 ggsave('RAD_EXPLOR.png', plot = last_plot(),  device = NULL, dpi = 300, 
@@ -751,7 +751,7 @@ ggsave('RAD_EXPLOR.png', plot = last_plot(),  device = NULL, dpi = 300,
 SuppFig <- ggarrange(TPSplot, TAPSplot, PSplot,
                      ncol=2, nrow=2,
                      widths = c(1,1),
-                     labels = c('a','b','c'),
+                     labels = c('A','B','C'),
                      hjust = -1)
 SuppFig
 ggsave('RAD_SUPP.png', plot = last_plot(),  device = NULL, dpi = 300, 
