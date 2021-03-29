@@ -11,7 +11,7 @@ library(Hmisc)
 
 #PATHS: will need changing
 # path for data & analysis
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+anaPath <- '/Users/alex/Library/Mobile Documents/com~apple~CloudDocs/Documents/DMT/analysis/radial_reaching'
 
 # load data
 setwd(anaPath)
@@ -378,7 +378,7 @@ avPMI
 PMIfig <- ggarrange(pPMI, avPMI,
                     ncol=2, nrow=1,
                     widths = c(1.5,1),
-                    labels = c('A','B'),
+                    labels = c('C','D'),
                     hjust = -1)
 PMIfig
 

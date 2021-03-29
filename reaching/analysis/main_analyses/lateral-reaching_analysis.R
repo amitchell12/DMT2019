@@ -15,7 +15,7 @@ library(ez)
 library(psychReport)
 
 #set working directory to where data is -> might need to change
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/'
+anaPath <- '/Users/alex/Library/Mobile Documents/com~apple~CloudDocs/Documents/DMT/analysis/lateral_reaching'
 setwd(anaPath)
 
 # load data file
@@ -36,9 +36,11 @@ colnames(res_medians)[colnames(res_medians)=='AE'] <- 'AEmed' #change name to be
 
 # changing levels to be more informative
 res_medians$GRP <- factor(res_medians$GRP)
+res_medians$VIEW <- factor(res_medians$VIEW)
+res_medians$SIDE <- factor(res_medians$SIDE)
+res_medians$SITE <- factor(res_medians$SITE)
 levels(res_medians$GRP) <- c('Control', 'Patient') #changing group name from 1 = control, 2 = AD
 levels(res_medians$VIEW) <- c('Free', 'Peripheral')
-res_medians$SITE <- factor(res_medians$SITE)
 levels(res_medians$SITE) <- c('UOE', 'UEA')
 res_medians$DIAGNOSIS <- factor(res_medians$DIAGNOSIS)
 res_medians <- res_medians[order(res_medians$PPT), ] 
@@ -263,7 +265,7 @@ ggplot(plot_PMI, aes(x = DOM, y = PMI, colour = DIAGNOSIS, group = PPT, shape = 
   scale_color_manual(values = c('grey45','grey45','grey45')) +
   scale_shape_manual(values = c(1,18)) +
   facet_wrap(~DIAGNOSIS) +
-  labs(x = 'Side', y = 'PMI (mm)') +
+  labs(x = '', y = 'Lateral PMI (mm)') +
   theme_classic() + theme(legend.position = 'none', 
                           axis.title = element_text(size = 12),
                           axis.text = element_text(size = 10),
@@ -285,7 +287,7 @@ ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = DIAGNOSIS, group = PPT, 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   scale_color_manual(values = c('grey45','grey45','grey45')) +
   scale_shape_manual(values = c(1,18)) +
-  labs(x = 'Diagnosis', y = '') +
+  labs(x = '', y = '') +
   theme_classic() + theme(legend.position = 'none', 
                           axis.title = element_text(size = 12),
                           axis.text = element_text(size = 10),
@@ -294,14 +296,14 @@ ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = DIAGNOSIS, group = PPT, 
 avPMI
 
 # combining AE figures together for pub
-PMIfig <- ggarrange(pPMI, avPMI,
+LPMIfig <- ggarrange(pPMI, avPMI,
                     ncol=2, nrow=1,
                     widths = c(1.5,1),
                     labels = c('A','B'),
                     hjust = -1)
 
 
-PMIfig
+LPMIfig
 
 ggsave('LATAE-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
        width = 8, height = 4, path = anaPath)
