@@ -12,11 +12,14 @@ library(plyr)
 library(ez)
 library(psychReport)
 library(ggpubr)
+library(Rmisc)
+library(effsize)
 
 ##### file info #####
 # on pc
-#fitPath <- ("S:/groups/DMT/analysis/TVA/all/") # Enter path to data
-#anaPath <- "S:/groups/DMT/analysis/TVA/"
+fitPath <- ("S:/groups/DMT/analysis/TVA/all/") # Enter path to data
+anaPath <- "S:/groups/DMT/analysis/TVA/"
+dataPath <- "S:/groups/DMT/data/"
 #latPath <- "S:/groups/DMT/analysis/lateral_reaching/"
 #radPath <- "S:/groups/DMT/analysis/radial_reaching/"
 # on mac
@@ -25,12 +28,6 @@ library(ggpubr)
 #dataPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data/"
 #latPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching/"
 #radPath <- "/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching/"
-# on desktop mac
-fitPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/" # Enter path to data
-anaPath <- "/Users/Alex/Documents/DMT/analysis/TVA/all/"
-dataPath <- "/Users/Alex/Documents/DMT/data/"
-latPath <- "/Users/Alex/Documents/DMT/analysis/lateral_reaching/" 
-radPath <- "/Users/Alex/Documents/DMT/analysis/radial_reaching/"
 
 # Enter directory to save converted files to
 setwd(fitPath)
@@ -129,6 +126,8 @@ tva_values$ExpDurC7 <- tva_values$ExpDurC7 + tva_values$mu
 setwd(anaPath)
 write.csv(tva_values, 'tva_values.csv', row.names = FALSE)
 
+tva_grand <- summarySE(measurevar = 'C', groupvars = 'diagnosis', data = tva_values)
+
 ##### DATA-FRAME FOR FITTING ######
 # creating data-frame so can have predicted and actual values for each condition
 # melting so have information by condition
@@ -173,59 +172,34 @@ setwd(anaPath)
 write.csv(tva_dat, 'tva_fits.csv', row.names = FALSE)
 
 ######### DATA ANALYSIS #########
+# run statistics on patients vs. controls 
+# collapse MCI and AD into one group because not enough in MCIs
 ## summary stats ## 
 meanC <- summarySE(data = tva_values, measurevar = 'C',
-                   groupvars = 'diagnosis', na.rm = TRUE)
+                   groupvars = 'GRP', na.rm = TRUE)
 meanK <- summarySE(data = tva_values, measurevar = 'K',
-                   groupvars = 'diagnosis', na.rm = TRUE)
+                   groupvars = 'GRP', na.rm = TRUE)
 setwd(anaPath)
 write.csv(meanC, 'TVA-Cmeans.csv', row.names = FALSE)
 write.csv(meanK, 'TVA-Kmeans.csv', row.names = FALSE)
 
-# run ANOVAs on processing speed & vSTM
+# run t-tests on processing speed & vSTM
 # processing speed
 tva_values$SUB <- factor(tva_values$SUB)
-C_ANOVA <- ezANOVA(
-  data = tva_values
-  , dv = .(C)
-  , wid = .(SUB)
-  , between = .(diagnosis)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
+ctest <- t.test(C ~ GRP, 
+                var.equal = TRUE,
+                data = tva_values)
+Ceff <- cohen.d(tva_values$C, tva_values$GRP, conf.level = .99)
 
-C_ANOVA$ANOVA
-C_ANOVA$`Mauchly's Test for Sphericity`
-C_ANOVA$`Sphericity Corrections`
-aovC <- aovEffectSize(ezObj = C_ANOVA, effectSize = "pes")
-aovDispTable(aovC)
-
-# pairwise t-test to identify group differences
-Cttest <- pairwise.t.test(tva_values$C, tva_values$diagnosis, p.adj = 'bonf')
-print(Cttest)
 
 # vSTM
-K_ANOVA <- ezANOVA(
-  data = tva_values
-  , dv = .(K)
-  , wid = .(SUB)
-  , between = .(diagnosis)
-  , type = 3,
-  return_aov = TRUE,
-  detailed = TRUE
-)
+Ktest <- t.test(K ~ GRP, 
+                var.equal = TRUE,
+                data = tva_values)
+Keff <- cohen.d(tva_values$K, tva_values$GRP, conf.level = .99)
 
-K_ANOVA$ANOVA
-K_ANOVA$`Mauchly's Test for Sphericity`
-K_ANOVA$`Sphericity Corrections`
-aovK <- aovEffectSize(ezObj = K_ANOVA, effectSize = "pes")
-aovDispTable(aovK)
 
-# pairwise t-test to identify group differences
-Kttest <- pairwise.t.test(tva_values$K, tva_values$diagnosis, p.adj = 'bonf')
-print(Kttest)
-
+##### CORRELATIONS #####
 ### correlate with ACE
 names(ACEscores)[1] <- 'SUB'
 tvaACE <- merge(tva_values, ACEscores, by = 'SUB')
@@ -280,10 +254,10 @@ ggsave('example_tvafits.png', plot = last_plot(), device = NULL, dpi = 300,
        width = 6, height = 5, path = anaPath)
 
 
-##### plotting outcome vars #####
+##### PLOTTING DVs #####
 tva_values$diagnosis <- factor(tva_values$diagnosis, levels = c('HC', 'MCI', 'AD'))
 # processing speed
-ggplot(tva_values, aes(x = diagnosis, y = C)) + 
+ggplot(tva_values, aes(x = GRP, y = C)) + 
   geom_jitter(aes(colour = diagnosis),
               position = position_jitter(0.2), size = 2) + 
   scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
@@ -298,7 +272,7 @@ ggplot(tva_values, aes(x = diagnosis, y = C)) +
         title = element_text(size = 10)) -> C
 
 #VSTM
-ggplot(tva_values, aes(x = diagnosis, y = K)) + 
+ggplot(tva_values, aes(x = GRP, y = K)) + 
   geom_jitter(aes(colour = diagnosis),
               position = position_jitter(0.2), size = 2) + 
   scale_color_manual(values = c('grey50', 'goldenrod2', 'dodgerblue3')) +
