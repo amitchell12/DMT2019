@@ -11,31 +11,31 @@
 %dataDir = '/Users/Alex/Documents/DMT/data/formatted_TVAecc';
 %anaDir = '/Users/Alex/Documents/DMT/analysis/TVA/fits';
 % on desktop
-dataDir = 'S:\groups\DMT\data\formatted_TVA';
-anaDir = 'S:\groups\DMT\analysis\TVA\all';
+dataDir = 'S:\groups\DMT\data\TVA\formatted_TVAecc';
+anaDir = 'S:\groups\DMT\analysis\TVA\ecc';
 cd(dataDir)
 files = dir(fullfile(dataDir, 'subject*.dat'));
 
 %% TVA file prep
 for i = 1:length(files)
     cd(dataDir)
-    participantID = files(i).name(1:10);
-    filename = files(i).name(end-8:end-4);
-    filecheck = tvacheckdatafile(files(i).name) %leave open
-    
+    filecheck = tvacheckdatafile(files(i).name) %leave open    
     % load data
-    % need to include the 'STD' [5 6] for masked conditions
-    tvadata = tvaloader(files(i).name, 'STD', [6 7]);
-    % tva report on data
-    %leave open to view
-    
+    % STD masked conditions
+    tvadata{i} = tvaloader(files(i).name, 'STD', [6 7]);
+end
+
+%% Running modelling
+for i = 1:length(files)
+    participantID = files(i).name(1:10);
     %% Fitting model
-    [theta, tvamodel, tvadata, df] = tvafit(tvadata, 2, 'FREE');
+    [theta{i}, tvamodel{i}, tvadata{i}, df{i}] = tvafit(tvadata{i}, 2, 'FREE');
     %see the fitted values
-    tvareport(tvadata, tvamodel, theta);
+    % leave tva report on data
+    tvareport(tvadata{i}, tvamodel{i}, theta{i});
     
     %% Plotting
-    [tt, oo, pp, cc] = tvaplot(tvadata, tvamodel, theta);
+    [tt, oo, pp, cc] = tvaplot(tvadata{i}, tvamodel{i}, theta{i});
     % first figure - by condition (unmasked at end)
     figure()
     plot(cc,pp,'*')
@@ -46,20 +46,16 @@ for i = 1:length(files)
     xlim([0 8]); ylim([0 4]);
     
     cd([anaDir filesep 'fit-plots'])
-    png_name = sprintf('%s_%s.png', participantID, filename);
+    png_name = sprintf('%s_%s.png', participantID);
     saveas(gcf, png_name)
-    
-    % second figure by exposure duration (unmasked intermixed)
-%     figure()
-%     plot(tt,pp,'*')
-%     ylabel('Mean score (k)'); xlabel('Exposure duration (ms)');
-%     xlim([0 250]); ylim([0 4]);
-    
-    %% Saving individual data
-    cd([anaDir filesep 'fits'])
-    save fit theta tvamodel tvadata
-    datafilename = sprintf('%s_%s_fits.txt', participantID, filename);
-    tvaexport(datafilename, 'DIR', 'fit.mat');
+end
+
+%% Saving
+cd(anaDir)
+for i=1:length(files)
+    if(i==1) tvalpr('Output_ecc.txt','',tvadata{i},tvamodel{i},theta{i}); 
+    end
+    tvalpr('Output.txt',files(i).name,tvadata{i},tvamodel{i},theta{i});
 end
 
 %% Exporting

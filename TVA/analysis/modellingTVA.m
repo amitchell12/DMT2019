@@ -28,7 +28,7 @@ end
     
     %% Fitting model
 for i = 1:length(files)
-     participantID = files(i).name(1:10);
+    participantID = files(i).name(1:10);
     [theta{i}, tvamodel{i}, tvadata{i}, df{i}] = tvafit(tvadata{i}, [], 'FREE');
     %see the fitted values
     tvareport(tvadata{i}, tvamodel{i}, theta{i});
