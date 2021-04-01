@@ -8,7 +8,7 @@
 
 %% Extracting data
 % on mac
-%dataDir = '/Users/Alex/Documents/DMT/data/formatted_TVA';
+%dataDir = '/Users/Alex/Documents/DMT/data/formatted_TVAecc';
 %anaDir = '/Users/Alex/Documents/DMT/analysis/TVA/fits';
 % on desktop
 dataDir = 'S:\groups\DMT\data\formatted_TVA';
