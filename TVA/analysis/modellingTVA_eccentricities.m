@@ -29,7 +29,7 @@ end
 for i = 1:length(files)
     participantID = files(i).name(1:10);
     %% Fitting model
-    [theta{i}, tvamodel{i}, tvadata{i}, df{i}] = tvafit(tvadata{i}, 8);
+    [theta{i}, tvamodel{i}, tvadata{i}, df{i}] = tvafit(tvadata{i}, 2);
     %see the fitted values
     % leave tva report on data
     tvareport(tvadata{i}, tvamodel{i}, theta{i});

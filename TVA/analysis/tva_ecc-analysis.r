@@ -50,6 +50,8 @@ for (i in 1:length(txt_filelist)) {
 
 ##### extracting key data #####
 output1 <- read.csv('OutputEcc.csv') #data where t0 not fixed
+## remove participants from output 1 with t0 < 0
+
 output2 <- read.csv('OutputEcc_Fixedt0.csv') #data where t0 was fixed (<0 initially)
 # bind
 output <- rbind(output1,output2)
@@ -61,6 +63,9 @@ tva_values <- output[, c(1,2,10,11,15,16,13,28:34,81:94,19)]
 tva_values$SUB <- factor(substr(tva_values$ID, 8, 10))
 tva_values$GRP <- factor(substr(tva_values$SUB, 1, 1))
 tva_values$SITE <- factor(substr(tva_values$SUB, 1, 1))
+
+
+
 #Norwich control data = 3, convert to 1 for same group
 for (i in 1:length(tva_values$GRP)){
   if (isTRUE(tva_values$GRP[i] == '3')){
