@@ -4,7 +4,7 @@
 clear;
 
 dataDir = 'S:\groups\DMT\data\TVA\fixedt0\';
-anaDir = 'S:\groups\DMT\analysis\TVA\all\';
+anaDir = 'S:\groups\DMT\analysis\TVA\ecc\';
 cd(dataDir)
 
 filename = dir('*.dat');
@@ -16,7 +16,7 @@ end
 
 %parpool
 for i=1:size(filename,1)
-    [theta{i},tvamodel{i}] = tvainit(tvadata{i});
+    [theta{i},tvamodel{i}] = tvafit(tvadata{i},8);
     [alpha,w,C,s,v,u0,chdetgm,mu] = tvadeal(tvamodel{i},1:length(theta{i}));
     [theta{i},theta_fix{i}] = tvafixer(theta{i},[],u0,tvamodel{i});
     theta_fix{i}(u0)=0;

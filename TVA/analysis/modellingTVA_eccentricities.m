@@ -29,7 +29,7 @@ end
 for i = 1:length(files)
     participantID = files(i).name(1:10);
     %% Fitting model
-    [theta{i}, tvamodel{i}, tvadata{i}, df{i}] = tvafit(tvadata{i}, 2, 'FREE');
+    [theta{i}, tvamodel{i}, tvadata{i}, df{i}] = tvafit(tvadata{i}, 8);
     %see the fitted values
     % leave tva report on data
     tvareport(tvadata{i}, tvamodel{i}, theta{i});
@@ -53,9 +53,9 @@ end
 %% Saving
 cd(anaDir)
 for i=1:length(files)
-    if(i==1) tvalpr('Output_ecc.txt','',tvadata{i},tvamodel{i},theta{i}); 
+    if(i==1) tvalpr('OutputEcc.txt','',tvadata{i},tvamodel{i},theta{i}); 
     end
-    tvalpr('Output.txt',files(i).name,tvadata{i},tvamodel{i},theta{i});
+    tvalpr('OutputEcc.txt',files(i).name,tvadata{i},tvamodel{i},theta{i});
 end
 
 %% Exporting
