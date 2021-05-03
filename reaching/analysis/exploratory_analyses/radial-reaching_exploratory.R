@@ -15,7 +15,7 @@ library(psychReport)
 
 ###### GETTING DATA ######
 #on mac
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
+anaPath <- '/Users/alex/Library/Mobile Documents/com~apple~CloudDocs/Documents/DMT/analysis/radial_reaching'
 setwd(anaPath)
 
 res <- read.csv('all_radial-reaching_compiled.csv')
@@ -44,7 +44,7 @@ ggplot(ECCsummary, aes(x = ECC, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS,
   scale_color_manual(values = c('black','grey30','grey60')) +
   labs(x = '', y = 'Radial reaching error (mm)') +
   facet_grid(~VIEW) + theme_classic() +
-  theme(legend.position = c(.15,.85),
+  theme(legend.position = c(.12,.80),
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
@@ -114,7 +114,7 @@ ggplot(MTecc, aes(x = ECC, y = MT, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_errorbar(aes(ymin=MT-ci, ymax=MT+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = 'Eccentricity (mm)', y = 'Movement time (ms)') +
+  labs(x = '', y = 'Movement time (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_wrap(~VIEW) + theme_classic() + ylim(300,900) +
   theme(legend.position = 'none',
@@ -198,7 +198,7 @@ ggplot(RTecc, aes(x = ECC, y = RT, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_errorbar(aes(ymin=RT-ci, ymax=RT+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = 'Eccentricity (mm)', y = 'Reaction time (ms)') +
+  labs(x = '', y = 'Reaction time (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() +
   ylim(300,900) +
@@ -237,17 +237,6 @@ aovDispTable(aovRTECC)
 RTttest <- pairwise.t.test(RT_ECC$RT, RT_ECC$DIAGNOSIS, p.adj = 'bonf')
 print(RTttest)
 
-#### FOR PUBLICATION: combine key results into 1 plot ####
-TimeFig <- ggarrange(AEecc, RTplot, MTplot,
-                     ncol=2, nrow=2,
-                     widths = c(1,1),
-                     labels = c('A','B','C'),
-                     hjust = -1)
-TimeFig
-ggsave('RAD_EXPLOR.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 8, height = 8, path = anaPath)
-
-###### ANALYSES PRESENTED IN SUPPLEMENTARY ######
 ##### PEAK SPEED #####
 PS_medians <- aggregate(PS ~ PPT * VIEW * SIDE * DOM * POSITION * ECC * SITE * DIAGNOSIS * AGE, 
                         median, data = res)
@@ -290,7 +279,7 @@ ggplot(PSecc, aes(x = ECC, y = PS, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_errorbar(aes(ymin=PS-ci, ymax=PS+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = 'Eccentricity (mm)', y = 'Peak speed (ms)') +
+  labs(x = '', y = 'Peak speed (mm/s)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() + 
   theme(legend.position = 'none',
@@ -370,10 +359,10 @@ ggplot(TPSecc, aes(x = ECC, y = TPS, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_errorbar(aes(ymin=TPS-ci, ymax=TPS+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = '', y = 'Time to peak speed (ms)') +
+  labs(x = 'Eccentricity (mm)', y = 'Time to peak speed (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() + ylim(0,300) +
-  theme(legend.position = c(.15,.20),
+  theme(legend.position = 'none',
         legend.title = element_blank(),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12),
@@ -435,7 +424,7 @@ ggplot(TAPS_means, aes(x = VIEW, y = TAPS, colour = SITE, group = PPT)) +
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   facet_wrap(~DIAGNOSIS) +
   labs(x = '', y = 'Time after peak speed (ms)', element_text(size = 12)) +
-  theme_classic() + theme(legend.position = 'bottom', 
+  theme_classic() + theme(legend.position = 'none', 
                           axis.text = element_text(size = 10),
                           axis.title = element_text(size = 12),
                           strip.text = element_text(size = 12)
@@ -506,15 +495,15 @@ reachDur$PER <- (reachDur$TAPS/reachDur$MT)*100
 # save the percentages
 write.csv(reachDur, 'reachDuration_TAPS.csv', row.names = FALSE)
 
-#### FOR PUBLICATION: combine figures ####
-SuppFig <- ggarrange(TPSplot, TAPSplot, PSplot,
-                     ncol=2, nrow=2,
+#### FOR PUBLICATION: combine key results into 1 plot ####
+TimeFig <- ggarrange(AEecc, RTplot, MTplot, PSplot, TPSplot, TAPSplot,
+                     ncol=2, nrow=3,
                      widths = c(1,1),
-                     labels = c('A','B','C'),
+                     labels = c('A','B','C','D','E','F'),
                      hjust = -1)
-SuppFig
-ggsave('RAD_SUPP.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 8, height = 8, path = anaPath)
+TimeFig
+ggsave('RAD_EXPLOR.png', plot = last_plot(),  device = NULL, dpi = 300, 
+       width = 8, height = 10, path = anaPath)
 
 ###### ANALYSES NOT INCLUDED IN MANUSCRIPT ######
 ##### ANGULAR ERROR: median, means, PMI #####
