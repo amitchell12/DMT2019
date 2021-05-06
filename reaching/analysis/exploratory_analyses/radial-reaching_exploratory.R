@@ -15,7 +15,8 @@ library(psychReport)
 
 ###### GETTING DATA ######
 #on mac
-anaPath <- '/Users/alex/Library/Mobile Documents/com~apple~CloudDocs/Documents/DMT/analysis/radial_reaching'
+#anaPath <- '/Users/alex/Library/Mobile Documents/com~apple~CloudDocs/Documents/DMT/analysis/radial_reaching'
+anaPath <- 'C:/Users/amitch17/OneDrive - University of Edinburgh/Experiments/DMT/analysis/radial_reaching'
 setwd(anaPath)
 
 res <- read.csv('all_radial-reaching_compiled.csv')
@@ -491,6 +492,22 @@ TAPSgrp_means <- TAPSgrp_means[, c(1:4)]
 reachDur <- merge(MTgrp_means, TAPSgrp_means)
 # calculating percentage
 reachDur$PER <- (reachDur$TAPS/reachDur$MT)*100
+
+# MT inflation in patient groups, percentage in TAPS
+# make into figure for reporting
+MTinf <- dcast(reachDur, VIEW ~ DIAGNOSIS, value.var = 'MT')
+MTinf$MTAD <- MTinf$AD - MTinf$HC
+MTinf$MTMCI <- MTinf$MCI - MTinf$HC
+MTinf <- MTinf[, c(1,5,6)]
+
+TAPSinf <- dcast(reachDur, VIEW ~ DIAGNOSIS, value.var = 'TAPS')
+TAPSinf$TAPSAD <- TAPSinf$AD - TAPSinf$HC
+TAPSinf$TAPSMCI <- TAPSinf$MCI - TAPSinf$HC
+TAPSinf <- TAPSinf[, c(1,5,6)]
+
+INF <- merge(MTinf, TAPSinf, by = 'VIEW')
+INF$PER_AD <- (INF$TAPSAD/INF$MTAD)*100
+INF$PER_MCI <- (INF$TAPSMCI/INF$MTMCI)*100
 
 # save the percentages
 write.csv(reachDur, 'reachDuration_TAPS.csv', row.names = FALSE)
