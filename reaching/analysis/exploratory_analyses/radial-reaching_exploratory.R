@@ -15,8 +15,8 @@ library(psychReport)
 
 ###### GETTING DATA ######
 #on mac
-#anaPath <- '/Users/alex/Library/Mobile Documents/com~apple~CloudDocs/Documents/DMT/analysis/radial_reaching'
-anaPath <- 'C:/Users/amitch17/OneDrive - University of Edinburgh/Experiments/DMT/analysis/radial_reaching'
+anaPath <- '/Users/alex/Library/Mobile Documents/com~apple~CloudDocs/Documents/DMT/analysis/radial_reaching'
+#anaPath <- 'C:/Users/amitch17/OneDrive - University of Edinburgh/Experiments/DMT/analysis/radial_reaching'
 setwd(anaPath)
 
 res <- read.csv('all_radial-reaching_compiled.csv')
@@ -511,6 +511,7 @@ INF$PER_MCI <- (INF$TAPSMCI/INF$MTMCI)*100
 
 # save the percentages
 write.csv(reachDur, 'reachDuration_TAPS.csv', row.names = FALSE)
+write.csv(INF, 'RADinflation_decel.csv', row.names = FALSE)
 
 #### FOR PUBLICATION: combine key results into 1 plot ####
 TimeFig <- ggarrange(AEecc, RTplot, MTplot, PSplot, TPSplot, TAPSplot,
