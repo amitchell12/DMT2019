@@ -98,6 +98,8 @@ cal <- cal[, c(1:3,6,14,15)]
 # merging data-frames with new cal-value
 resUOE <- merge(res, cal, by = c('PPT','POSITION','SIDE'), all = TRUE) #SO HAPPY THIS FUNCT EXISTS
 resUOE[resUOE == -32768] <- NA
+# removing eye-move data
+resUOE <- resUOE[resUOE$EYE_MOVE == 0 ,]
 resUOE <- resUOE[, c(1:3,5:13,15,16)]
 
 
@@ -110,7 +112,7 @@ files <- list.files(path=dataPath, pattern = "*.TRJ", full.names = TRUE, recursi
 idfiles <- list.files(path=dataPath, pattern = "*.csv", full.names = TRUE, recursive = TRUE)
 
 # data-frame structures
-optodat <- read.csv(text="PS,TPS,FILE,COUNT")
+optodat <- read.csv(text="px,py,PS,TPS,FILE,COUNT")
 caldat <- read.csv(text="RT,MT,PS,TPS,PAX,TPAX,calx,caly,FILE")
 iddat <- read.csv(text = 'POSITION,DELAY,RT,TO,RESP,FILE,TRIAL')
 
@@ -165,6 +167,7 @@ optodat$TRIAL <- substr(optodat$FILE, (nchar(optodat$FILE)-5), (nchar(optodat$FI
 # removing '0' that pre-fix digits
 optodat$TRIAL <- gsub("(^|[^0-9])0+", "\\1", optodat$TRIAL, perl = TRUE)
 
+### calibration data ###
 row_x <- 1
 cal_x <- 1
 # get calibration files
@@ -186,15 +189,7 @@ for(file in files) {
   }
 }
 
-# extracting key features from FILE in optodat in the same manner as iddat - for merging
-optodat$PPT <- substr(optodat$FILE, 5, 7)
-optodat$SIDE <- substr(optodat$FILE, (nchar(optodat$FILE)-15), (nchar(optodat$FILE)-14))
-optodat$VIEW <- substr(optodat$FILE, 18, 18)
-optodat$TRIAL <- substr(optodat$FILE, (nchar(optodat$FILE)-5), (nchar(optodat$FILE)-4))
-# removing '0' that pre-fix digits
-optodat$TRIAL <- gsub("(^|[^0-9])0+", "\\1", optodat$TRIAL, perl = TRUE)
 
-## back to caldat
 # getting 'position' and 'ppt' data for caldat
 caldat$PPT <- substr(caldat$FILE, 5, 7)
 
@@ -269,28 +264,71 @@ cal_fits <- cal_fits[, c(5:7,2,3,8,9)]
 caldat <- rbind(caldat,cal_fits)
 
 ### MERGE
-### IDDAT AND OPTODAT TRIALS DO NOT ALIGN - THIS IS AN ISSUE, MAYBE SPEAK TO THE OTHERS ABOUT THIS?
 # combining id data and optotrak data
-res <- merge(iddat, optodat, by = c('PPT', 'SIDE', 'VIEW', 'TRIAL'))
-res <- res[order(res$COUNT, decreasing = FALSE), ] #ordering by count (so all in order)
+resUEA <- merge(iddat, optodat, by = c('PPT', 'SIDE', 'VIEW', 'TRIAL'))
+resUEA <- resUEA[order(resUEA$COUNT, decreasing = FALSE), ] #ordering by count (so all in order)
 # renaming conditions to be more sensible :)
-res$SIDE <- factor(res$SIDE, labels = c('Left', 'Right'))
-res$VIEW <- factor(res$VIEW, labels = c('Free', 'Peripheral'))
+resUEA$SIDE <- factor(resUEA$SIDE, labels = c('Left', 'Right'))
+resUEA$VIEW <- factor(resUEA$VIEW, labels = c('Free', 'Peripheral'))
+
 # remove file column
-res <- res[, c(1:17,19)]
+resUEA <- resUEA[, c(1:13,15)]
 
+## merging caldat to account for calibrationd data
+# labelling 'position' and 'side' in caldat
+resUEA <- merge(resUEA, caldat, by = c('PPT','POSITION','SIDE'), all = TRUE) #SO HAPPY THIS FUNCT EXISTS
+resUEA <- resUEA[order(resUEA$COUNT, decreasing = FALSE), ] #ordering by count (so all in order)
+resUEA[resUEA == -32768] <- NA
+# counting eye-move and removing eye-move + void
+nEye_move <- aggregate(resUEA$RESP == '69', by=list(subject_nr = resUEA$PPT), FUN=sum)
+nTimeOut <- aggregate(resUEA$TIMEOUT == '1', by=list(subject_nr = resUEA$PPT), FUN=sum)
+nVoid <- aggregate(resUEA$RESP == '73', by=list(subject_nr = resUEA$PPT), FUN=sum)
+# removing
+resUEA <- resUEA[resUEA$RESP == 32 ,]
+resUEA <- resUEA[complete.cases(resUEA) ,] #removing NA values
 
+##### COMBINING UEA AND UOE DATA ######
+# UOE res - to match UEA
+resUOE$PPT <- substr(resUOE$PPT, 4, 6)
+resUOE$VIEW <- factor(resUOE$VIEW, labels = c('Free', 'Peripheral'))
+resUOE$SIDE <- factor(resUOE$SIDE, labels = c('Left', 'Right'))
+# UEA res - match data
+# remove participants
+resUEA <- resUEA[resUEA$PPT != '311' ,] #participant 311 had TIA
+# first 10 participants did different set-up to UEA patients, also remove
+oldPP <- c(301:310)
+resUEA <- subset(resUEA, ! PPT %in% oldPP)
+# change position labelling here too - needs to match UOE (100,200,300,400mm)
+# split into two data-frames (left/right sides) and label, the bind again
+UEAright <- resUEA[resUEA$SIDE == 'Right' ,]
+UEAleft <- resUEA[resUEA$SIDE == 'Left' ,]
+# for right 1= closest, 4= furthest away
+UEAright$POSITION <- factor(UEAright$POSITION, labels = c('100','200','300','400'))
+# for left 1=furthest, 4= nearest
+UEAleft$POSITION <- factor(UEAleft$POSITION, labels = c('-400','-300','-200','-100'))
+# bind back together!
+resUEA <- rbind(UEAright, UEAleft)
+
+# site labelling
+resUOE$SITE <- 'UOE'
+resUEA$SITE <- 'UEA'
+
+# removing unnecessary cols
+resUOE <- resUOE[, c(1:5,7:10,12:14)]
+resUEA <- resUEA[, c(1:5,10:16)]
+
+# bind
+res <- rbind(resUOE, resUEA)
 
 
 ##### PREP FOR DATA ANALYSIS #####
 # subtracting cal from reach endpoint
 res$LANDx <- res$mx - res$calx
 res$LANDy <- res$my - res$caly
-
 #renaming some stuff
 res$GRP <- factor(substr(res$PPT, 4, 4))
-res$PPT <- substr(res$PPT, 4, 6)
-res$SITE <- 'UOE'
+
+
 
 # plotting to get a look at data
 res$POSITION <- factor(res$POSITION)
