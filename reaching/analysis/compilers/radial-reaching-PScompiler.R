@@ -7,12 +7,13 @@ library(dplyr, warn.conflicts = FALSE)
 library(forcats)
 
 ###### UOE DATA ######
-#on mac
-#anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/radial_reaching'
-#dataPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/data'
 #on mac desktop
-anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching/'
-dataPath <- '/Users/Alex/Documents/DMT/data/'
+#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching/'
+#dataPath <- '/Users/Alex/Documents/DMT/data/'
+
+# work computer
+anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
+dataPath <- 'S:/groups/DMT/data'
 setwd(dataPath)
 
 files <- list.files(path=dataPath, pattern = "*.TRJ", full.names = TRUE, recursive = TRUE)
@@ -27,8 +28,9 @@ visAngle <- function(size, distance){
   return(Ang)
 }
 
-optodat <- read.csv(text="RT,MT,PS,TPS,PAX,TPAX,mx,my,COUNT")
+optodat <- read.csv(text="px,py,PS,TPS,FILE,COUNT")
 iddat <- read.csv(text = 'PPT,SIDE,VIEW,TRIAL,POSITION,EYE_MOVE,FILENUM')
+caldat <- read.csv(text='RT,MT,PS,TPS,PAX,TPAX,calx,caly,FILE')
 
 # reading in all idfiles and compiling
 for(i in idfiles){
@@ -41,40 +43,66 @@ row_x <-1
 #reading in all TRJ files
 for(file in files) {
   ## MADE THESE CHANGES - CHECK TOMORROW THAT THEY WORK
-  tmp <- as.numeric(t(as.vector(read_tsv(file, col_names = FALSE)[1:14, 7])))
-  TPSrow <- (tmp[4]/10)+1
-  tmp1 <- as.numeric(t(as.vector(read_tsv(file, col_names = FALSE)[TPSrow, 1:3])))
+  FILE <- basename(file)
+  tmp <- c(as.numeric(unlist(read_tsv(file, col_names = FALSE)[1:14, 7])), FILE)
+  TPSrow <- (as.numeric(tmp[4])/10)+1
+  tmp1 <- as.numeric(t(as.vector(read_tsv(file, col_names = FALSE)[TPSrow, 1:2])))
   
-  optodat[row_x, 1:3] <- tmp1
+  
+  optodat[row_x, 1:2] <- tmp1
+  optodat[row_x, 3:5] <- tmp[c(3:4,15)]
   optodat$COUNT[row_x] <- row_x
   row_x <- row_x + 1
   
 }
 
+optodat$PPT <- substr(optodat$FILE, 1, 6)
+optodat$FILENUM <- substr(optodat$FILE, 8, 10)
+optodat$FILENUM <- gsub("(^|[^0-9])0+", "\\1", optodat$FILENUM, perl = TRUE)
+
 ## MIGHT NEED TO MAKE CHANGES BELOW - USE UEA IF NEEDED
 
 #merging id data and optotrak data
-res <- merge(data.frame(optodat, row.names = NULL),
-             data.frame(iddat, row.names = NULL), by = 0, all = TRUE)[-1] 
+res <- merge(iddat, optodat, by = c('FILENUM','PPT')) 
 res <- res[order(res$COUNT, decreasing = FALSE), ] #ordering by count (so all in order)
 # removing DF
 res <- res[!res$PPT == 'DMT300', ]
-
-##### calibration data #####
-# calibration data-frame
-caldat <- res[res$VIEW == 'CAL', ]
-colnames(caldat)[colnames(caldat) == 'mx'] <- 'calx' #renaming for merging
-colnames(caldat)[colnames(caldat) == 'my'] <- 'caly'
-#remove unnecessary trials
-caldat <- caldat[c(7,8,10,14)]
-#remove first row of caldat data - incorrect calib
-caldat <- caldat[-c(1) ,]
-
 res <- res[!res$VIEW =='CAL', ] #data-frame without cal trials, not needed
 
+##### calibration data #####
+# take seperately - different cal data to x,y data here
+cal_x <- 1
+
+for(file in files) {
+  ## MADE THESE CHANGES - CHECK TOMORROW THAT THEY WORK
+  FILE <- basename(file)
+  tmp <- c(as.numeric(unlist(read_tsv(file, col_names = FALSE)[1:14, 7])), FILE)
+  caldat[cal_x, 1:9] <- tmp[c(1:6,9:10,15)]
+  cal_x <- cal_x+1 #counter
+
+}
+
+caldat$PPT <- substr(caldat$FILE, 1, 6)
+caldat$FILENUM <- substr(caldat$FILE, 8, 10)
+caldat$FILENUM <- gsub("(^|[^0-9])0+", "\\1", caldat$FILENUM, perl = TRUE)
+
+cal <- merge(iddat, caldat, by = c('FILENUM','PPT'))
+cal <- cal[cal$VIEW =='CAL', ]
+cal <- cal[order(cal$PPT, decreasing = FALSE), ]
+# remove DMT300 and extra cal trial on DMT101
+cal <- cal[!cal$PPT == 'DMT300', ]
+cal <- cal[-c(1) ,]
+# remove unnecessary cols
+cal <- cal[, c(1:3,6,14,15)]
+
 # merging data-frames with new cal-value
-res <- merge(res, caldat, by = c('PPT','POSITION'), all = TRUE) #SO HAPPY THIS FUNCT EXISTS
+res <- merge(res, cal, by = c('PPT','POSITION','SIDE'), all = TRUE) #SO HAPPY THIS FUNCT EXISTS
 res[res == -32768] <- NA
+res <- res[, c(1:3,5:13,15,16)]
+
+
+###### UEA DATA ######
+
 
 ##### PREP FOR DATA ANALYSIS #####
 # subtracting cal from reach endpoint
