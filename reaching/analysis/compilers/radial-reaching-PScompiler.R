@@ -292,6 +292,10 @@ resUEA <- resUEA[complete.cases(resUEA) ,] #removing NA values
 resUOE$PPT <- substr(resUOE$PPT, 4, 6)
 resUOE$VIEW <- factor(resUOE$VIEW, labels = c('Free', 'Peripheral'))
 resUOE$SIDE <- factor(resUOE$SIDE, labels = c('Left', 'Right'))
+# adding start positions of finger
+resUOE$sX <- 500
+resUOE$sY <- 0
+
 # UEA res - match data
 # remove participants
 resUEA <- resUEA[resUEA$PPT != '311' ,] #participant 311 had TIA
@@ -314,20 +318,37 @@ resUOE$SITE <- 'UOE'
 resUEA$SITE <- 'UEA'
 
 # removing unnecessary cols
-resUOE <- resUOE[, c(1:5,7:10,12:14)]
-resUEA <- resUEA[, c(1:5,10:16)]
+resUOE <- resUOE[, c(1:5,7:10,12:17)]
+resUEA <- resUEA[, c(1:5,10:19)]
 
 # bind
-res <- rbind(resUOE, resUEA)
-
+resALL <- rbind(resUOE, resUEA)
+setwd(anaPath)
+write.csv(resALL, 'RAD_PSposition.csv', row.names = FALSE)
 
 ##### PREP FOR DATA ANALYSIS #####
-# subtracting cal from reach endpoint
-res$LANDx <- res$mx - res$calx
-res$LANDy <- res$my - res$caly
-#renaming some stuff
-res$GRP <- factor(substr(res$PPT, 4, 4))
+# getting group and diagnosis
+resALL$GRP <- factor(substr(resALL$PPT, 1, 1))
+# adding demographic information
+setwd('S:/groups/DMT/data')
+patient_demos <- read.csv('patient_demographics.csv') #loading patient demographics
+control_demos <- read.csv('control_demographics.csv') #loading control demos
+#extracting ACE data into seperate data-frame
+ACEscores <- patient_demos[ ,c(1, 8:13)]
+#isolating patient demographic information to bind with control
+patient_demos <- patient_demos[, c(1:6)]
+demo <- rbind(control_demos, patient_demos)
+# changing 'subject_nr' to PPT to match data-set
+names(demo)[1] <- 'PPT'
 
+#merging demo with res
+resALL <- merge(demo, resALL, by = 'PPT')
+setwd(anaPath)
+write.csv(resALL, 'RAD_PSposition.csv', row.names = FALSE)
+
+# subtracting cal from reach endpoint
+res$LANDx <- res$px - res$calx
+res$LANDy <- res$py - res$caly
 
 
 # plotting to get a look at data
@@ -346,10 +367,6 @@ res$LANDy_deg <- visAngle(size= res$LANDy, distance = 500)
 # absolute error - in mm
 res$AE <- sqrt(res$LANDx^2 + res$LANDy^2) #mm
 
-## start position
-res$sX <- 500
-res$sY <- 0
-
 ## angular error and amplitude error
 # calculating target and end-point position relative to start-point
 res$rX <- res$mx - res$sX
@@ -367,19 +384,7 @@ res$rAMP <- sqrt(res$rX^2 + res$rY^2)
 res$ANG_ERR <- res$rANG - res$tANG
 res$AMP_ERR <- res$rAMP - res$tAMP
 
-# adding demographic information
-patient_demos <- read.csv('patient_demographics.csv') #loading patient demographics
-control_demos <- read.csv('control_demographics 2.csv') #loading control demos
-#extracting ACE data into seperate data-frame
-ACEscores <- patient_demos[ ,c(1, 8:13)]
-#isolating patient demographic information to bind with control
-patient_demos <- patient_demos[, c(1:6)]
-demo <- rbind(control_demos, patient_demos)
-# changing 'subject_nr' to PPT to match data-set
-names(demo)[1] <- 'PPT'
 
-#merging demo with res
-res <- merge(demo, res, by = 'PPT')
 
 # counting eye-move and removing eye-move + void
 nEye_move <- aggregate(EYE_MOVE == 1 ~ PPT * diagnosis * VIEW, sum, data = res)
