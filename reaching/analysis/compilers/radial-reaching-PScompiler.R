@@ -7,13 +7,13 @@ library(dplyr, warn.conflicts = FALSE)
 library(forcats)
 
 ###### UOE DATA ######
-#on mac desktop
-#anaPath <- '/Users/Alex/Documents/DMT/analysis/radial_reaching/'
-#dataPath <- '/Users/Alex/Documents/DMT/data/'
+#on mac 
+anaPath <- '/Users/alex/Library/Mobile Documents/com~apple~CloudDocs/Documents/DMT/analysis/radial_reaching'
+dataPath <- '/Users/alex/Library/Mobile Documents/com~apple~CloudDocs/Documents/DMT/data'
 
 # work computer
-anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
-dataPath <- 'S:/groups/DMT/data'
+#anaPath <- 'S:/groups/DMT/analysis/radial_reaching'
+#dataPath <- 'S:/groups/DMT/data'
 setwd(dataPath)
 
 files <- list.files(path=dataPath, pattern = "*.TRJ", full.names = TRUE, recursive = TRUE)
@@ -343,75 +343,12 @@ names(demo)[1] <- 'PPT'
 
 #merging demo with res
 resALL <- merge(demo, resALL, by = 'PPT')
+names(resALL)[2] <- 'GENDER'
+names(resALL)[3] <- 'AGE'
+names(resALL)[4] <- 'HAND'
+names(resALL)[5] <- 'ED'
+names(resALL)[6] <- 'DIAGNOSIS'
+
 setwd(anaPath)
 write.csv(resALL, 'RAD_PSposition.csv', row.names = FALSE)
 
-# subtracting cal from reach endpoint
-res$LANDx <- res$px - res$calx
-res$LANDy <- res$py - res$caly
-
-
-# plotting to get a look at data
-res$POSITION <- factor(res$POSITION)
-ggplot(res) + geom_point(aes(x = calx, y = caly, colour = POSITION), shape = 3) +
-  geom_point(aes(x = mx, y = my, colour = POSITION)) +
-  facet_wrap(~PPT*VIEW)
-ggsave('radial-reach_Err.png', plot = last_plot(), device = NULL, 
-       path = anaPath, scale = 1, width = 15, height = 10, units = 'in')
-
-## data transformations and calculations
-# tranforming to degrees
-res$LANDx_deg <- visAngle(size= res$LANDx, distance = 500) #using visual angle function above
-res$LANDy_deg <- visAngle(size= res$LANDy, distance = 500)
-
-# absolute error - in mm
-res$AE <- sqrt(res$LANDx^2 + res$LANDy^2) #mm
-
-## angular error and amplitude error
-# calculating target and end-point position relative to start-point
-res$rX <- res$mx - res$sX
-res$rY <- res$my - res$sY
-res$tX <- res$calx - res$sX
-res$tY <- res$caly - res$sY
-
-#recode response as target-relative ERRORS in polar coordinates
-res$tANG <- (atan(res$tX/res$tY))*(180/pi)
-res$tAMP <- sqrt(res$tX^2 + res$tY^2)
-res$rANG <- (atan(res$rX/res$rY))*(180/pi)
-res$rAMP <- sqrt(res$rX^2 + res$rY^2)
-
-## calculating angular error and amplitude error
-res$ANG_ERR <- res$rANG - res$tANG
-res$AMP_ERR <- res$rAMP - res$tAMP
-
-
-
-# counting eye-move and removing eye-move + void
-nEye_move <- aggregate(EYE_MOVE == 1 ~ PPT * diagnosis * VIEW, sum, data = res)
-nVoid <- aggregate(EYE_MOVE == -1 ~ diagnosis * VIEW, sum, data = res)
-
-nTrials <- res %>% 
-  group_by(PPT,VIEW) %>% 
-  tally()
-nTrials <- na.omit(nTrials)
-
-# getting percentage eye-move for each group, and each condition
-Eye_move <- merge(nEye_move, nTrials)
-names(Eye_move)[4] <- 'eye_move'
-sumEye_move <- aggregate(eye_move ~ diagnosis * VIEW, sum, data = Eye_move)
-sumTrials <- aggregate(n ~ diagnosis * VIEW, sum, data = Eye_move)
-totEye_move <- merge(sumEye_move, sumTrials)
-
-# save this to combine with UEA data
-setwd(anaPath)
-write.csv(totEye_move, 'edinburgh_eye-move.csv', row.names = FALSE)
-
-# removing
-res <- res[res$EYE_MOVE == 0, c(1:7,17:18,8:15,22:42)]
-
-#do some pre-emptive renaming
-res$VIEW <- factor(res$VIEW, labels = c('Free', 'Peripheral'))
-res$SIDE <- factor(res$SIDE, labels = c('Left','Right'))
-
-#save compiled data-set
-write.csv(res, "radial-reaching_compiled.csv", row.names = FALSE)
