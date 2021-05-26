@@ -19,15 +19,6 @@ setwd(dataPath)
 files <- list.files(path=dataPath, pattern = "*.TRJ", full.names = TRUE, recursive = TRUE)
 idfiles <- list.files(path=dataPath, pattern = "*.dmt", full.names = TRUE, recursive = TRUE)
 
-##### variables #####
-visAngle <- function(size, distance){
-  # this function calculates visual angle
-  # size and distance must be in the same units
-  Rad = 2*atan(size/(2*distance))
-  Ang = Rad*(180/pi)
-  return(Ang)
-}
-
 optodat <- read.csv(text="px,py,PS,TPS,FILE,COUNT")
 iddat <- read.csv(text = 'PPT,SIDE,VIEW,TRIAL,POSITION,EYE_MOVE,FILENUM')
 caldat <- read.csv(text='RT,MT,PS,TPS,PAX,TPAX,calx,caly,FILE')
