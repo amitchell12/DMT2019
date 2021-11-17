@@ -116,6 +116,10 @@ td_patient[is.na(td_patient$D), "D"] <- -1
 #patient data for test of deficit = same as above
 # time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
 # using Crawford's (1998) test of deficit
+
+##### THIS CODE NEEDS CHANGING - PACKAGE HAS BEEN BLOODY UPDATED AGAIN (GRR)
+
+
 td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 for (l in 1:length(td_patient$PPT)){
@@ -124,7 +128,7 @@ for (l in 1:length(td_patient$PPT)){
                 alternative = 'greater', int_level = 0.95, iter = 10000,
                 use_sumstats = TRUE, cor_mat = NDCM, sample_size = td_control$N[1])
   diff <- t(NDres$estimate)
-  ltmp <- data.frame(td_patient$ND[l], NDres$statistic, NDres$p.value, 
+  ltmp <- data.frame(td_patient$ND[l], NDres$estimate[[1]], NDres$p.value, 
                      diff[1], diff[2], t(NDres$interval), 'ND', check.names = FALSE) 
   ltmp$PPT <- td_patient$PPT[l]
   ltmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
@@ -134,7 +138,7 @@ for (l in 1:length(td_patient$PPT)){
                   alternative = 'greater', int_level = 0.95, iter = 10000,
                   use_sumstats = TRUE, cor_mat = DCM, sample_size = td_control$N[2])
   diff <- t(Dres$estimate)
-  rtmp <- data.frame(td_patient$D[l], Dres$statistic, Dres$p.value, 
+  rtmp <- data.frame(td_patient$D[l], Dres$estimate[[1]], Dres$p.value, 
                      diff[1], diff[2], t(Dres$interval), 'D', check.names = FALSE) 
   rtmp$PPT <- td_patient$PPT[l]
   rtmp$DIAGNOSIS <- td_patient$DIAGNOSIS[l]
