@@ -15,7 +15,8 @@ library(ez)
 library(psychReport)
 
 #set working directory to where data is -> might need to change
-anaPath <- '/Users/alex/Library/Mobile Documents/com~apple~CloudDocs/Documents/DMT/analysis/lateral_reaching'
+anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+#anaPath <- '/Users/alex/Library/Mobile Documents/com~apple~CloudDocs/Documents/DMT/analysis/lateral_reaching'
 setwd(anaPath)
 
 # load data file
