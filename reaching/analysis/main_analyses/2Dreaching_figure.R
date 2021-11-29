@@ -10,114 +10,116 @@ library(ggpubr)
 library(reshape2)
 
 #set working directory to where data is -> might need to change
-anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
-#anaPath <- '/Users/alex/Library/Mobile Documents/com~apple~CloudDocs/Documents/DMT/analysis/lateral_reaching'
+#anaPath <- 'S:/groups/DMT/analysis/lateral_reaching'
+anaPath <- '/Users/alex/Library/Mobile Documents/com~apple~CloudDocs/Documents/DMT/analysis/lateral_reaching'
 setwd(anaPath)
 
+###### SHAPING DATA #####
 # load data file
 res <- read.csv('lateral-reaching_compiled.csv')
+
+# screen information
+x = 310
+y = 175
+pixels_perdeg = 43.76
+deg_perpix = 1/pixels_perdeg
+x_res = 1920
+y_res = 1080
+sd = 40
+
+pixPer_mm_x = x_res/x;
+pixPer_mm_y = y_res/y;
+pixPer_mm = (pixPer_mm_x+pixPer_mm_y)/2;
+mm_perPix = 1/pixPer_mm;
+
+# convert LAND/TARG from pix to mm
+res$LANDx_mm <- res$LANDx*mm_perPix
+res$LANDy_mm <- res$LANDy*mm_perPix
+res$TARGx_mm <- res$TARGx*mm_perPix
+res$TARGy_mm <- res$TARGy*mm_perPix
+
+# grouping
+res$ECCx <- factor(cut(abs(res$TARGx_mm), 3), labels = c('49', '83', '118'))
+#res$ECCy <- factor(cut(abs(res$TARGy_mm), 3), labels = c('-30', '0', '30'))
+
+TARGx <- summarySEwithin(data = res, measurevar = 'TARGx_mm', withinvars = c('ECCx','SIDE'))
+
 # group by x and y error for each target - first by eccentricity (median)
-LANDX <- aggregate(xerr_mm~POSITION*PPT*VIEW*SIDE*SITE*GRP*DIAGNOSIS*AGE, 
+LANDX <- aggregate(LANDx_mm~POSITION*ECCx*PPT*VIEW*SIDE*SITE*GRP*DIAGNOSIS*AGE, 
                    median, data=res)
-LANDY <- aggregate(yerr_mm~POSITION*PPT*VIEW*SIDE*SITE*GRP*DIAGNOSIS*AGE, 
+LANDY <- aggregate(LANDy_mm~POSITION*ECCx*PPT*VIEW*SIDE*SITE*GRP*DIAGNOSIS*AGE, 
                    median, data=res)
-# then by side (mean)
-LANDX <- aggregate(xerr_mm~PPT*VIEW*SIDE*SITE*GRP*DIAGNOSIS*AGE, 
-                   mean, data=LANDX)
-LANDY <- aggregate(yerr_mm~PPT*VIEW*SIDE*SITE*GRP*DIAGNOSIS*AGE, 
-                   mean, data=LANDY)
 
 ALLPOS <- merge(LANDX, LANDY)
 
+# isolate peripheral condition
+ALLPERIPH <- ALLPOS[ALLPOS$VIEW == 'periph' ,]
+
 # mean error for each target per position x & y - not absolute
-Xpos_means <- summarySEwithin(data = ALLPOS, measurevar = 'xerr_mm', 
-                              betweenvars = 'DIAGNOSIS', withinvars = c('VIEW','SIDE'))
-names(Xpos_means)[8] <- 'CIX'
-Ypos_means <- summarySEwithin(data = ALLPOS, measurevar = 'yerr_mm', 
-                              betweenvars = 'DIAGNOSIS', withinvars = c('VIEW','SIDE'))
-names(Ypos_means)[8] <- 'CIY'
+XPOS <- summarySEwithin(data = ALLPERIPH, measurevar = 'LANDx_mm', 
+                              betweenvars = 'DIAGNOSIS', withinvars = c('ECCx', 'VIEW','SIDE'))
+names(XPOS)[8] <- 'SEX'
+YPOS <- summarySEwithin(data = ALLPERIPH, measurevar = 'LANDy_mm', 
+                              betweenvars = 'DIAGNOSIS', withinvars = c('ECCx','VIEW','SIDE'))
+names(YPOS)[8] <- 'SEY'
 
-ALLPOS_means <- merge(Xpos_means, Ypos_means, 
-                      by = c('DIAGNOSIS', 'VIEW', 'SIDE', 'N'))
-ALLPOS_means$DIAGNOSIS <- factor(ALLPOS_means$DIAGNOSIS, levels = c('HC','MCI','AD'))
-ALLPOS_free <- ALLPOS_means[ALLPOS_means$VIEW == 'free' ,]
-ALLPOS_periph <- ALLPOS_means[ALLPOS_means$VIEW == 'periph' ,]
+# combining
+ALLPOS <- merge(XPOS, YPOS, 
+                      by = c('DIAGNOSIS', 'VIEW', 'SIDE', 'N', 'ECCx'))
+ALLPOS$DIAGNOSIS <- factor(ALLPOS$DIAGNOSIS, levels = c('HC','MCI','AD'))
+ALLPOS$ECCy <- 0
+ALLPOS$ECCx <- as.numeric(as.character(ALLPOS$ECCx))
 
-# free -left
-ggplot(ALLPOS_free[ALLPOS_free$SIDE=='left' ,], 
-       aes(shape = DIAGNOSIS, colour = DIAGNOSIS)) +
-  geom_point(aes(xerr_mm, yerr_mm), size = 4.5) +
-  geom_errorbar(aes(x = xerr_mm, ymin=yerr_mm-se.y, ymax=yerr_mm+se.y), 
-                width = .17, size = .75) +
-  geom_errorbarh(aes(xmin=xerr_mm-se.x, xmax=xerr_mm+se.x, y = yerr_mm), 
-                 height = .1, size = .75) +
-  geom_hline(yintercept = 0, size = .75, linetype = 'dashed') + 
-  geom_vline(xintercept = 0, size = .75, linetype = 'dashed') +
-  geom_point(aes(0,0), fill = 'white', shape = 21, colour = 'black', 
-             size = 10, stroke = 1.5)  +
-  scale_colour_manual(values = c('black','grey30','grey60')) +
-  ylim(-1,3) + xlim(-1,3) +
-  labs(x = 'Error (x-axis, mm)', y = 'Error (y-axis, mm)', title = 'Left Free') +
-  theme_classic() + theme(legend.position = 'none') -> LFP
+for (l in 1:length(ALLPOS$ECCx)) {
+  if (isTRUE(ALLPOS$SIDE[l] == 'left')){
+    ALLPOS$ECCx[l] <- (ALLPOS$ECCx*(-1))[l]
+  }
+}
 
-# free -right
-ggplot(ALLPOS_free[ALLPOS_free$SIDE=='right' ,], 
-       aes(shape = DIAGNOSIS, colour = DIAGNOSIS)) +
-  geom_point(aes(xerr_mm, yerr_mm), size = 4.5) +
-  geom_errorbar(aes(x = xerr_mm, ymin=yerr_mm-se.y, ymax=yerr_mm+se.y), 
-                width = .17, size = .75) +
-  geom_errorbarh(aes(xmin=xerr_mm-se.x, xmax=xerr_mm+se.x, y = yerr_mm), 
-                 height = .1, size = .75) +
-  geom_hline(yintercept = 0, size = .75, linetype = 'dashed') + 
-  geom_vline(xintercept = 0, size = .75, linetype = 'dashed') +
-  geom_point(aes(0,0), fill = 'white', shape = 21, colour = 'black', 
-             size = 10, stroke = 1.5)  +
-  scale_colour_manual(values = c('black','grey30','grey60')) +
-  ylim(-1,3) + xlim(-1,3) +
-  labs(x = 'Error (x-axis, mm)', y = 'Error (y-axis, mm)', title = 'Right Free') +
-  theme_classic() + theme(legend.position = c(.8,.85)) -> RFP
-
+###### PLOTTING X BY Y ######
 # peripheral -left
-ggplot(ALLPOS_periph[ALLPOS_periph$SIDE=='left' ,], 
-       aes(shape = DIAGNOSIS, colour = DIAGNOSIS)) +
-  geom_point(aes(xerr_mm, yerr_mm), size = 4.5) +
-  geom_errorbar(aes(x = xerr_mm, ymin=yerr_mm-se.y, ymax=yerr_mm+se.y), 
-                width = .17, size = .75) +
-  geom_errorbarh(aes(xmin=xerr_mm-se.x, xmax=xerr_mm+se.x, y = yerr_mm), 
-                 height = .1, size = .75) +
+ggplot(ALLPOS[ALLPOS$SIDE=='left' ,]) +
+  geom_point(aes(LANDx_mm, LANDy_mm, shape = DIAGNOSIS, colour = as.factor(ECCx)),
+             size = 4.5) +
+  geom_point(aes(as.numeric(ECCx), ECCy, colour= as.factor(ECCx)), shape = 21, size = 10) +
+#  geom_errorbar(aes(x = LANDx_mm, ymin=LANDy_mm-ci.y, ymax=LANDy_mm+ci.y, 
+#                    colour = DIAGNOSIS), width = .17, size = .75) +
+  geom_errorbarh(aes(xmin=LANDx_mm-ci.x, xmax=LANDx_mm+ci.x, y = LANDy_mm,
+                     colour = as.factor(ECCx)), height = .1, size = .75) +
   geom_hline(yintercept = 0, size = .75, linetype = 'dashed') + 
-  geom_vline(xintercept = 0, size = .75, linetype = 'dashed') +
-  geom_point(aes(0,0), fill = 'white', shape = 21, colour = 'black', 
-             size = 10, stroke = 1.5)  +
-  scale_colour_manual(values = c('black','grey30','grey60')) +
-  ylim(-6,1) + xlim(-1,12) +
-  labs(x = 'Error (x-axis, mm)', y = 'Error (y-axis, mm)', title = 'Left Peripheral') +
-  theme_classic() + theme(legend.position = 'none') -> LPP
+  scale_colour_manual(values = c('grey50','darkblue','darkgreen')) +
+  ylim(-6,2) + xlim(-130,1) +
+  labs(x = 'Reach endpoint (x-axis, mm)', y = 'Reach endpoint (y-axis, mm)', 
+       title = 'Left') +
+  theme_classic() + theme(legend.position = 'none',
+                          legend.title = element_blank(),
+                          legend.direction = 'horizontal') -> LPP
 
 # peripheral -right
-ggplot(ALLPOS_periph[ALLPOS_periph$SIDE=='right' ,], 
-       aes(shape = DIAGNOSIS, colour = DIAGNOSIS)) +
-  geom_point(aes(xerr_mm, yerr_mm), size = 4.5) +
-  geom_errorbar(aes(x = xerr_mm, ymin=yerr_mm-se.y, ymax=yerr_mm+se.y), 
-                width = .17, size = .75) +
-  geom_errorbarh(aes(xmin=xerr_mm-se.x, xmax=xerr_mm+se.x, y = yerr_mm), 
-                 height = .1, size = .75) +
+ggplot(ALLPOS[ALLPOS$SIDE=='right' ,]) +
+  geom_point(aes(LANDx_mm, LANDy_mm, shape = DIAGNOSIS, colour = as.factor(ECCx)),
+             size = 4.5) +
+  geom_point(aes(as.numeric(ECCx), ECCy, colour= as.factor(ECCx)), shape = 21, size = 10) +
+  #  geom_errorbar(aes(x = LANDx_mm, ymin=LANDy_mm-ci.y, ymax=LANDy_mm+ci.y, 
+  #                    colour = DIAGNOSIS), width = .17, size = .75) +
+  geom_errorbarh(aes(xmin=LANDx_mm-ci.x, xmax=LANDx_mm+ci.x, y = LANDy_mm,
+                     colour = as.factor(ECCx)), height = .1, size = .75) +
   geom_hline(yintercept = 0, size = .75, linetype = 'dashed') + 
-  geom_vline(xintercept = 0, size = .75, linetype = 'dashed') +
-  geom_point(aes(0,0), fill = 'white', shape = 21, colour = 'black', 
-             size = 10, stroke = 1.5)  +
-  scale_colour_manual(values = c('black','grey30','grey60')) +
-  ylim(-6,1) + xlim(-12,1) +
-  labs(x = 'Error (x-axis, mm)', y = 'Error (y-axis, mm)', title = 'Right Peripheral') +
-  theme_classic() + theme(legend.position = 'none') -> RPP
+  scale_colour_manual(values = c('grey50','darkblue','darkgreen')) +
+  ylim(-6,2) + xlim(-1,130) +
+  labs(x = 'Reach endpoint (x-axis, mm)', y = '', 
+       title = 'Right') +
+  theme_classic() + theme(legend.position = c(.75,.95),
+                          legend.title = element_blank(),
+                          legend.direction = 'horizontal') -> RPP
 
 ## combining all
-TWOD <- ggarrange(LFP,RFP,LPP,RPP,
-                  ncol = 2, nrow = 2,
+TWOD <- ggarrange(LPP,RPP,
+                  ncol = 2, nrow = 1,
                   widths = c(1,1),
                   hjust = .1)
 TWOD
 # saving
 ggsave('2DREACH.png', plot = last_plot(),  device = NULL, dpi = 300, 
-       width = 8, height = 8, path = anaPath)
+       width = 8, height = 4, path = anaPath)
 
