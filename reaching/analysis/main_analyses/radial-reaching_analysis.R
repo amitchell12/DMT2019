@@ -472,12 +472,12 @@ RPP
 
 ###### FOR PUBLICATION - combinging plots #####
 # combining in to main plot for publication
-PMIfig <- ggarrange(pPMI, avPMI,
+RPMIfig <- ggarrange(pPMI, avPMI,
                     ncol=2, nrow=1,
                     widths = c(1.5,1),
                     labels = c('A','B'),
                     hjust = -1)
-PMIfig
+RPMIfig
 
 # combining 2D reach plots
 TWOD <- ggarrange(LPP,RPP,
@@ -488,7 +488,7 @@ TWOD <- ggarrange(LPP,RPP,
 TWOD
 
 # final combine
-AEfig <- ggarrange(LPMIfig, TWOD,
+AEfig <- ggarrange(RPMIfig, TWOD,
                    ncol = 1, nrow = 2,
                    heights = c(1.05,.95))
 AEfig
