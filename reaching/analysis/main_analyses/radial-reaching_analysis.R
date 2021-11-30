@@ -120,15 +120,15 @@ tdUOE_patient[is.na(tdUOE_patient$D), "D"] <- -1
 
 # time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
 # using Crawford et al.'s (2011) Bayesian test of covariates (with singcar package)
-td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
-td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
+td_dom <- read.csv(text = 'PMI,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
+td_ndom <- read.csv(text = 'PMI,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 for (l in 1:length(tdUOE_patient$PPT)){
   #left data first
   NDres <- BTD_cov(tdUOE_patient$ND[l], tdUOE_patient$AGE[l], tdUOE_controlND, tdUOE_control$AGE[1], 
                    alternative = 'greater', int_level = 0.95, iter = 10000,
                    use_sumstats = TRUE, cor_mat = NDCM_UOE, sample_size = tdUOE_control$N[1])
   diff <- t(NDres$estimate)
-  ltmp <- data.frame(tdUOE_patient$ND[l], NDres$statistic, NDres$p.value, 
+  ltmp <- data.frame(tdUOE_patient$ND[l], NDres$p.value, 
                      diff[1], diff[2], t(NDres$interval), 'ND', check.names = FALSE) 
   ltmp$PPT <- tdUOE_patient$PPT[l]
   ltmp$DIAGNOSIS <- tdUOE_patient$DIAGNOSIS[l]
@@ -138,7 +138,7 @@ for (l in 1:length(tdUOE_patient$PPT)){
                   alternative = 'greater', int_level = 0.95, iter = 10000,
                   use_sumstats = TRUE, cor_mat = DCM_UOE, sample_size = tdUOE_control$N[2])
   diff <- t(Dres$estimate)
-  rtmp <- data.frame(tdUOE_patient$D[l], Dres$statistic, Dres$p.value, 
+  rtmp <- data.frame(tdUOE_patient$D[l], Dres$p.value, 
                      diff[1], diff[2], t(Dres$interval), 'D', check.names = FALSE) 
   rtmp$PPT <- tdUOE_patient$PPT[l]
   rtmp$DIAGNOSIS <- tdUOE_patient$DIAGNOSIS[l]
@@ -146,7 +146,7 @@ for (l in 1:length(tdUOE_patient$PPT)){
 }
 
 # merging and renaming data-frames
-tdUOE_results <- read.csv(text = 'PMI,TSTAT,PVALUE,ZCC,PROP,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
+tdUOE_results <- read.csv(text = 'PMI,PVALUE,ZCC,PROP,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 # changing names of td data-frames to match td-res
 names(td_ndom) <- names(tdUOE_results)
 names(td_dom) <- names(tdUOE_results)
@@ -196,15 +196,15 @@ tdUEA_patient <- dcast(tdUEA_patient, PPT+DIAGNOSIS+AGE ~ DOM)
 
 # time for test of deficit! Calling on 'singcar' package developed by Jonathan Rittmo
 # using Crawford et al's (2011) Bayesian test of covariates (with singcar package)
-td_dom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
-td_ndom <- read.csv(text = 'PMI,TSTAT,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
+td_dom <- read.csv(text = 'PMI,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
+td_ndom <- read.csv(text = 'PMI,PVALUE,PROP,ZCC,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 for (l in 1:length(tdUEA_patient$PPT)){
   #left data first
   NDres <- BTD_cov(tdUEA_patient$ND[l], tdUEA_patient$AGE[l], tdUEA_controlND, tdUEA_control$AGE[1], 
               alternative = 'greater', int_level = 0.95, iter = 10000,
               use_sumstats = TRUE, cor_mat = NDCM_UEA, sample_size = tdUEA_control$N[1])
   diff <- t(NDres$estimate)
-  ltmp <- data.frame(tdUEA_patient$ND[l], NDres$statistic, NDres$p.value, 
+  ltmp <- data.frame(tdUEA_patient$ND[l], NDres$p.value, 
                      diff[1], diff[2], t(NDres$interval), 'ND', check.names = FALSE) 
   ltmp$PPT <- tdUEA_patient$PPT[l]
   ltmp$DIAGNOSIS <- tdUEA_patient$DIAGNOSIS[l]
@@ -214,7 +214,7 @@ for (l in 1:length(tdUEA_patient$PPT)){
                   alternative = 'greater', int_level = 0.95, iter = 10000,
                   use_sumstats = TRUE, cor_mat = DCM_UEA, sample_size = tdUEA_control$N[2])
   diff <- t(Dres$estimate)
-  rtmp <- data.frame(tdUEA_patient$D[l], Dres$statistic, Dres$p.value, 
+  rtmp <- data.frame(tdUEA_patient$D[l], Dres$p.value, 
                      diff[1], diff[2], t(Dres$interval), 'D', check.names = FALSE) 
   rtmp$PPT <- tdUEA_patient$PPT[l]
   rtmp$DIAGNOSIS <- tdUEA_patient$DIAGNOSIS[l]
@@ -222,7 +222,7 @@ for (l in 1:length(tdUEA_patient$PPT)){
 }
 
 # merging and renaming data-frames
-tdUEA_results <- read.csv(text = 'PMI,TSTAT,PVALUE,ZCC,PROP,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
+tdUEA_results <- read.csv(text = 'PMI,PVALUE,ZCC,PROP,CI,LCI-T,HCI-T,LCI-P,HCI-P,DOM,PPT,DIAGNOSIS')
 # changing names of td data-frames to match td-res
 names(td_ndom) <- names(tdUEA_results)
 names(td_dom) <- names(tdUEA_results)
@@ -314,7 +314,6 @@ print(PMIttest)
 ## PLOT: PMI side + av ##
 # make control data-frame
 control_PMI <- subset(PMIdata, PMIdata$DIAGNOSIS == 'HC')
-control_PMI$TSTAT <- 0
 control_PMI$PVALUE <- 1
 control_PMI$DEFICIT <- 0
 control_PMI$BL <- 0
@@ -322,7 +321,7 @@ control_PMI$BL <- 0
 plot_PMI <- merge(PMIdata, td_results, by = c('PPT','DOM','DIAGNOSIS','SITE'))
 # include only relevant info
 plot_PMI$PMI <- plot_PMI$PMI.x
-plot_PMI <- plot_PMI[, c(1:9,23,12,13,21,22)]
+plot_PMI <- plot_PMI[, c(1:9,22,12,20,21)]
 
 # make plot data frame
 plot_PMI <- rbind(control_PMI, plot_PMI)
@@ -374,13 +373,125 @@ ggplot(PMIav_plot, aes(x = DIAGNOSIS, y = PMI, colour = DIAGNOSIS, group = PPT, 
   ) -> avPMI
 avPMI
 
+### 2D reaching figures
+# grouping calib info
+
+
+# group by x and y error for each target - first by eccentricity (median)
+LANDX <- aggregate(mx~POSITION*PPT*VIEW*SIDE*SITE*GRP*DIAGNOSIS*AGE, 
+                   median, data=res)
+LANDY <- aggregate(my~POSITION*PPT*VIEW*SIDE*SITE*GRP*DIAGNOSIS*AGE, 
+                   median, data=res)
+TARGX <- aggregate(calx~POSITION*PPT*VIEW*SIDE*SITE*GRP*DIAGNOSIS*AGE, 
+                   median, data=res)
+
+ALLPOS <- merge(LANDX, LANDY)
+
+# need to transform the Edinburgh data to match UEA 
+# - subtract 563mm from these data (consistent change across target location from UOE TO UEA)
+for (l in 1:length(ALLPOS$POSITION)){
+  if (isTRUE(ALLPOS$SITE[l] == 'UOE')) {
+    ALLPOS$mx[l] = (ALLPOS$mx[l]) - 563
+  }
+}
+for (l in 1:length(TARGX$POSITION)){
+  if (isTRUE(TARGX$SITE[l] == 'UOE')) {
+    TARGX$calx[l] = (TARGX$calx[l]) - 563
+  }
+}
+
+# isolate peripheral condition
+ALLPERIPH <- ALLPOS[ALLPOS$VIEW == 'Peripheral' ,]
+ALLFREE <- TARGX[TARGX$VIEW == 'Free' ,]
+
+# mean error for each target per position x & y - not absolute
+XPOS <- summarySEwithin(data = ALLPERIPH, measurevar = 'mx', 
+                        betweenvars = 'DIAGNOSIS', withinvars = c('POSITION','VIEW','SIDE'))
+
+XPOS_FREE <- summarySEwithin(data = ALLFREE, measurevar = 'calx', withinvars = c('POSITION','VIEW','SIDE'))
+XPOS_FREE <- XPOS_FREE[, c(1:6)]
+
+YPOS <- summarySEwithin(data = ALLPERIPH, measurevar = 'my', 
+                        betweenvars = 'DIAGNOSIS', withinvars = c('POSITION','VIEW','SIDE'))
+
+# combining
+ALLPOS <- merge(XPOS, YPOS, 
+                by = c('DIAGNOSIS', 'VIEW', 'SIDE', 'N', 'POSITION'))
+ALLPOS <- merge(ALLPOS, XPOS_FREE, by = c('SIDE','POSITION'))
+
+ALLPOS$DIAGNOSIS <- factor(ALLPOS$DIAGNOSIS, levels = c('HC','MCI','AD'))
+ALLPOS$POSY <- 360
+ALLPOS$calx <- as.factor(ALLPOS$calx)
+
+## PLOTTING X BY Y ##
+# peripheral -left
+ggplot(ALLPOS[ALLPOS$SIDE=='Left' ,]) +
+  geom_point(aes(mx, my, shape = DIAGNOSIS, colour = as.factor(calx)),
+             size = 4.5) +
+  geom_point(aes(as.numeric(as.character(calx)), POSY, colour= as.factor(calx)), 
+             shape = 21, size = 10) +
+  #  geom_errorbar(aes(x = LANDx_mm, ymin=LANDy_mm-ci.y, ymax=LANDy_mm+ci.y, 
+  #                    colour = DIAGNOSIS), width = .17, size = .75) +
+  geom_errorbarh(aes(xmin=mx-ci.x, xmax=mx+ci.x, y = my,
+                     colour = as.factor(calx)), height = .4, size = .80) +
+  geom_hline(yintercept = 360, size = .75, linetype = 'dashed') + 
+  scale_colour_manual(values = c('black','grey30','grey55','grey80'), guide = 'none') +
+  ylim(400,355) + xlim(-450,0) +
+  labs(x = 'Reach endpoint (x-axis, mm)', y = 'Reach endpoint (y-axis, mm)', 
+       title = 'Left') +
+  theme_classic() + theme(legend.position = 'none',
+                          legend.title = element_blank(),
+                          legend.direction = 'horizontal',
+                          axis.title = element_text(size = 12),
+                          axis.text = element_text(size = 10)) -> LPP
+LPP
+
+# peripheral -right
+ggplot(ALLPOS[ALLPOS$SIDE=='Right' ,]) +
+  geom_point(aes(mx, my, shape = DIAGNOSIS, colour = as.factor(calx)),
+             size = 4.5) +
+  geom_point(aes(as.numeric(as.character(calx)), POSY, colour= as.factor(calx)), 
+             shape = 21, size = 10, show.legend = F) +
+  #  geom_errorbar(aes(x = LANDx_mm, ymin=LANDy_mm-ci.y, ymax=LANDy_mm+ci.y, 
+  #                    colour = DIAGNOSIS), width = .17, size = .75) +
+  geom_errorbarh(aes(xmin=mx-ci.x, xmax=mx+ci.x, y = my,
+                     colour = as.factor(calx)), height = .5, size = .80) +
+  geom_hline(yintercept = 360, size = .75, linetype = 'dashed') + 
+  scale_colour_manual(values = c('grey80','grey55','grey30','black'), guide = 'none') +
+  scale_y_continuous(trans = "reverse", limits = c(400,355), position = "right") +
+  xlim(0,450) +
+  labs(x = 'Reach endpoint (x-axis, mm)', title = 'Right') +
+  theme_classic() + theme(legend.position = c(-0.05,.99),
+                          legend.title = element_blank(),
+                          legend.direction = 'horizontal',
+                          plot.title = element_text(hjust = 1),
+                          axis.title = element_text(size = 12),
+                          axis.text = element_text(size = 10),
+                          axis.title.y=element_blank()) -> RPP
+RPP
+
+###### FOR PUBLICATION - combinging plots #####
 # combining in to main plot for publication
 PMIfig <- ggarrange(pPMI, avPMI,
                     ncol=2, nrow=1,
                     widths = c(1.5,1),
-                    labels = c('C','D'),
+                    labels = c('A','B'),
                     hjust = -1)
 PMIfig
 
+# combining 2D reach plots
+TWOD <- ggarrange(LPP,RPP,
+                  ncol = 2, nrow = 1,
+                  widths = c(1,1),
+                  labels = 'C',
+                  hjust = -1)
+TWOD
+
+# final combine
+AEfig <- ggarrange(LPMIfig, TWOD,
+                   ncol = 1, nrow = 2,
+                   heights = c(1.05,.95))
+AEfig
+
 ggsave('RADAE-fig.png', plot = last_plot(), device = NULL, dpi = 300, 
-       width = 8, height = 4, path = anaPath)
+       width = 8, height = 8, path = anaPath)
