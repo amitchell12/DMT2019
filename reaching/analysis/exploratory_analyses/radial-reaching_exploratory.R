@@ -338,7 +338,7 @@ ggplot(TPS_means, aes(x = VIEW, y = TPS, colour = SITE, group = PPT)) +
   stat_summary(aes(y = TPS, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   facet_wrap(~DIAGNOSIS) + 
-  labs(x = '', y = 'Acceleration phase (ms)', element_text(size = 12)) +
+  labs(x = '', y = 'Acceleration Time (ms)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'bottom', 
                           axis.text = element_text(size = 10),
                           axis.title = element_text(size = 12),
@@ -360,7 +360,7 @@ ggplot(TPSecc, aes(x = ECC, y = TPS, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_errorbar(aes(ymin=TPS-ci, ymax=TPS+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = 'Eccentricity (mm)', y = 'Acceleration phase (ms)') +
+  labs(x = 'Eccentricity (mm)', y = 'Acceleration time (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() + ylim(0,300) +
   theme(legend.position = 'none',
@@ -424,7 +424,7 @@ ggplot(TAPS_means, aes(x = VIEW, y = TAPS, colour = SITE, group = PPT)) +
   stat_summary(aes(y = TAPS, group = 1), fun.y = mean, colour = "black", 
                geom = 'point', shape = 3, stroke = 1, size = 4, group = 1) +
   facet_wrap(~DIAGNOSIS) +
-  labs(x = '', y = 'Deceleration phase (ms)', element_text(size = 12)) +
+  labs(x = '', y = 'Deceleration time (ms)', element_text(size = 12)) +
   theme_classic() + theme(legend.position = 'none', 
                           axis.text = element_text(size = 10),
                           axis.title = element_text(size = 12),
@@ -446,7 +446,7 @@ ggplot(TAPSecc, aes(x = ECC, y = TAPS, group = DIAGNOSIS, colour = DIAGNOSIS,
   geom_errorbar(aes(ymin=TAPS-ci, ymax=TAPS+ci), 
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
-  labs(x = 'Eccentricity (mm)', y = 'Deceleration phase (ms)') +
+  labs(x = 'Eccentricity (mm)', y = 'Deceleration time (ms)') +
   scale_color_manual(values = c('black','grey30','grey60')) +
   facet_grid(~VIEW) + theme_classic() + ylim(300,700) +
   theme(legend.position = 'none',

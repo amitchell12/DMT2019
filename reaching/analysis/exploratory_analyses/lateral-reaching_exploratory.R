@@ -12,8 +12,10 @@ library(psychReport)
 
 ###### GETTING DATA #######
 # PATHS: will have to change if using different computer
-anaPath <- '/Users/alexandramitchell/Documents/EDB_PostDoc/DMT2019/analysis/lateral_reaching'
+anaPath <- '/Users/alex/Library/Mobile Documents/com~apple~CloudDocs/Documents/DMT/analysis/lateral_reaching'
 setwd(anaPath)
+
+res <- read.csv('lateral-reaching_compiled.csv')
 
 # changing levels to be more informative
 levels(res$VIEW) <- c('Free', 'Peripheral')
@@ -46,7 +48,7 @@ ggplot(av_ecc, aes(x = ECC, y = AE, group = DIAGNOSIS, colour = DIAGNOSIS,
                 width=.4, position = position_dodge(width = .4)) + 
   geom_line(aes(group = DIAGNOSIS), size = 0.7, position = position_dodge(width = .4)) +
   scale_color_manual(values = c('black','grey30','grey60')) +
-  labs(x = '', y = 'Absolute error (mm)') +
+  labs(x = '', y = 'Lateral reaching error (mm)') +
   facet_wrap(~VIEW) + theme_classic() +
   theme(legend.position = c(.12,.85),
         legend.title = element_blank(),
